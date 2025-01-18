@@ -1,0 +1,42 @@
+# This file contains sample and default values for the app configuration.
+# Copy this file and rename it to '.config.yaml' and then update values as needed.
+
+# General configuration for the app
+app:
+  # Unique identifier for the app instance, useful when running multiple instances.
+  id: "local-dev"
+  # The name of the app, currently used for logging purposes.
+  name: "gopl.dev"
+  # The version of the app. You can use any format (e.g., semantic versioning, timestamp, commit hash or whatever else).
+  # This is used for logging and to verify the correct version of app is deployed (e.g., via the "/api/status/" endpoint).
+  version: "ognev-local"
+
+  # Specifies the environment in which the app is running. Possible values:
+  # - dev: Development environment (e.g., for active coding/debugging).
+  # - test: Testing environment (e.g., running automated tests).
+  # - staging: Pre-release testing environment. Ideally, it should mimic the release environment,
+  #            but you may use it for specific checks (like credentials for third-party).
+  # - release: Production environment where the app is live and handling real operations.
+  env: dev
+
+# Server configuration
+server:
+  # Hostname or IP address the server will bind to.
+  host: localhost
+  # Port number the server will listen on.
+  port: 8080
+  # A prefix applied to all API endpoints
+  api_base_path: api
+
+# Database configuration
+db:
+  # Database address (host:port format).
+  addr: localhost:5432
+  # Database username.
+  user: postgres
+  # Database password.
+  password: postgres
+  # Name of the database to connect to.
+  name: gopl_dev_server
+  # Enable or disable SQL query logging
+  log_queries: true

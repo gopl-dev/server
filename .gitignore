@@ -1,0 +1,6 @@
+*.exe
+.idea
+*.log
+
+.config.yaml
+bin/*
