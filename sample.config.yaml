@@ -30,13 +30,9 @@ server:
 
 # Database configuration
 db:
-  # Database address (host:port format).
-  addr: localhost:5432
-  # Database username.
+  host: localhost:5432
+  port: 5432
   user: postgres
-  # Database password.
   password: postgres
-  # Name of the database to connect to.
   name: gopl_dev_server
-  # Enable or disable SQL query logging
   log_queries: true

@@ -31,7 +31,8 @@ type Config struct {
 	}
 
 	DB struct {
-		Addr       string
+		Host       string
+		Port       string
 		User       string
 		Password   string
 		Name       string
