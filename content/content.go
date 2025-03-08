@@ -1,6 +1,7 @@
 package content
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -45,7 +46,7 @@ var autoTopicExceptions = []string{
 
 var pluralizer = pluralize.NewClient()
 
-func ImportFromGitHub(repo ds.GitHubRepo) (err error) {
+func ImportFromGitHub(ctx context.Context, repo ds.GitHubRepo) (err error) {
 	startAt := time.Now()
 
 	var (
@@ -108,7 +109,7 @@ func ImportFromGitHub(repo ds.GitHubRepo) (err error) {
 	}
 
 	// import to DB
-	err = ImportContentFromDir(cloneTo, repo.ID)
+	err = ImportContentFromDir(ctx, cloneTo, repo.ID)
 	if err != nil {
 		err = fmt.Errorf("ImportContentFromDir: %v", err)
 		return
@@ -151,17 +152,16 @@ func ImportFromGitHub(repo ds.GitHubRepo) (err error) {
 
 // ImportContentFromDir imports data from local path
 // TODO partial import
-func ImportContentFromDir(dir string, repoID int64) (err error) {
+func ImportContentFromDir(ctx context.Context, dir string, repoID int64) (err error) {
 	// Mark all data as deleted,
 	// and while importing restore existing entities
 	// Entities that still marked as deleted after import should be deleted for real
-	//_, err = database.ORM().
-	//	Exec("UPDATE entities SET deleted_at=NOW() WHERE repo_id = ?", repoID)
-	//if err != nil {
+	//_, err = app.DB().
+	//	Exec("UPDATE entities SET deleted_at=NOW() WHERE repo_id = $1", repoID)
 	//	return
 	//}
-	//
-	//// delete topics
+
+	// delete topics
 	//_, err = database.ORM().
 	//	Exec("DELETE FROM entity_topics WHERE topic_id IN (SELECT id FROM topics WHERE repo_id = ?)", repoID)
 	//if err != nil {
@@ -172,11 +172,11 @@ func ImportContentFromDir(dir string, repoID int64) (err error) {
 	//if err != nil {
 	//	return
 	//}
-	//
-	//err = importDataFromDir(dir, repoID)
-	//if err != nil {
-	//	return
-	//}
+
+	err = importDataFromDir(dir, repoID)
+	if err != nil {
+		return
+	}
 
 	// TODO: since collections introduced it is not good to hard delete entities,
 	//  because that will be confusing when entity from collection simply disappear.

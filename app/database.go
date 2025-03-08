@@ -19,6 +19,9 @@ import (
 
 var dbConn *pgxpool.Pool
 
+// NewDatabasePool creates a new PostgreSQL connection pool.
+// It reads the database configuration from the Config() and establishes a connection.
+// It also verifies the connection by executing a simple query.
 func NewDatabasePool(ctx context.Context) (db *pgxpool.Pool, err error) {
 	c := Config().DB
 	db, err = pgxpool.New(ctx, fmt.Sprintf("postgres://%s:%s@%s:%s/%s", c.User, c.Password, c.Host, c.Port, c.Name))
@@ -36,10 +39,12 @@ func NewDatabasePool(ctx context.Context) (db *pgxpool.Pool, err error) {
 	return
 }
 
+// DB returns the global PostgreSQL connection pool.
 func DB() *pgxpool.Pool {
 	return dbConn
 }
 
+// CloseDatabase closes the global PostgreSQL connection pool if it is not nil.
 func CloseDatabase() {
 	if dbConn != nil {
 		dbConn.Close()
@@ -62,6 +67,8 @@ type migration struct {
 }
 
 // MigrateDB runs SQL scripts from the './migrations' directory that haven't been committed yet.
+// It reads migration files, compares them with the migrations already applied to the database,
+// and executes the new migrations in a transaction.
 func MigrateDB(ctx context.Context) (err error) {
 	defer func() {
 		if err != nil {
@@ -125,11 +132,11 @@ selectAll:
 		pgErr := &pgconn.PgError{}
 		if errors.As(err, &pgErr) && pgErr.Code == "42P01" && strings.Contains(err.Error(), mgTable) {
 			_, err = dbConn.Exec(ctx, `
-		CREATE TABLE `+mgTable+` (
-			version    BIGINT NOT NULL PRIMARY KEY,
-			name       TEXT NOT NULL,
-			migrated_at TIMESTAMPTZ NOT NULL
-		);`)
+       CREATE TABLE `+mgTable+` (
+          version    BIGINT NOT NULL PRIMARY KEY,
+          name       TEXT NOT NULL,
+          migrated_at TIMESTAMPTZ NOT NULL
+       );`)
 			if err != nil {
 				return fmt.Errorf("init migrations table: %v", err)
 			}
@@ -186,24 +193,13 @@ iterate:
 	return nil
 }
 
+// RunInTx executes a function within a PostgreSQL transaction.
+// It begins a transaction, executes the provided function, and commits or rolls back the transaction based on the function's result.
 func RunInTx(ctx context.Context, f func(ctx context.Context, tx pgx.Tx) error) (err error) {
 	tx, err := dbConn.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %v", err)
 	}
-
-	defer func() {
-		if err != nil {
-			err = tx.Rollback(ctx)
-			err = fmt.Errorf("rollback transaction: %v", err)
-			return
-		}
-
-		err = tx.Commit(ctx)
-		if err != nil {
-			err = fmt.Errorf("commit transaction: %v", err)
-		}
-	}()
 
 	err = f(ctx, tx)
 	if err != nil {

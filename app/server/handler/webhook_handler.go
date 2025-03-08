@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -98,7 +99,7 @@ func ImportContentFromGitHubRepo(w http.ResponseWriter, r *http.Request) {
 	// TODO import using queue
 	go func() {
 		repo.CloneURL = req.Repo.CloneURL
-		err = content.ImportFromGitHub(repo)
+		err = content.ImportFromGitHub(context.TODO(), repo)
 		if err != nil {
 			log.Printf("[ERROR] import from GH: " + err.Error())
 		}

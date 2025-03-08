@@ -32,6 +32,13 @@ type ConfigT struct {
 	}
 
 	Content struct {
+		Repo struct {
+			// Path represents "{account}/{repo}" on GitHub.
+			// Note that this is equivalent to "full_name" in the GitHub API.
+			Path   string `yaml:"name"`
+			Branch string `yaml:"branch"`
+			Secret string `yaml:"secret"`
+		}
 		LocalDir string `yaml:"local_dir"`
 	}
 }

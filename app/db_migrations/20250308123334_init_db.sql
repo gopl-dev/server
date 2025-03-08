@@ -22,3 +22,14 @@ CREATE TABLE entity_topics
     entity_id BIGINT NOT NULL REFERENCES entities (id),
     topic_id  BIGINT NOT NULL REFERENCES topics (id)
 );
+
+CREATE TABLE content_import_logs
+(
+    id         BIGSERIAL PRIMARY KEY NOT NULL,
+    path       TEXT UNIQUE           NOT NULL,
+    branch     TEXT                  NOT NULL,
+    status     INT,
+    log        TEXT,
+    created_at TIMESTAMPTZ           NOT NULL
+);
+
