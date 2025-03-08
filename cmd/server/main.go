@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -8,12 +9,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gopl-dev/server/config"
-	"github.com/gopl-dev/server/server"
+	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/server"
 )
 
 func main() {
-	conf := config.Get()
+	conf := app.Config()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit,
@@ -23,8 +24,20 @@ func main() {
 		syscall.SIGQUIT, // kill -SIGQUIT
 	)
 
-	srv := server.New()
+	ctx := context.Background()
+	db, err := app.NewDatabasePool(ctx)
+	defer db.Close()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
+	err = app.MigrateDB(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	srv := server.New()
 	go func() {
 		<-quit
 		if err := srv.Close(); err != nil {
@@ -33,7 +46,7 @@ func main() {
 	}()
 
 	log.Println(conf.App.Name + " (" + conf.App.Version + ") serving at " + conf.Server.Host + ":" + conf.Server.Port)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil && errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err.Error())
 	}
