@@ -1,4 +1,4 @@
-package server
+package api
 
 type ResponseError struct {
 	Code        int               `json:"code"`

@@ -7,12 +7,12 @@ CREATE TABLE topics
 
 CREATE TABLE entities
 (
-    id         BIGSERIAL PRIMARY KEY   NOT NULL,
-    token      TEXT UNIQUE             NOT NULL,
-    title      TEXT                    NOT NULL,
-    type       TEXT                    NOT NULL,
-    data       JSONB                   NOT NULL,
-    created_at TIMESTAMPTZ             NOT NULL,
+    id         BIGSERIAL PRIMARY KEY NOT NULL,
+    path       TEXT UNIQUE           NOT NULL,
+    title      TEXT                  NOT NULL,
+    type       TEXT                  NOT NULL,
+    data       JSONB                 NOT NULL,
+    created_at TIMESTAMPTZ           NOT NULL,
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ
 );
@@ -26,10 +26,8 @@ CREATE TABLE entity_topics
 CREATE TABLE content_import_logs
 (
     id         BIGSERIAL PRIMARY KEY NOT NULL,
-    path       TEXT UNIQUE           NOT NULL,
-    branch     TEXT                  NOT NULL,
-    status     INT,
-    log        TEXT,
+    status     INT                   NOT NULL,
+    log        TEXT                  NOT NULL,
     created_at TIMESTAMPTZ           NOT NULL
 );
 

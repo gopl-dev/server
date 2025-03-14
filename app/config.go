@@ -14,33 +14,22 @@ type ConfigT struct {
 		Name    string `yaml:"name"`
 		Version string `yaml:"version"`
 		Env     string `yaml:"env"`
-	}
+	} `yaml:"app"`
 
 	Server struct {
-		Port        string
-		Host        string
+		Port        string `yaml:"port"`
+		Host        string `yaml:"host"`
 		ApiBasePath string `yaml:"api_base_path"`
-	}
+	} `yaml:"server"`
 
 	DB struct {
-		Host       string
-		Port       string
-		User       string
-		Password   string
-		Name       string
-		LogQueries bool `yaml:"log_queries"`
-	}
-
-	Content struct {
-		Repo struct {
-			// Path represents "{account}/{repo}" on GitHub.
-			// Note that this is equivalent to "full_name" in the GitHub API.
-			Path   string `yaml:"name"`
-			Branch string `yaml:"branch"`
-			Secret string `yaml:"secret"`
-		}
-		LocalDir string `yaml:"local_dir"`
-	}
+		Host       string `yaml:"host"`
+		Port       string `yaml:"port"`
+		User       string `yaml:"user"`
+		Password   string `yaml:"password"`
+		Name       string `yaml:"name"`
+		LogQueries bool   `yaml:"log_queries"`
+	} `yaml:"db"`
 }
 
 func (c ConfigT) IsDevEnv() bool {
@@ -67,7 +56,9 @@ func Config() *ConfigT {
 			err = fmt.Errorf("read '.config.yaml': %v", err)
 			panic(err)
 		}
-		err = yaml.Unmarshal(data, &conf)
+
+		conf = &ConfigT{}
+		err = yaml.Unmarshal(data, conf)
 		if err != nil {
 			panic(err)
 		}

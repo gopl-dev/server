@@ -1,6 +1,16 @@
 package service
 
-import "github.com/gopl-dev/server/app/ds"
+import (
+	"context"
+	"errors"
+
+	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
+	"github.com/jackc/pgx/v5"
+)
+
+var ErrNoRows = errors.New("no rows in result set")
 
 type FilterTopicsParams struct{}
 
@@ -104,25 +114,26 @@ func CommonTopics(in CommonTopicsParams) (out []string, err error) {
 	return
 }
 
-func FirstOrCreateTopic(elem *ds.Topic) (err error) {
-	//err = database.ORM().
-	//	Model(elem).
-	//	Where("name = ?", elem.Name).
-	//	Where("repo_id = ?", elem.RepoID).
-	//	First()
-	//if err != nil && err != pg.ErrNoRows {
-	//	return
-	//}
-	//
-	//if err == pg.ErrNoRows {
-	//	err = database.ORM().Insert(elem)
-	//}
+func FirstOrCreateTopic(ctx context.Context, m *ds.Topic) (err error) {
+	db := app.DB()
+	err = pgxscan.Get(ctx, db, m, `SELECT * FROM topics WHERE name = $1 LIMIT 1`, m.Name)
+	if errors.Is(err, pgx.ErrNoRows) {
+		r := app.DB().QueryRow(ctx, "INSERT INTO topics (name) VALUES ($1) RETURNING id", m.Name)
+		err = r.Scan(&m.ID)
+		if err != nil {
+			return
+		}
+	}
 
 	return
 }
 
-func CreateEntityTopic(m ds.EntityTopic) (err error) {
-	//err = database.ORM().Insert(&m)
+func CreateEntityTopic(ctx context.Context, m ds.EntityTopic) (err error) {
+	_, err = app.DB().Exec(ctx,
+		"INSERT INTO entity_topics (entity_id, topic_id) VALUES ($1, $2)",
+		m.EntityID,
+		m.TopicID,
+	)
 
 	return
 }

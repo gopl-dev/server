@@ -1,7 +1,6 @@
 package ds
 
 type Topic struct {
-	ID     int64  `json:"id"`
-	RepoID int64  `json:"-"`
-	Name   string `json:"name"`
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
 }

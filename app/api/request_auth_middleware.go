@@ -1,4 +1,4 @@
-package server
+package api
 
 // RequestAuthMiddleware middleware
 // See RequestUserMiddleware middleware for auth details

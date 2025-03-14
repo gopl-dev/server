@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"net"
@@ -10,7 +10,7 @@ import (
 	"github.com/gopl-dev/server/app"
 )
 
-func New() *http.Server {
+func NewServer() *http.Server {
 	conf := app.Config().Server
 
 	r := NewRouter()

@@ -42,5 +42,6 @@ func FilterBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetBookByID(w http.ResponseWriter, r *http.Request) {
-	jsonOK(w, map[string]string{"status": "ok"})
+	id := r.PathValue("book_id")
+	jsonOK(w, map[string]string{"id": id})
 }

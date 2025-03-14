@@ -5,7 +5,9 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"log/slog"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -24,7 +26,9 @@ var dbConn *pgxpool.Pool
 // It also verifies the connection by executing a simple query.
 func NewDatabasePool(ctx context.Context) (db *pgxpool.Pool, err error) {
 	c := Config().DB
-	db, err = pgxpool.New(ctx, fmt.Sprintf("postgres://%s:%s@%s:%s/%s", c.User, c.Password, c.Host, c.Port, c.Name))
+	conf, err := pgxpool.ParseConfig(fmt.Sprintf("postgres://%s:%s@%s:%s/%s", c.User, c.Password, c.Host, c.Port, c.Name))
+	conf.ConnConfig.Tracer = NewLoggingQueryTracer(slog.Default())
+	db, err = pgxpool.NewWithConfig(ctx, conf)
 	if err != nil {
 		err = fmt.Errorf("create db connection pool: %w", err)
 		return
@@ -216,4 +220,72 @@ func RunInTx(ctx context.Context, f func(ctx context.Context, tx pgx.Tx) error) 
 	}
 
 	return
+}
+
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+// Took bellow code from
+// https://gist.github.com/zaydek/91f27cdd35c6240701f81415c3ba7c07
+// Leaving it as-is for now
+var (
+	replaceTabs                      = regexp.MustCompile(`\t+`)
+	replaceSpacesBeforeOpeningParens = regexp.MustCompile(`\s+\(`)
+	replaceSpacesAfterOpeningParens  = regexp.MustCompile(`\(\s+`)
+	replaceSpacesBeforeClosingParens = regexp.MustCompile(`\s+\)`)
+	replaceSpacesAfterClosingParens  = regexp.MustCompile(`\)\s+`)
+	replaceSpaces                    = regexp.MustCompile(`\s+`)
+)
+
+// prettyPrintSQL removes empty lines and trims spaces.
+func prettyPrintSQL(sql string) string {
+	lines := strings.Split(sql, "\n")
+
+	pretty := strings.Join(lines, " ")
+	pretty = replaceTabs.ReplaceAllString(pretty, "")
+	pretty = replaceSpacesBeforeOpeningParens.ReplaceAllString(pretty, "(")
+	pretty = replaceSpacesAfterOpeningParens.ReplaceAllString(pretty, "(")
+	pretty = replaceSpacesAfterClosingParens.ReplaceAllString(pretty, ")")
+	pretty = replaceSpacesBeforeClosingParens.ReplaceAllString(pretty, ")")
+
+	// Finally, replace multiple spaces with a single space
+	pretty = replaceSpaces.ReplaceAllString(pretty, " ")
+
+	return strings.TrimSpace(pretty)
+}
+
+type LoggingQueryTracer struct {
+	logger *slog.Logger
+}
+
+func NewLoggingQueryTracer(logger *slog.Logger) *LoggingQueryTracer {
+	return &LoggingQueryTracer{logger: logger}
+}
+
+func (l *LoggingQueryTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+	l.logger.
+		Info("query start",
+			slog.String("sql", prettyPrintSQL(data.SQL)),
+			slog.Any("args", data.Args),
+		)
+	return ctx
+}
+
+func (l *LoggingQueryTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+	// Failure
+	if data.Err != nil {
+		l.logger.
+			Error("query end",
+				slog.String("error", data.Err.Error()),
+				slog.String("command_tag", data.CommandTag.String()),
+			)
+		return
+	}
+
+	// Success
+	l.logger.
+		Info("query end",
+			slog.String("command_tag", data.CommandTag.String()),
+		)
 }

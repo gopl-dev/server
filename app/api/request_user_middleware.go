@@ -1,4 +1,4 @@
-package server
+package api
 
 const authSuccessKey = "auth_success"
 const authErrorKey = "auth_error"

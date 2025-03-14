@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gopl-dev/server/app"
-	"github.com/gopl-dev/server/app/server"
+	"github.com/gopl-dev/server/app/api"
 )
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	srv := server.New()
+	srv := api.NewServer()
 	go func() {
 		<-quit
 		if err := srv.Close(); err != nil {

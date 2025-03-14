@@ -1,7 +1,14 @@
 package service
 
 import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/jackc/pgx/v5"
 )
 
 // DefinitionType
@@ -113,44 +120,46 @@ func Definition(name string) (def *ds.Entity, err error) {
 	return
 }
 
-func CreateOrUpdateEntity(elem *ds.Entity) (err error) {
-	//old := ds.Entity{}
-	//err = database.ORM().
-	//	Model(&old).
-	//	Where("path = ?", elem.Path).
-	//	Where("repo_id = ?", elem.RepoID).
-	//	First()
-	//if err != nil && err != pg.ErrNoRows {
-	//	return
-	//}
+func CreateOrUpdateEntity(ctx context.Context, elem *ds.Entity) (err error) {
+	old := ds.Entity{}
+	err = pgxscan.Get(ctx, app.DB(), &old, `SELECT * FROM entities WHERE path = $1`, elem.Path)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return
+	}
 
-	// insert new
-	//if err == pg.ErrNoRows {
-	//	err = database.ORM().Insert(elem)
-	//	if err != nil {
-	//		return
-	//	}
-	//} else {
-	//	old.Path = elem.Path
-	//	old.Title = elem.Title
-	//	old.Type = elem.Type
-	//	old.DeletedAt = nil
-	//
-	//	old.Data = elem.Data
-	//	// TODO check if new data is different from new data and set updated_at
-	//	//if old.Data != elem.Data {
-	//	//	now := time.Now()
-	//	//	old.Data = elem.Data
-	//	//	old.UpdatedAt = &now
-	//	//}
-	//
-	//	err = database.ORM().Update(&old)
-	//	if err != nil {
-	//		return
-	//	}
-	//	*elem = old
-	//}
+	// create new
+	if errors.Is(err, pgx.ErrNoRows) {
+		r := app.DB().QueryRow(ctx,
+			"INSERT INTO entities (path, title, type, data, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+			elem.Path,
+			elem.Title,
+			elem.Type,
+			elem.Data,
+			time.Now(),
+		)
 
+		err = r.Scan(&elem.ID)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	// update old
+	_, err = app.DB().Exec(ctx,
+		// TODO updated_at should be set if entity is changed for sure
+		"UPDATE entities SET title=$1, type=$2, data=$3, updated_at=NOW(), deleted_at=NULL WHERE id=$4",
+		elem.Title,
+		elem.Type,
+		elem.Data,
+		old.ID,
+	)
+	if err != nil {
+		return
+	}
+
+	elem.ID = old.ID
 	return nil
 }
 
