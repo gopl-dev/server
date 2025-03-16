@@ -1,5 +1,50 @@
 package api
 
+import (
+	"log"
+	"net/http"
+	"time"
+)
+
+// LoggingMiddleware logs the request details
+func LoggingMiddleware(next Handler) Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		log.Printf("Started %s %s", r.Method, r.URL.Path)
+		next(w, r)
+		log.Printf("Completed in %v", time.Since(start))
+	}
+}
+
+func RecoveryMiddleware(next Handler) Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Printf("[%s %s] Recovered from panic: %s", r.Method, r.URL.Path, err)
+			}
+		}()
+
+		next(w, r)
+	}
+}
+
+// RequestAuthMiddleware middleware
+// See RequestUserMiddleware middleware for auth details
+//func RequestAuthMiddleware(c *gin.Context) {
+//	if !c.GetBool(authSuccessKey) {
+//		errText := c.GetString(authErrorKey)
+//		if errText == "" {
+//			errText = http.StatusText(http.StatusUnauthorized)
+//		}
+//
+//		abort(c, app.ErrUnauthorized(errText))
+//		return
+//	}
+//
+//	c.Next()
+//}
+
 const authSuccessKey = "auth_success"
 const authErrorKey = "auth_error"
 

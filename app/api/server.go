@@ -17,8 +17,8 @@ func NewServer() *http.Server {
 
 	api := r.Group(conf.ApiBasePath)
 	api.Use(
+		RecoveryMiddleware,
 		LoggingMiddleware,
-		AnotherMiddleware,
 	)
 
 	registerPublicApiRoutes(api)

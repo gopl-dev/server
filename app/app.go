@@ -1,8 +1,12 @@
 package app
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
+
+	z "github.com/Oudwins/zog"
 )
 
 const (
@@ -28,4 +32,34 @@ func RelativeFilePath(basePath, fullPath string) string {
 
 	rel = filepath.ToSlash(rel)
 	return rel
+}
+
+func Validate(schema z.Schema, data any) (err error) {
+	// Zod panics if struct is missing schema key
+	// we don't want that
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+			return
+		}
+	}()
+
+	issueMap := z.Struct(schema).Validate(data)
+	if len(issueMap) == 0 {
+		return nil
+	}
+
+	ie := NewInputError()
+	for key, issues := range issueMap {
+		messages := make([]string, 0, len(issues))
+		for _, issue := range issues {
+			if issue == nil {
+				continue
+			}
+			messages = append(messages, issue.Message)
+		}
+		ie.Add(key, strings.Join(messages, "\n"))
+	}
+
+	return ie
 }

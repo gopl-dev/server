@@ -2,11 +2,9 @@ package api
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"path"
 	"strings"
-	"time"
 )
 
 type Handler func(w http.ResponseWriter, r *http.Request)
@@ -87,25 +85,4 @@ func (r *Router) DELETE(pattern string, handler Handler) *Router {
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.mux.ServeHTTP(w, req)
-}
-
-// LoggingMiddleware logs the request details
-func LoggingMiddleware(next Handler) Handler {
-	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		log.Printf("Started %s %s", r.Method, r.URL.Path)
-		next(w, r)
-		log.Printf("Completed in %v", time.Since(start))
-	}
-}
-
-// AnotherMiddleware is an example of additional middleware
-func AnotherMiddleware(next Handler) Handler {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Do something before
-		log.Println("Before handling request")
-		next(w, r)
-		// Do something after
-		log.Println("After handling request")
-	}
 }

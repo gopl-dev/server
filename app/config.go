@@ -30,6 +30,16 @@ type ConfigT struct {
 		Name       string `yaml:"name"`
 		LogQueries bool   `yaml:"log_queries"`
 	} `yaml:"db"`
+
+	Email struct {
+		// Driver can be: smtp or test
+		Driver   string `yaml:"driver"`
+		From     string `yaml:"from"`
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	}
 }
 
 func (c ConfigT) IsDevEnv() bool {

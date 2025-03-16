@@ -37,18 +37,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	srv := api.NewServer()
+	server := api.NewServer()
 	go func() {
 		<-quit
-		if err := srv.Close(); err != nil {
-			log.Fatal(err.Error())
+		if err := server.Close(); err != nil {
+			log.Println(err.Error())
+			return
 		}
 	}()
 
 	log.Println(conf.App.Name + " (" + conf.App.Version + ") serving at " + conf.Server.Host + ":" + conf.Server.Port)
-	err = srv.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil && errors.Is(err, http.ErrServerClosed) {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return
 	}
 
 	log.Println(conf.App.Name + " (" + conf.App.Version + ") server closed")

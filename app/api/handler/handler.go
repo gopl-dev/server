@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app"
 )
 
@@ -30,43 +31,57 @@ func StatusHandler(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-type Handler struct {
+type Request struct {
 	Request  *http.Request
 	Response http.ResponseWriter
 	aborted  bool
 }
 
-func NewHandler(r *http.Request, w http.ResponseWriter) *Handler {
-	return &Handler{
+func NewRequest(r *http.Request, w http.ResponseWriter) *Request {
+	return &Request{
 		Request:  r,
 		Response: w,
 	}
 }
 
-func handleJSONRequest(w http.ResponseWriter, r *http.Request, body any) *Handler {
-	h := NewHandler(r, w)
+func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
+	h := NewRequest(r, w)
 
 	err := bindJSON(r, body)
 	if err != nil {
 		h.Abort(err)
 	}
 
+	if v, ok := body.(Sanitizer); ok {
+		v.Sanitize()
+	}
+
 	if v, ok := body.(Validator); ok {
-		err = v.Validate(r)
+		err := app.NewInputError()
+		v.Validate(&err)
+		if err.Has() {
+			h.Abort(err)
+			return h
+		}
+	}
+
+	if v, ok := body.(ValidateSchemaProvider); ok {
+		err = app.Validate(v.ValidationSchema(), body)
 		if err != nil {
 			h.Abort(err)
+			return h
 		}
 	}
 
 	return h
 }
 
-func (h *Handler) bindJSON(body any) *Handler {
-	return handleJSONRequest(h.Response, h.Request, body)
+func (h *Request) bindJSON(body any) *Request {
+	return handleJSON(h.Response, h.Request, body)
 }
 
-func handleQueryRequest(w http.ResponseWriter, r *http.Request, body any) *Handler {
-	h := &Handler{
+func handleQueryRequest(w http.ResponseWriter, r *http.Request, body any) *Request {
+	h := &Request{
 		Request:  r,
 		Response: w,
 	}
@@ -76,9 +91,14 @@ func handleQueryRequest(w http.ResponseWriter, r *http.Request, body any) *Handl
 		h.Abort(err)
 	}
 
+	if v, ok := body.(Sanitizer); ok {
+		v.Sanitize()
+	}
+
 	if v, ok := body.(Validator); ok {
-		err = v.Validate(r)
-		if err != nil {
+		err := app.NewInputError()
+		v.Validate(&err)
+		if err.Has() {
 			h.Abort(err)
 		}
 	}
@@ -86,7 +106,7 @@ func handleQueryRequest(w http.ResponseWriter, r *http.Request, body any) *Handl
 	return h
 }
 
-func (h *Handler) MapHeaders(to any) {
+func (h *Request) MapHeaders(to any) {
 	val := reflect.ValueOf(to).Elem()
 	typ := val.Type()
 
@@ -117,16 +137,16 @@ func (h *Handler) MapHeaders(to any) {
 	}
 }
 
-func (h *Handler) jsonOK(body any) {
+func (h *Request) jsonOK(body any) {
 	jsonOK(h.Response, body)
 }
 
-func (h *Handler) Abort(err error) {
+func (h *Request) Abort(err error) {
 	h.aborted = true
 	abort(h.Response, err)
 }
 
-func (h *Handler) Aborted() bool {
+func (h *Request) Aborted() bool {
 	return h.aborted
 }
 
@@ -134,7 +154,12 @@ func bindJSON(r *http.Request, obj any) error {
 	decoder := json.NewDecoder(r.Body)
 	decoder.UseNumber()
 
-	return decoder.Decode(obj)
+	err := decoder.Decode(obj)
+	if err != nil {
+		err = fmt.Errorf("decode JSON: %s", err.Error())
+	}
+
+	return err
 }
 
 func writeJSON(w http.ResponseWriter, body any, status int) (err error) {
@@ -157,11 +182,15 @@ func jsonOK(w http.ResponseWriter, body any) {
 }
 
 type Validator interface {
-	Validate(r *http.Request) error
+	Validate(err *app.InputError)
+}
+
+type ValidateSchemaProvider interface {
+	ValidationSchema() z.Schema
 }
 
 type Sanitizer interface {
-	Sanitize(r *http.Request) error
+	Sanitize()
 }
 
 //func bindID(c *gin.Context, id *int64, paramNameOpt ...string) (ok bool) {

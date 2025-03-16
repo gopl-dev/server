@@ -41,3 +41,11 @@ db:
   password: postgres
   name: gopl_dev_server
   log_queries: true
+
+email:
+  driver: test
+  from: mail@gopl.dev
+  host: sandbox.smtp.mailtrap.io
+  port: 25
+  username:
+  password:
