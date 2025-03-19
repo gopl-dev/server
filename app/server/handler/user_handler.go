@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/gopl-dev/server/app/api/request"
+	"github.com/gopl-dev/server/app/server/request"
 	"github.com/gopl-dev/server/app/service"
 )
 

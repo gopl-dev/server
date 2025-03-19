@@ -295,3 +295,11 @@ func bindQuery(r *http.Request, to any) (err error) {
 
 	return nil
 }
+
+func render(w http.ResponseWriter, template string, data any) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// TO resolve template
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("<b>HELLO GOPL.DEV</b>\n"))
+}

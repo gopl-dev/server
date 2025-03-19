@@ -1,7 +1,7 @@
-package api
+package server
 
 import (
-	h "github.com/gopl-dev/server/app/api/handler"
+	h "github.com/gopl-dev/server/app/server/handler"
 )
 
 func registerPublicApiRoutes(r *Router) {

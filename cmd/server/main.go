@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gopl-dev/server/app"
-	"github.com/gopl-dev/server/app/api"
+	"github.com/gopl-dev/server/app/server"
 )
 
 func main() {
@@ -37,17 +37,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := api.NewServer()
+	srv := server.NewServer()
 	go func() {
 		<-quit
-		if err := server.Close(); err != nil {
+		if err := srv.Close(); err != nil {
 			log.Println(err.Error())
 			return
 		}
 	}()
 
 	log.Println(conf.App.Name + " (" + conf.App.Version + ") serving at " + conf.Server.Host + ":" + conf.Server.Port)
-	err = server.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil && errors.Is(err, http.ErrServerClosed) {
 		log.Println(err.Error())
 		return

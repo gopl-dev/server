@@ -1,4 +1,4 @@
-package api
+package server
 
 import (
 	"net"
@@ -15,7 +15,18 @@ func NewServer() *http.Server {
 
 	r := NewRouter()
 
-	api := r.Group(conf.ApiBasePath)
+	// Middlewares that is common to "web" and "api" endpoint groups
+	common := r.Use(
+		RecoveryMiddleware,
+		LoggingMiddleware,
+	)
+
+	// Web endpoints
+	web := common.Group("/")
+	web.RegisterPublicWebRoutes()
+
+	// API endpoints
+	api := common.Group(conf.ApiBasePath)
 	api.Use(
 		RecoveryMiddleware,
 		LoggingMiddleware,
