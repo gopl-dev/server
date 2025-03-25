@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/gopl-dev/server/web"
 )
 
 type Handler func(w http.ResponseWriter, r *http.Request)
@@ -80,6 +82,11 @@ func (r *Router) PUT(pattern string, handler Handler) *Router {
 func (r *Router) DELETE(pattern string, handler Handler) *Router {
 	r.register(http.MethodDelete, pattern, handler)
 
+	return r
+}
+
+func (r *Router) HandleAssets() *Router {
+	r.mux.Handle("GET /assets/", http.FileServer(http.FS(web.AssetsFs)))
 	return r
 }
 

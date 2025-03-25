@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	z "github.com/Oudwins/zog"
+	"github.com/a-h/templ"
 	"github.com/gopl-dev/server/app"
 )
 
@@ -181,6 +183,20 @@ func jsonOK(w http.ResponseWriter, body any) {
 	}
 }
 
+func render(ctx context.Context, w http.ResponseWriter, t templ.Component) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
+	err := t.Render(ctx, w)
+	if err != nil {
+		log.Println(err)
+		_, err = w.Write([]byte(err.Error()))
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
 type Validator interface {
 	Validate(err *app.InputError)
 }
@@ -294,12 +310,4 @@ func bindQuery(r *http.Request, to any) (err error) {
 	}
 
 	return nil
-}
-
-func render(w http.ResponseWriter, template string, data any) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	// TO resolve template
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("<b>HELLO GOPL.DEV</b>\n"))
 }

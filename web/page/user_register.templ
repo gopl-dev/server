@@ -1,0 +1,14 @@
+package page
+
+import . "github.com/gopl-dev/server/web/component"
+
+templ RegisterUserForm() {
+	<form>
+		<div class="grid gap-3 mb-3">
+			@TextInput("username", "Username", true)
+			@TextInput("email", "E-mail", true)
+			@PasswordInput("password", "Password", true)
+			@SubmitButton("Register")
+		</div>
+	</form>
+}

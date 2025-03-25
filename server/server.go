@@ -14,6 +14,7 @@ func NewServer() *http.Server {
 	conf := app.Config().Server
 
 	r := NewRouter()
+	r.HandleAssets()
 
 	// Middlewares that is common to "web" and "api" endpoint groups
 	common := r.Use(

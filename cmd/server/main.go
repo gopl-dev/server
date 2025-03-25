@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gopl-dev/server/app"
-	"github.com/gopl-dev/server/app/server"
+	"github.com/gopl-dev/server/server"
 )
 
 func main() {
