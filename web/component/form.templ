@@ -1,17 +1,17 @@
 package component
 
 templ Label(id, text string) {
-	<label for="{ id }" class="block mb-2 text-sm font-medium text-gray-900">{ text }</label>
+	<label for="{ id }" class="mb-2 text-sm font-medium text-gray-900">{ text }</label>
 }
 
 templ TextInput(id, label string, required bool) {
     @Label(id, label)
-	<input type="text" id="{ id }" class="bg-gray-50 border text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required?={ required }/>
+	<input type="text" id="{ id }" class="bg-gray-50 border text-gray-900 rounded-sm  focus:border-blue-500 w-full p-2.5" required?={ required }/>
 }
 
 templ PasswordInput(id, label string, required bool) {
     @Label(id, label)
-	<input type="password" id="{ id }" class="bg-gray-50 border text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required?={ required }/>
+	<input type="password" id="{ id }" class="bg-gray-50 border text-gray-900 rounded-sm focus:border-blue-500 w-full p-2.5" required?={ required }/>
 }
 
 templ SubmitButton(text string) {
