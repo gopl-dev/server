@@ -4,10 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gopl-dev/server/app/service"
+	"github.com/gopl-dev/server/frontend/layout"
+	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/request"
-	"github.com/gopl-dev/server/web"
-	"github.com/gopl-dev/server/web/layout"
-	"github.com/gopl-dev/server/web/page"
 )
 
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
@@ -27,14 +26,21 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegisterUserViewForm(w http.ResponseWriter, r *http.Request) {
-	head := web.HeadData{
+	head := page.HeadData{
 		Title: "Register",
 	}
+
+	page := page.Page{
+		Name: "Register",
+		Head: page.Head{},
+		Body:
+	}
+
 	data := layout.Data{
 		Title: "Register",
-		Head:  web.Head(head),
+		Head:  page.Head(head),
 		Body:  page.RegisterUserForm(),
-		User:  nil, // TODO resolve user
+		User:  nil, // TODO! resolve user
 	}
 
 	render(r.Context(), w, layout.Default(data))

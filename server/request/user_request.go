@@ -9,9 +9,9 @@ import (
 )
 
 type RegisterUser struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string `json:"username" form:"username"`
+	Email    string `json:"email" form:"email"`
+	Password string `json:"password" form:"password"`
 }
 
 func (r *RegisterUser) Sanitize() {

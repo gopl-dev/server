@@ -4,6 +4,7 @@ templ Default(d Data) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
+		     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 			@d.Head
 		</head>
 		<body class="bg-gray-100 font-sans">
@@ -45,11 +46,20 @@ templ Default(d Data) {
 				</div>
 			</nav>
 			<!--Container-->
-			<div class="container mx-auto mt-24 md:mt-18 p-6">
-				<h1 class="text-3xl font-bold">
+			<div class="container mt-20  p-6">
+				<h1 class="text-3xl font-bold pb-10">
 					{ d.Title }
 				</h1>
 				@d.Body
+			</div>
+			<div class="p-10 columns-2">
+			    <hr>
+				<div class="float-left">
+				a classic footer right here
+				</div>
+				<div  class="float-right">
+				link to github repo
+				</div>
 			</div>
 			<script>
 		document.getElementById('nav-toggle').onclick = function(){

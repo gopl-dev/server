@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -50,8 +51,17 @@ func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 	h := NewRequest(r, w)
 
 	err := bindJSON(r, body)
+	// we'll get EOF error when body is empty,
+	// so proceed as usual
+	if err == io.EOF {
+		err = nil
+	}
+	if errors.Is(err, io.EOF) {
+		err = nil
+	}
 	if err != nil {
 		h.Abort(err)
+		return h
 	}
 
 	if v, ok := body.(Sanitizer); ok {
@@ -158,7 +168,7 @@ func bindJSON(r *http.Request, obj any) error {
 
 	err := decoder.Decode(obj)
 	if err != nil {
-		err = fmt.Errorf("decode JSON: %s", err.Error())
+		err = fmt.Errorf("decode JSON: %w", err)
 	}
 
 	return err

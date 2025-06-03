@@ -1,5 +1,5 @@
 # server
-A humble server that is doing its best to handle API calls to gopl.dev
+A humble server that serves gopl.dev
 
 # templ live watch & reload
 `templ generate --watch --proxy="http://localhost:8080" --cmd="go run ./cmd/server/main.go"`

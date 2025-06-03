@@ -3,13 +3,13 @@ package page
 import . "github.com/gopl-dev/server/web/component"
 
 templ RegisterUserForm() {
-	<form>
-		<div class=" items-center">
-		    <div class="max-w-md">
+	<form hx-post="/api/users/register/" method="post">
+		<div class="w-50">
 			@TextInput("username", "Username", true)
 			@TextInput("email", "E-mail", true)
 			@PasswordInput("password", "Password", true)
-			@SubmitButton("Register")
+			<div class="p-2">
+				@SubmitButton("Register")
 			</div>
 		</div>
 	</form>

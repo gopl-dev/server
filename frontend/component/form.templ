@@ -1,0 +1,37 @@
+package component
+
+const (
+	InputTypeText     = "text"
+	InputTypePassword = "password"
+)
+
+const (
+	labelClass = "mb-2 text-sm font-medium text-gray-900"
+	inputClass = "order rounded-md  focus:border-blue-500 w-full p-2.5"
+)
+
+templ Label(id, text string) {
+	<label for={ id } class={ labelClass }>{ text }</label>
+}
+
+templ Input(t, id, label string, required bool) {
+	<input type={ t } id={ id } class={ inputClass } required?={ required }/>
+}
+
+templ TextInput(id, label string, required bool) {
+	<div class="p-2">
+		@Label(id, label)
+		@Input(InputTypeText, id, label, required)
+	</div>
+}
+
+templ PasswordInput(id, label string, required bool) {
+	<div class="p-2">
+		@Label(id, label)
+		@Input(InputTypePassword, id, label, required)
+	</div>
+}
+
+templ SubmitButton(text string) {
+	<button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none rounded-md  w-full sm:w-auto px-10 py-2.5 text-center">{ text }</button>
+}

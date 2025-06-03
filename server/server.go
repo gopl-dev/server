@@ -43,7 +43,7 @@ func NewServer() *http.Server {
 	}
 }
 
-func corsConfig() gin.HandlerFunc {
+func corsConfig() gin.HandlerFunc { // TODO review
 	conf := cors.Config{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
