@@ -1,4 +1,8 @@
 <p>Hello, {{.username}}</p>
+<p>Somebody just registered on gopl.dev with your email address ({{.email}}). If it was not you, simply ignore this email.</p>
+<p>To continue, please confirm your email address at:<br/>
+    <a href="{{.confirm_url}}">{{.confirm_url}}</a>
+</p>
 <p>Email confirmation code:<br/>
-    <strong>{{.code}}</strong>
+    <h2>{{.code}}</h2>
 </p>

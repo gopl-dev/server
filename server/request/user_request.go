@@ -9,9 +9,9 @@ import (
 )
 
 type RegisterUser struct {
-	Username string `json:"username" form:"username"`
-	Email    string `json:"email" form:"email"`
-	Password string `json:"password" form:"password"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (r *RegisterUser) Sanitize() {
@@ -20,7 +20,7 @@ func (r *RegisterUser) Sanitize() {
 	r.Password = strings.TrimSpace(r.Password)
 }
 
-func (r *RegisterUser) ValidationSchema() z.Schema {
+func (r *RegisterUser) ValidationSchema() z.Shape {
 	return ds.UserValidationRules
 }
 
@@ -28,6 +28,13 @@ func (r RegisterUser) ToParams() service.RegisterUserArgs {
 	return service.RegisterUserArgs{
 		Username: r.Username,
 		Email:    r.Email,
-		Password: r.Password,
 	}
+}
+
+type ConfirmEmail struct {
+	Code string `json:"code"`
+}
+
+func (r *ConfirmEmail) Sanitize() {
+	r.Code = strings.TrimSpace(r.Code)
 }

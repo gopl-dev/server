@@ -37,6 +37,7 @@ func createCode(ctx context.Context) (string, error) {
 		for i := 0; i < length; i++ {
 			token[i] = chars[rand.Intn(len(chars))]
 		}
+
 		return string(token)
 	}
 

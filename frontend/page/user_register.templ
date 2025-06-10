@@ -1,16 +1,94 @@
 package page
 
-import . "github.com/gopl-dev/server/web/component"
+import . "github.com/gopl-dev/server/frontend/component"
 
 templ RegisterUserForm() {
-	<form hx-post="/api/users/register/" method="post">
-		<div class="w-50">
-			@TextInput("username", "Username", true)
-			@TextInput("email", "E-mail", true)
-			@PasswordInput("password", "Password", true)
-			<div class="p-2">
-				@SubmitButton("Register")
+	<script>
+		function registerUserForm() {
+			return {
+				form: {
+					username: '',
+					email: '',
+					password: '',
+				},
+
+				errors: {
+					username: '',
+					email: '',
+					password: '',
+				},
+
+				submitForm() {
+					this.errors = {
+						username: '',
+						email: '',
+						password: '',
+					}
+
+					fetch('/api/users/register/', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(this.form)
+					})
+						.then(resp => resp.json())
+						.then(resp => {
+							if (resp.status !== 200 && resp.input_errors !== null) {
+								let ie = resp.input_errors
+								console.log(ie)
+								if ("username" in ie) {
+									this.errors.username = ie.username
+								}
+								if ("email" in ie) {
+									this.errors.email = ie.email
+								}
+								if ("password" in ie) {
+									this.errors.password = ie.password
+								}
+								console.log(this.errors)
+							}
+				})
+						.catch(response => {
+
+						})
+				}
+			}
+		}
+	</script>
+	<div class="flex flex-row justify-center">
+		<div class="w-full lg:w-1/2">
+			<h1 class="text-3xl pb-4">Register</h1>
+			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+				<div class="card-body">
+					@Form("registerUserForm") {
+						<fieldset class="fieldset">
+						@Input(InputParams{
+							ID:          "username",
+							Label:       "Username",
+							Model:       "form.username",
+							ErrorModel:  "errors.username",
+							Description: "a-Z, 0-9, dot, underline, dash. Min 2; Max 30",
+						})
+						@Input(InputParams{
+							ID:         "email",
+							Label:      "E-mail",
+							Model:      "form.email",
+							ErrorModel: "errors.email",
+						})
+						@Input(InputParams{
+							ID:         "password",
+							Label:      "Password",
+							Model:      "form.password",
+							ErrorModel: "errors.password",
+							Type:       "password",
+							Description: "Min. 6 characters",
+						})
+						<div class="p-2">
+							@SubmitButton("Register")
+						</div>
+						</fieldset>
+					}
+				</div>
 			</div>
 		</div>
-	</form>
+	</div>
 }

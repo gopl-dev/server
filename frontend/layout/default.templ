@@ -4,67 +4,50 @@ templ Default(d Data) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
-		     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-			@d.Head
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<link rel="stylesheet" href="/assets/output.css"/>
+			<script src="https://unpkg.com/alpinejs" defer></script>
+			<title>{ d.Title } | gopl.dev</title>
+			<meta name="author" content="{ d.MetaAuthor }"/>
+			<meta name="description" content="{ d.MetaDescription }"/>
+			<meta name="keywords" content="{ d.MetaKeywords }"/>
 		</head>
 		<body class="bg-gray-100 font-sans">
-			<nav class="flex items-center justify-between flex-wrap bg-gray-900 p-3 fixed w-full z-10 top-0">
-				<div class="flex items-center flex-shrink-0 text-white mr-6">
+			<div class="navbar bg-neutral text-neutral-content shadow-sm">
+				<div class="flex-1 pl-10">
 					<a class="text-white no-underline " href="/">
 						<img src="/assets/gopl.svg" width="60"/>
 					</a>
 				</div>
-				<div class="block lg:hidden">
-					<button id="nav-toggle" class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-600 hover:text-white hover:border-white">
-						<svg class="fill-current h-3 w-3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><title>Menu</title><path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"></path></svg>
-					</button>
-				</div>
-				<div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden lg:block pt-6 lg:pt-0" id="nav-content">
-					<ul class="list-reset lg:flex justify-end flex-1 items-center">
-						<li class="mr-3">
-							<a class="inline-block py-2 px-4 text-white no-underline" href="#">Active</a>
+				<div class="flex-none">
+					<ul class="menu menu-horizontal px-1">
+						<li><a href="/users/login/">Login</a></li>
+						<li><a href="/users/register/">Register</a></li>
+						<li>
+							<details>
+								<summary>Parent</summary>
+								<ul class="bg-base-100 rounded-t-none p-2">
+									<li><a>Link 1</a></li>
+									<li><a>Link 2</a></li>
+								</ul>
+							</details>
 						</li>
-						<li class="mr-3">
-							<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-						</li>
-						<li class="mr-3">
-							<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="#">link</a>
-						</li>
-						if d.User != nil {
-							<li class="mr-3">
-								<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="/user/">{ d.User.Username }</a>
-							</li>
-						} else {
-							<li class="mr-3">
-								<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="/users/login/">Login</a>
-							</li>
-							<li class="mr-3">
-								<a class="inline-block text-gray-600 no-underline hover:text-gray-200 hover:text-underline py-2 px-4" href="/users/register/">Register</a>
-							</li>
-						}
 					</ul>
 				</div>
-			</nav>
-			<!--Container-->
-			<div class="container mt-20  p-6">
-				<h1 class="text-3xl font-bold pb-10">
-					{ d.Title }
-				</h1>
+			</div>
+			<div class="container  p-6">
 				@d.Body
 			</div>
 			<div class="p-10 columns-2">
-			    <hr>
-				<div class="float-left">
-				a classic footer right here
+				<div>
+					a classic footer right here
 				</div>
-				<div  class="float-right">
-				link to github repo
+				<div class="float-right">
+					link to github repo
 				</div>
 			</div>
 			<script>
-		document.getElementById('nav-toggle').onclick = function(){
-			document.getElementById("nav-content").classList.toggle("hidden");
-		}
 	</script>
 		</body>
 	</html>

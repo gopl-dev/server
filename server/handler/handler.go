@@ -193,7 +193,7 @@ func jsonOK(w http.ResponseWriter, body any) {
 	}
 }
 
-func render(ctx context.Context, w http.ResponseWriter, t templ.Component) {
+func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 

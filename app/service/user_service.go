@@ -28,7 +28,7 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 		return
 	}
 	if existing != nil {
-		err = app.InputError{"email": "user with this email already exists"}
+		err = app.InputError{"email": "User with this email already exists"}
 		return
 	}
 	existing, err = repo.FindUserByUsername(ctx, p.Username)
@@ -36,7 +36,7 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 		return
 	}
 	if existing != nil {
-		err = app.InputError{"username": "username already taken"}
+		err = app.InputError{"username": "Username already taken"}
 		return
 	}
 
@@ -65,6 +65,7 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 
 	err = email.Send(user.Email, email.ConfirmEmail{
 		Username: user.Username,
+		Email:    p.Email,
 		Code:     emailConfirmCode,
 	})
 

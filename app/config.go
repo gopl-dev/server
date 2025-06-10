@@ -20,6 +20,7 @@ type ConfigT struct {
 		Port        string `yaml:"port"`
 		Host        string `yaml:"host"`
 		ApiBasePath string `yaml:"api_base_path"`
+		Addr        string `yaml:"addr"`
 	} `yaml:"server"`
 
 	DB struct {

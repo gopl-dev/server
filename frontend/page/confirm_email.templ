@@ -1,0 +1,65 @@
+package page
+
+import . "github.com/gopl-dev/server/frontend/component"
+
+templ ConfirmEmailForm() {
+	<script>
+		function confirmEmailForm() {
+			return {
+				form: {
+					code: '',
+				},
+
+				errors: {
+					code: '',
+				},
+
+				submitForm() {
+					this.errors = {
+						code: '',
+					}
+
+					fetch('/api/users/confirm-email/', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(this.form)
+					})
+						.then(resp => resp.json())
+						.then(resp => {
+							if (resp.status !== 200 && resp.input_errors !== null) {
+								let ie = resp.input_errors
+								if ("code" in ie) {
+									this.errors.code = ie.code
+								}
+							}
+				})
+						.catch(response => {
+
+						})
+				}
+			}
+		}
+	</script>
+	<div class="flex flex-row justify-center">
+		<div class="w-full lg:w-1/2">
+			<h1 class="text-3xl pb-4">Confirm email</h1>
+			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+				<div class="card-body">
+					@Form("registerUserForm") {
+						<fieldset class="fieldset">
+						@Input(InputParams{
+							ID:          "code",
+							Label:       "Code",
+							Model:       "form.code",
+							ErrorModel:  "errors.code",
+						})
+						<div class="p-2">
+							@SubmitButton("Confirm")
+						</div>
+						</fieldset>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+}

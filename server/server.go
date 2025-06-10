@@ -22,7 +22,7 @@ func NewServer() *http.Server {
 		LoggingMiddleware,
 	)
 
-	// Web endpoints
+	// Serve frontend endpoints
 	web := common.Group("/")
 	web.RegisterPublicWebRoutes()
 

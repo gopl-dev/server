@@ -1,37 +1,64 @@
 package component
 
 const (
-	InputTypeText     = "text"
-	InputTypePassword = "password"
+	InputTypeText = "text"
 )
 
 const (
-	labelClass = "mb-2 text-sm font-medium text-gray-900"
-	inputClass = "order rounded-md  focus:border-blue-500 w-full p-2.5"
+	LabelClass        = "mb-2 text-sm font-medium text-gray-900"
+	InputClassDefault = "input input-xl"
+	InputClassError   = "input-error"
 )
 
-templ Label(id, text string) {
-	<label for={ id } class={ labelClass }>{ text }</label>
+templ Form(data string) {
+	<form x-data={ data } @submit.prevent="submitForm">
+		{ children... }
+	</form>
 }
 
-templ Input(t, id, label string, required bool) {
-	<input type={ t } id={ id } class={ inputClass } required?={ required }/>
+type InputParams struct {
+	ID          string
+	Type        string
+	Label       string
+	Model       string
+	Required    bool
+	Class       string
+	ErrorModel  string
+	Description string
 }
 
-templ TextInput(id, label string, required bool) {
+templ Input(p InputParams) {
+	if p.Type == "" {
+		{{ p.Type = InputTypeText }}
+	}
+	if p.Class == "" {
+		{{ p.Class = InputClassDefault }}
+	}
 	<div class="p-2">
-		@Label(id, label)
-		@Input(InputTypeText, id, label, required)
-	</div>
-}
-
-templ PasswordInput(id, label string, required bool) {
-	<div class="p-2">
-		@Label(id, label)
-		@Input(InputTypePassword, id, label, required)
+		<label class="floating-label">
+			<span>{ p.Label }</span>
+			<input
+				type={ p.Type }
+				id={ p.ID }
+				class={ p.Class }
+				x-model={ p.Model }
+				required?={ p.Required }
+				if p.ErrorModel != "" {
+					:class={ p.ErrorModel + " !== '' ? '" + InputClassError + "' : ''" }
+					x-on:focus={ p.ErrorModel + "=''" }
+				}
+			/>
+			if p.ErrorModel != "" {
+				{{ xShow := p.ErrorModel + "!== ''" }}
+				<div x-text={ p.ErrorModel } x-show={ xShow } class="text-red-500 text-sm pl-5"></div>
+			}
+			if p.Description != "" {
+				<div class="label pl-2">{ p.Description }</div>
+			}
+		</label>
 	</div>
 }
 
 templ SubmitButton(text string) {
-	<button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none rounded-md  w-full sm:w-auto px-10 py-2.5 text-center">{ text }</button>
+	<button type="submit" class="btn btn-lg btn-info w-full">{ text }</button>
 }
