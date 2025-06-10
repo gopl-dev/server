@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 )
@@ -25,6 +26,32 @@ func CreateEmailConfirmation(ctx context.Context, userID int64) (code string, er
 	}
 
 	err = repo.CreateEmailConfirmation(ctx, ec)
+	return
+}
+
+// ConfirmEmail confirms an email address by setting the email_confirmed flag for a user.
+func ConfirmEmail(ctx context.Context, code string) (err error) {
+	ec, err := repo.FindEmailConfirmationByCode(ctx, code)
+	if err != nil {
+		return
+	}
+
+	if ec == nil || ec.Invalid() {
+		err = app.InputError{"code": "Invalid confirmation code"}
+		return
+	}
+
+	err = SetUserEmailConfirmed(ctx, ec.UserID)
+	if err != nil {
+		return
+	}
+
+	err = SetUserEmailConfirmed(ctx, ec.UserID)
+	if err != nil {
+		return
+	}
+
+	err = repo.DeleteEmailConfirmation(ctx, ec.ID)
 	return
 }
 

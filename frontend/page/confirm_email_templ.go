@@ -31,7 +31,7 @@ func ConfirmEmailForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction confirmEmailForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\tcode: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\tcode: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.errors = {\r\n\t\t\t\t\t\tcode: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/confirm-email/', {\r\n\t\t\t\t\t\tmethod: 'POST',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && resp.input_errors !== null) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"code\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.code = ie.code\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t})\r\n\t\t\t\t\t\t.catch(response => {\r\n\r\n\t\t\t\t\t\t})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Confirm email</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction confirmEmailForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\tcode: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terror: '',\r\n\t\t\t\tsuccess: false,\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\tcode: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.error = ''\r\n\t\t\t\t\tthis.errors = {\r\n\t\t\t\t\t\tcode: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/confirm-email/', {\r\n\t\t\t\t\t\tmethod: 'POST',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (\"success\" in resp && resp.success === true) {\r\n\t\t\t\t\t\t\t\tthis.success = true\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"error\" in resp) {\r\n\t\t\t\t\t\t\t\tthis.error = resp.code + ': ' + resp.error\r\n\t\t\t\t\t\t\t\tconsole.log(this.error)\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"input_errors\" in resp) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"code\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.code = ie.code\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t})\r\n\t\t\t\t\t\t.catch(resp => {\r\n\t\t\t\t\t\t})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Confirm email</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -47,7 +47,7 @@ func ConfirmEmailForm() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<fieldset class=\"fieldset\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"!success && error !== ''\"></p><div role=\"alert\" class=\"alert alert-success\" x-show=\"success\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span>Your email has been confirmed!</span></div><fieldset class=\"fieldset\" x-show=\"!success\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -56,6 +56,8 @@ func ConfirmEmailForm() templ.Component {
 				Label:      "Code",
 				Model:      "form.code",
 				ErrorModel: "errors.code",
+				NoAutoFill: true,
+				Autofocus:  true,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -74,7 +76,7 @@ func ConfirmEmailForm() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Form("registerUserForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Form("confirmEmailForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

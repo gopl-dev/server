@@ -18,6 +18,7 @@ import (
 	z "github.com/Oudwins/zog"
 	"github.com/a-h/templ"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/server/response"
 )
 
 var (
@@ -151,6 +152,10 @@ func (h *Request) MapHeaders(to any) {
 
 func (h *Request) jsonOK(body any) {
 	jsonOK(h.Response, body)
+}
+
+func (h *Request) jsonSuccess() {
+	jsonOK(h.Response, response.Success)
 }
 
 func (h *Request) Abort(err error) {

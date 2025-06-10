@@ -25,6 +25,8 @@ type InputParams struct {
 	Class       string
 	ErrorModel  string
 	Description string
+	Autofocus   bool
+	NoAutoFill  bool
 }
 
 templ Input(p InputParams) {
@@ -43,9 +45,13 @@ templ Input(p InputParams) {
 				class={ p.Class }
 				x-model={ p.Model }
 				required?={ p.Required }
+				autofocus?={ p.Autofocus }
 				if p.ErrorModel != "" {
 					:class={ p.ErrorModel + " !== '' ? '" + InputClassError + "' : ''" }
 					x-on:focus={ p.ErrorModel + "=''" }
+				}
+				if p.NoAutoFill {
+					autocomplete="off"
 				}
 			/>
 			if p.ErrorModel != "" {

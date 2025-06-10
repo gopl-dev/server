@@ -10,11 +10,15 @@ templ ConfirmEmailForm() {
 					code: '',
 				},
 
+				error: '',
+				success: false,
+
 				errors: {
 					code: '',
 				},
 
 				submitForm() {
+					this.error = ''
 					this.errors = {
 						code: '',
 					}
@@ -26,15 +30,21 @@ templ ConfirmEmailForm() {
 					})
 						.then(resp => resp.json())
 						.then(resp => {
-							if (resp.status !== 200 && resp.input_errors !== null) {
+							if ("success" in resp && resp.success === true) {
+								this.success = true
+							}
+							if (resp.status !== 200 && "error" in resp) {
+								this.error = resp.code + ': ' + resp.error
+								console.log(this.error)
+							}
+							if (resp.status !== 200 && "input_errors" in resp) {
 								let ie = resp.input_errors
 								if ("code" in ie) {
 									this.errors.code = ie.code
 								}
 							}
-				})
-						.catch(response => {
-
+						})
+						.catch(resp => {
 						})
 				}
 			}
@@ -45,17 +55,26 @@ templ ConfirmEmailForm() {
 			<h1 class="text-3xl pb-4">Confirm email</h1>
 			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
 				<div class="card-body">
-					@Form("registerUserForm") {
-						<fieldset class="fieldset">
-						@Input(InputParams{
-							ID:          "code",
-							Label:       "Code",
-							Model:       "form.code",
-							ErrorModel:  "errors.code",
-						})
-						<div class="p-2">
-							@SubmitButton("Confirm")
+					@Form("confirmEmailForm") {
+						<p class="text-red-500" x-text="error" x-show="!success && error !== ''"></p>
+						<div role="alert" class="alert alert-success" x-show="success">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg>
+							<span>Your email has been confirmed!</span>
 						</div>
+						<fieldset class="fieldset" x-show="!success">
+							@Input(InputParams{
+								ID:         "code",
+								Label:      "Code",
+								Model:      "form.code",
+								ErrorModel: "errors.code",
+								NoAutoFill: true,
+								Autofocus:  true,
+							})
+							<div class="p-2">
+								@SubmitButton("Confirm")
+							</div>
 						</fieldset>
 					}
 				</div>

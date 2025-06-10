@@ -68,7 +68,7 @@ func (SMTPSender) Send(to string, c Composer) (err error) {
 		return err
 	}
 
-	message.Subject(c.Subject())
+	message.Subject("gopl: " + c.Subject())
 	message.SetBodyString(mail.TypeTextHTML, body)
 
 	client, err := mail.NewClient(conf.Host,

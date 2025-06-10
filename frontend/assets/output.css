@@ -5267,6 +5267,9 @@
   .h-3 {
     height: calc(var(--spacing) * 3);
   }
+  .h-6 {
+    height: calc(var(--spacing) * 6);
+  }
   .btn-wide {
     width: 100%;
     max-width: calc(0.25rem * 64);
@@ -5375,6 +5378,9 @@
   }
   .w-3 {
     width: calc(var(--spacing) * 3);
+  }
+  .w-6 {
+    width: calc(var(--spacing) * 6);
   }
   .w-full {
     width: 100%;
@@ -6199,6 +6205,9 @@
   }
   .fill-current {
     fill: currentcolor;
+  }
+  .stroke-current {
+    stroke: currentcolor;
   }
   .checkbox-lg {
     padding: 0.3125rem;

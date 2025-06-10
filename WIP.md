@@ -2,9 +2,14 @@
 
 for simplicity, I keep todo list and progress here
 
+- add tests
+- add linter
+- add tracer
+- add openAPI
+---
 - [ ] core user features:
-    - [ ] register user
-    - [ ] confirm email
+    - [x] register user
+    - [x] confirm email
     - [ ] restore password
     - [ ] login
     - [ ] handle frontend logic for user auth status 
@@ -21,3 +26,4 @@ for simplicity, I keep todo list and progress here
   - [ ] delete book
   - [ ] list books
 - [ ] RELEASE
+---

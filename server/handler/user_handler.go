@@ -16,29 +16,29 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := service.RegisterUser(r.Context(), req.ToParams())
+	_, err := service.RegisterUser(r.Context(), req.ToParams())
 	if err != nil {
 		h.Abort(err)
 		return
 	}
 
-	h.jsonOK(user)
+	h.jsonSuccess()
 }
 
 func ConfirmEmail(w http.ResponseWriter, r *http.Request) {
-	var req request.RegisterUser
+	var req request.ConfirmEmail
 	h := handleJSON(w, r, &req)
 	if h.Aborted() {
 		return
 	}
 
-	user, err := service.RegisterUser(r.Context(), req.ToParams())
+	err := service.ConfirmEmail(r.Context(), req.Code)
 	if err != nil {
 		h.Abort(err)
 		return
 	}
 
-	h.jsonOK(user)
+	h.jsonSuccess()
 }
 
 func RegisterUserView(w http.ResponseWriter, r *http.Request) {

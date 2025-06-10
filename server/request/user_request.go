@@ -28,6 +28,7 @@ func (r RegisterUser) ToParams() service.RegisterUserArgs {
 	return service.RegisterUserArgs{
 		Username: r.Username,
 		Email:    r.Email,
+		Password: r.Password,
 	}
 }
 

@@ -28,7 +28,7 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 		return
 	}
 	if existing != nil {
-		err = app.InputError{"email": "User with this email already exists"}
+		err = app.InputError{"email": "User with this email already exists."}
 		return
 	}
 	existing, err = repo.FindUserByUsername(ctx, p.Username)
@@ -72,12 +72,16 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 	return
 }
 
+func FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
+	return repo.FindUserByID(ctx, id)
+}
+
 func CreateUser(u *ds.User) (err error) {
 	//err = database.ORM().Insert(u)
 	return
 }
 
-func UpdateUser(u *ds.User) (err error) {
-	//err = database.ORM().Update(u)
-	return
+// SetUserEmailConfirmed sets the email_confirmed flag for a user.
+func SetUserEmailConfirmed(ctx context.Context, userID int64) (err error) {
+	return repo.SetUserEmailConfirmed(ctx, userID)
 }

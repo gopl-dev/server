@@ -12,6 +12,8 @@ templ RegisterUserForm() {
 					password: '',
 				},
 
+				error: '',
+
 				errors: {
 					username: '',
 					email: '',
@@ -19,6 +21,7 @@ templ RegisterUserForm() {
 				},
 
 				submitForm() {
+					this.error = ''
 					this.errors = {
 						username: '',
 						email: '',
@@ -32,6 +35,12 @@ templ RegisterUserForm() {
 					})
 						.then(resp => resp.json())
 						.then(resp => {
+							if ("success" in resp && resp.success === true) {
+								window.location.href = '/users/confirm-email/'
+							}
+							if (resp.status !== 200 && "error" in resp) {
+								this.error = resp.code + ': ' + resp.error
+							}
 							if (resp.status !== 200 && resp.input_errors !== null) {
 								let ie = resp.input_errors
 								console.log(ie)
@@ -60,6 +69,7 @@ templ RegisterUserForm() {
 			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
 				<div class="card-body">
 					@Form("registerUserForm") {
+						<p class="text-red-500" x-text="error" x-show="error !== ''"></p>
 						<fieldset class="fieldset">
 						@Input(InputParams{
 							ID:          "username",
@@ -81,6 +91,7 @@ templ RegisterUserForm() {
 							ErrorModel: "errors.password",
 							Type:       "password",
 							Description: "Min. 6 characters",
+							NoAutoFill:  true,
 						})
 						<div class="p-2">
 							@SubmitButton("Register")

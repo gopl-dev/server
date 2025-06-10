@@ -34,7 +34,7 @@ func RelativeFilePath(basePath, fullPath string) string {
 	return rel
 }
 
-func Validate(schema z.Schema, data any) (err error) {
+func Validate(schema z.Shape, data any) (err error) {
 	// Zod panics if struct is missing schema key
 	// we don't want that
 	defer func() {
