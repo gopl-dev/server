@@ -39,3 +39,20 @@ type ConfirmEmail struct {
 func (r *ConfirmEmail) Sanitize() {
 	r.Code = strings.TrimSpace(r.Code)
 }
+
+type UserLogin struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (r *UserLogin) Sanitize() {
+	r.Email = strings.TrimSpace(r.Email)
+	r.Password = strings.TrimSpace(r.Password)
+}
+
+func (r *UserLogin) ValidationSchema() z.Shape {
+	return z.Shape{
+		"email":    z.String().Email().Required(z.Message("Email is required")),
+		"password": z.String().Required(z.Message("Password is required")),
+	}
+}

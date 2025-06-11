@@ -9,9 +9,9 @@ templ Default(d Data) {
 			<link rel="stylesheet" href="/assets/output.css"/>
 			<script src="https://unpkg.com/alpinejs" defer></script>
 			<title>{ d.Title } | gopl.dev</title>
-			<meta name="author" content="{ d.MetaAuthor }"/>
-			<meta name="description" content="{ d.MetaDescription }"/>
-			<meta name="keywords" content="{ d.MetaKeywords }"/>
+			<meta name="author" content={ d.MetaAuthor }/>
+			<meta name="description" content={ d.MetaDescription }/>
+			<meta name="keywords" content={ d.MetaKeywords }/>
 		</head>
 		<body class="bg-gray-100 font-sans">
 			<div class="navbar bg-neutral text-neutral-content shadow-sm">
@@ -22,17 +22,24 @@ templ Default(d Data) {
 				</div>
 				<div class="flex-none">
 					<ul class="menu menu-horizontal px-1">
-						<li><a href="/users/login/">Login</a></li>
-						<li><a href="/users/register/">Register</a></li>
-						<li>
-							<details>
-								<summary>Parent</summary>
-								<ul class="bg-base-100 rounded-t-none p-2">
-									<li><a>Link 1</a></li>
-									<li><a>Link 2</a></li>
-								</ul>
-							</details>
-						</li>
+						if d.User == nil {
+							<li><a href="/users/login/">Login</a></li>
+							<li><a href="/users/register/">Register</a></li>
+						} else {
+							<li>
+								<details>
+									<summary>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                                      <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+                                    </svg>
+									{ d.User.Username }</summary>
+									<ul class="bg-neutral rounded-t-none p-2">
+										<li><a>Link 1</a></li>
+										<li><a href="/users/logout/">Logout</a></li>
+									</ul>
+								</details>
+							</li>
+						}
 					</ul>
 				</div>
 			</div>

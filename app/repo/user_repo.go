@@ -2,11 +2,15 @@ package repo
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+)
+
+var (
+	ErrUserNotFound = errors.New("user not found")
 )
 
 // FindUserByEmail retrieves a user from the database by their email address.
@@ -28,7 +32,7 @@ func FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
 	err = pgxscan.Get(ctx, app.DB(), user, `SELECT * FROM users WHERE id = $1`, id)
 	if noRows(err) {
 		user = nil
-		err = fmt.Errorf("user by ID found")
+		err = ErrUserNotFound
 	}
 
 	return user, err

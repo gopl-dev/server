@@ -1,1 +1,0 @@
-Endpoint handlers should not contain business logic

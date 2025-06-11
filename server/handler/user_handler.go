@@ -7,6 +7,7 @@ import (
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/request"
+	"github.com/gopl-dev/server/server/response"
 )
 
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
@@ -23,6 +24,28 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.jsonSuccess()
+}
+
+func LoginUser(w http.ResponseWriter, r *http.Request) {
+	var req request.UserLogin
+	h := handleJSON(w, r, &req)
+	if h.Aborted() {
+		return
+	}
+
+	user, token, err := service.LoginUser(r.Context(), req.Email, req.Password)
+	if err != nil {
+		h.Abort(err)
+		return
+	}
+
+	setSessionCookie(w, token)
+
+	h.jsonOK(response.LoginUser{
+		ID:       user.ID,
+		Username: user.Username,
+		Token:    token,
+	})
 }
 
 func ConfirmEmail(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +76,14 @@ func ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Confirm email",
 		Body:  page.ConfirmEmailForm(),
+		User:  nil, // TODO! resolve user
+	}))
+}
+
+func LoginUserView(w http.ResponseWriter, r *http.Request) {
+	renderTempl(r.Context(), w, layout.Default(layout.Data{
+		Title: "Login",
+		Body:  page.UserLoginForm(),
 		User:  nil, // TODO! resolve user
 	}))
 }

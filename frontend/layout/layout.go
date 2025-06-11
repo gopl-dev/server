@@ -1,6 +1,9 @@
 package layout
 
-import "github.com/a-h/templ"
+import (
+	"github.com/a-h/templ"
+	"github.com/gopl-dev/server/frontend"
+)
 
 type Data struct {
 	Title           string
@@ -8,9 +11,5 @@ type Data struct {
 	MetaDescription string
 	MetaKeywords    string
 	Body            templ.Component
-	User            *User
-}
-
-type User struct {
-	Username string
+	User            *frontend.User
 }

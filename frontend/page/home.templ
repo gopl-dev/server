@@ -1,6 +1,9 @@
 package page
 
 templ Home() {
+    <script>
+    console.log("token:", localStorage.getItem('auth_token'))
+    </script>
 <div id="app">hello world</div>
 <div x-data="{ count: 0 }">
     <button x-on:click="count++">Increment</button>

@@ -29,7 +29,7 @@ func Home() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"app\">hello world</div><div x-data=\"{ count: 0 }\"><button x-on:click=\"count++\">Increment</button> <span x-text=\"count\"></span></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n    console.log(\"token:\", localStorage.getItem('auth_token'))\r\n    </script><div id=\"app\">hello world</div><div x-data=\"{ count: 0 }\"><button x-on:click=\"count++\">Increment</button> <span x-text=\"count\"></span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

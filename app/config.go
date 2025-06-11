@@ -41,6 +41,11 @@ type ConfigT struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 	}
+
+	Session struct {
+		DurationHours int    `yaml:"duration_hours"`
+		Key           string `yaml:"key"`
+	}
 }
 
 func (c ConfigT) IsDevEnv() bool {

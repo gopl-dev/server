@@ -50,3 +50,7 @@ email:
   port: 25
   username:
   password:
+
+session:
+  duration_hours: 24
+  key: "secret-key"

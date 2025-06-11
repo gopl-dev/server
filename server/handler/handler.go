@@ -326,3 +326,28 @@ func bindQuery(r *http.Request, to any) (err error) {
 
 	return nil
 }
+
+const sessionCookieName = "session"
+
+func setSessionCookie(w http.ResponseWriter, token string) {
+	cookie := http.Cookie{
+		Name:     sessionCookieName,
+		Value:    token,
+		Path:     "/",
+		MaxAge:   60 * 60 * app.Config().Session.DurationHours,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, &cookie)
+}
+
+func GetSessionFromCookie(r *http.Request) string {
+	cookie, _ := r.Cookie(sessionCookieName)
+	if cookie != nil {
+		return cookie.Value
+	}
+
+	return ""
+}

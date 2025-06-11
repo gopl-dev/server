@@ -8,32 +8,32 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/server/endpoint"
+	"github.com/gopl-dev/server/server/middleware"
 )
 
 func NewServer() *http.Server {
 	conf := app.Config().Server
 
-	r := NewRouter()
+	r := endpoint.NewRouter()
 	r.HandleAssets()
 
 	// Middlewares that is common to "web" and "api" endpoint groups
 	common := r.Use(
-		RecoveryMiddleware,
-		LoggingMiddleware,
+		middleware.Recovery,
+		middleware.Logging,
 	)
 
-	// Serve frontend endpoints
+	// Frontend endpoints
 	web := common.Group("/")
-	web.RegisterPublicWebRoutes()
+	web.Use(middleware.ResolveUserFromCookie)
+	web.PublicWebEndpoints()
 
 	// API endpoints
 	api := common.Group(conf.ApiBasePath)
-	api.Use(
-		RecoveryMiddleware,
-		LoggingMiddleware,
-	)
+	api.Use()
 
-	registerPublicApiRoutes(api)
+	api.PublicApiEndpoints()
 
 	return &http.Server{
 		Addr:         net.JoinHostPort(conf.Host, conf.Port),

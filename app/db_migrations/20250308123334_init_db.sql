@@ -19,29 +19,18 @@ CREATE TABLE email_confirmations
     expires_at TIMESTAMPTZ           NOT NULL
 );
 
-CREATE TABLE topics
-(
-    id         BIGSERIAL PRIMARY KEY NOT NULL,
-    name       TEXT UNIQUE           NOT NULL,
-    deleted_at TIMESTAMPTZ
-);
 
-CREATE TABLE entities
+CREATE TABLE user_sessions
 (
-    id         BIGSERIAL PRIMARY KEY NOT NULL,
-    path       TEXT UNIQUE           NOT NULL,
-    title      TEXT                  NOT NULL,
-    type       TEXT                  NOT NULL,
-    data       JSONB                 NOT NULL,
+    id         UUID PRIMARY KEY NOT NULL,
+    user_id    BIGINT                NOT NULL REFERENCES users (id),
     created_at TIMESTAMPTZ           NOT NULL,
     updated_at TIMESTAMPTZ,
-    deleted_at TIMESTAMPTZ
+    expires_at TIMESTAMPTZ           NOT NULL
 );
 
-CREATE TABLE entity_topics
-(
-    entity_id BIGINT NOT NULL REFERENCES entities (id),
-    topic_id  BIGINT NOT NULL REFERENCES topics (id)
-);
+
+
+
 
 
