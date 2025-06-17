@@ -27,3 +27,20 @@ func ResolveUserFromCookie(next endpoint.Handler) endpoint.Handler {
 		next(w, r)
 	}
 }
+
+func UserAuthWeb(next endpoint.Handler) endpoint.Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := service.UserFromContext(r.Context())
+		if user == nil {
+			redirectTo := r.URL.Path
+			if redirectTo == "/users/logout/" {
+				redirectTo = "/"
+			}
+
+			handler.RenderLoginPage(w, r, redirectTo)
+			return
+		}
+
+		next(w, r)
+	}
+}

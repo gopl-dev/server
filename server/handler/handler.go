@@ -18,6 +18,8 @@ import (
 	z "github.com/Oudwins/zog"
 	"github.com/a-h/templ"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/frontend/layout"
+	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/response"
 )
 
@@ -160,7 +162,7 @@ func (h *Request) jsonSuccess() {
 
 func (h *Request) Abort(err error) {
 	h.aborted = true
-	abort(h.Response, err)
+	Abort(h.Response, err)
 }
 
 func (h *Request) Aborted() bool {
@@ -198,6 +200,10 @@ func jsonOK(w http.ResponseWriter, body any) {
 	}
 }
 
+func isJSON(r *http.Request) bool {
+	return r.Header.Get("Content-Type") == "application/json"
+}
+
 func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -210,6 +216,13 @@ func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) 
 			log.Println(err)
 		}
 	}
+}
+
+func RenderLoginPage(w http.ResponseWriter, r *http.Request, redirectTo string) {
+	renderTempl(r.Context(), w, layout.Default(layout.Data{
+		Title: "Login",
+		Body:  page.UserLoginForm(redirectTo),
+	}))
 }
 
 type Validator interface {
@@ -261,7 +274,7 @@ func copyRequestBody(r *http.Request) (body []byte, err error) {
 	return
 }
 
-func abort(w http.ResponseWriter, err error) {
+func Abort(w http.ResponseWriter, err error) {
 	resp := Error{
 		Code: app.CodeInternal,
 	}
@@ -335,6 +348,20 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		Value:    token,
 		Path:     "/",
 		MaxAge:   60 * 60 * app.Config().Session.DurationHours,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, &cookie)
+}
+
+func clearSessionCookie(w http.ResponseWriter) {
+	cookie := http.Cookie{
+		Name:     sessionCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   0,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,

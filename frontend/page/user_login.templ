@@ -2,8 +2,12 @@ package page
 
 import . "github.com/gopl-dev/server/frontend/component"
 
-templ UserLoginForm() {
+templ UserLoginForm(redirectTo string) {
+    if redirectTo == "" {
+        {{ redirectTo = "/" }}
+    }
 	<script>
+	    let redirectTo = {{ redirectTo }}
 		function userLoginForm() {
 			return {
 				form: {
@@ -34,7 +38,7 @@ templ UserLoginForm() {
 						.then(resp => {
 							if ("token" in resp) {
 								localStorage.setItem('auth_token', resp.token)
-								window.location.href = '/'
+								window.location.href = redirectTo
 							}
 							if (resp.status !== 200 && "error" in resp) {
 								this.error = resp.error

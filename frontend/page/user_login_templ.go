@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import . "github.com/gopl-dev/server/frontend/component"
 
-func UserLoginForm() templ.Component {
+func UserLoginForm(redirectTo string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -31,11 +31,26 @@ func UserLoginForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction userLoginForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terror: '',\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.error = ''\r\n\t\t\t\t\tthis.errors = {\r\n\t\t\t\t\t\temail: '',\r\n\t\t\t\t\t\tpassword: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/login/', {\r\n\t\t\t\t\t\tmethod: 'POST',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (\"token\" in resp) {\r\n\t\t\t\t\t\t\t\tlocalStorage.setItem('auth_token', resp.token)\r\n\t\t\t\t\t\t\t\twindow.location.href = '/'\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"error\" in resp) {\r\n\t\t\t\t\t\t\t\tthis.error = resp.error\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && resp.input_errors !== null) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"email\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.email = ie.email\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"password\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.password = ie.password\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t})\r\n\t\t\t\t\t\t.catch(response => {})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Login</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		if redirectTo == "" {
+			redirectTo = "/"
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t    let redirectTo = ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var2, templ_7745c5c3_Err := templruntime.ScriptContentOutsideStringLiteral(redirectTo)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/user_login.templ`, Line: 10, Col: 35}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\r\n\t\tfunction userLoginForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terror: '',\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.error = ''\r\n\t\t\t\t\tthis.errors = {\r\n\t\t\t\t\t\temail: '',\r\n\t\t\t\t\t\tpassword: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/login/', {\r\n\t\t\t\t\t\tmethod: 'POST',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (\"token\" in resp) {\r\n\t\t\t\t\t\t\t\tlocalStorage.setItem('auth_token', resp.token)\r\n\t\t\t\t\t\t\t\twindow.location.href = redirectTo\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"error\" in resp) {\r\n\t\t\t\t\t\t\t\tthis.error = resp.error\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && resp.input_errors !== null) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"email\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.email = ie.email\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"password\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.password = ie.password\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t})\r\n\t\t\t\t\t\t.catch(response => {})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Login</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -47,7 +62,7 @@ func UserLoginForm() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><fieldset class=\"fieldset\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><fieldset class=\"fieldset\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -70,7 +85,7 @@ func UserLoginForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"p-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"p-2\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -78,17 +93,17 @@ func UserLoginForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></fieldset>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></fieldset>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Form("userLoginForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Form("userLoginForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

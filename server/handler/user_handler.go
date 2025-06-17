@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gopl-dev/server/app/service"
@@ -72,6 +73,26 @@ func RegisterUserView(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
+func UserLogout(w http.ResponseWriter, r *http.Request) {
+	clearSessionCookie(w)
+
+	ctx := r.Context()
+	session := service.UserSessionFromContext(ctx)
+	if session != nil {
+		err := service.DeleteUserSession(ctx, session.ID)
+		if err != nil {
+			log.Println("delete user session: " + err.Error())
+		}
+	}
+
+	if isJSON(r) {
+		jsonOK(w, response.Success)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 func ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Confirm email",
@@ -81,9 +102,5 @@ func ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginUserView(w http.ResponseWriter, r *http.Request) {
-	renderTempl(r.Context(), w, layout.Default(layout.Data{
-		Title: "Login",
-		Body:  page.UserLoginForm(),
-		User:  nil, // TODO! resolve user
-	}))
+	RenderLoginPage(w, r, "/")
 }

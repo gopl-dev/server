@@ -28,6 +28,8 @@ func NewServer() *http.Server {
 	web := common.Group("/")
 	web.Use(middleware.ResolveUserFromCookie)
 	web.PublicWebEndpoints()
+	web.Use(middleware.UserAuthWeb)
+	web.ProtectedWebEndpoints()
 
 	// API endpoints
 	api := common.Group(conf.ApiBasePath)

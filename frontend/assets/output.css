@@ -4635,9 +4635,6 @@
   .mr-6 {
     margin-right: calc(var(--spacing) * 6);
   }
-  .mr-10 {
-    margin-right: calc(var(--spacing) * 10);
-  }
   .fieldset-legend {
     margin-bottom: calc(0.25rem * -1);
     display: flex;

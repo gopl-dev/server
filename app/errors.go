@@ -79,8 +79,8 @@ func ErrBadRequest(message string) error {
 	return NewError(CodeBadRequest, message)
 }
 
-func ErrUnauthorized(message string) error {
-	return NewError(CodeUnauthorized, message)
+func ErrUnauthorized() error {
+	return NewError(CodeUnauthorized, "Unauthorized")
 }
 
 func ErrForbidden(message string) error {
