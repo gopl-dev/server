@@ -19,7 +19,6 @@ CREATE TABLE email_confirmations
     expires_at TIMESTAMPTZ           NOT NULL
 );
 
-
 CREATE TABLE user_sessions
 (
     id         UUID PRIMARY KEY NOT NULL,

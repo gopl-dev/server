@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"time"
 
 	z "github.com/Oudwins/zog"
 )
@@ -18,10 +17,6 @@ const (
 
 func Pointer[T any](v T) *T {
 	return &v
-}
-
-func TimeNowPtr() *time.Time {
-	return Pointer(time.Now())
 }
 
 func RelativeFilePath(basePath, fullPath string) string {

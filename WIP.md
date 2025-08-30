@@ -11,7 +11,7 @@ for simplicity, I keep todo list and progress here
     - [x] register user
     - [x] confirm email
     - [ ] restore password
-    - [ ] login
+    - [x] login
     - [ ] handle frontend logic for user auth status 
     - [ ] change password
     - [ ] change login

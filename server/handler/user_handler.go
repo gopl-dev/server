@@ -27,6 +27,8 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	h.jsonSuccess()
 }
 
+// LoginUser is a handler for the user login endpoint.
+// TODO either email or username can be used to login
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	var req request.UserLogin
 	h := handleJSON(w, r, &req)

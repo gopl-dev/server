@@ -8,7 +8,7 @@ To install and run these tools, please refer to their corresponding docs, as thi
 As of now, it's as simple as that:
 
 **templ**:\
-`templ generate --watch --proxy="http://localhost:8080" --cmd="go run ./cmd/server/main.go"`
+`go tool templ generate --watch --proxy="http://localhost:8080" --cmd="go run ./cmd/server/main.go"`
 
 **Tailwind CSS**:\
 `tailwindcss -i ./frontend/assets/input.css -o ./frontend/assets/output.css --watch`
