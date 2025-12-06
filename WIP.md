@@ -1,6 +1,6 @@
 # wip
 
-for simplicity, I keep todo list and progress here
+for simplicity, I keep todo list and progress here for now
 
 - add tests
 - add linter

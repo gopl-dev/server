@@ -2,12 +2,12 @@ package service
 
 import "github.com/gopl-dev/server/app/ds"
 
-func CreateBook(u *ds.Book) (err error) {
+func (s *Service) CreateBook(u *ds.Book) (err error) {
 	//err = database.ORM().Insert(u)
 	return
 }
 
-func UpdateBook(u *ds.Book) (err error) {
+func (s *Service) UpdateBook(u *ds.Book) (err error) {
 	//err = database.ORM().Update(u)
 	return
 }
@@ -18,7 +18,7 @@ type FilterBooksParams struct {
 	Name   string
 }
 
-func FilterBooks(params FilterBooksParams) (data []ds.Book, count int, err error) {
+func (s *Service) FilterBooks(params FilterBooksParams) (data []ds.Book, count int, err error) {
 	_ = params
 	count = 5
 	data = []ds.Book{

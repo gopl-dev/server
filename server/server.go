@@ -8,27 +8,31 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/server/endpoint"
+	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/middleware"
 )
 
-func NewServer() *http.Server {
+func New(s *service.Service) *http.Server {
 	conf := app.Config().Server
 
-	r := endpoint.NewRouter()
+	h := handler.NewHandler(s)
+	mw := middleware.NewMiddleware(s)
+	r := endpoint.NewRouter(h)
 	r.HandleAssets()
 
 	// Middlewares that is common to "web" and "api" endpoint groups
 	common := r.Use(
-		middleware.Recovery,
-		middleware.Logging,
+		mw.Recovery,
+		mw.Logging,
 	)
 
 	// Frontend endpoints
 	web := common.Group("/")
-	web.Use(middleware.ResolveUserFromCookie)
+	web.Use(mw.ResolveUserFromCookie)
 	web.PublicWebEndpoints()
-	web.Use(middleware.UserAuthWeb)
+	web.Use(mw.UserAuthWeb)
 	web.ProtectedWebEndpoints()
 
 	// API endpoints

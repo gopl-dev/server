@@ -1,19 +1,15 @@
 package endpoint
 
-import (
-	h "github.com/gopl-dev/server/server/handler"
-)
-
 func (r *Router) PublicApiEndpoints() {
-	r.GET("status", h.StatusHandler)
+	r.GET("status", r.handler.StatusHandler)
 
 	r.Group("users").
-		POST("/register/", h.RegisterUser).
-		POST("/login/", h.LoginUser).
-		POST("/confirm-email/", h.ConfirmEmail)
+		POST("/register/", r.handler.RegisterUser).
+		POST("/login/", r.handler.LoginUser).
+		POST("/confirm-email/", r.handler.ConfirmEmail)
 
 	r.Group("books").
-		GET("/", h.FilterBooks).
-		GET("{book_id}", h.GetBookByID)
+		GET("/", r.handler.FilterBooks).
+		GET("{book_id}", r.handler.GetBookByID)
 
 }

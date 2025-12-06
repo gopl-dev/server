@@ -22,26 +22,26 @@ type FilterBookResponse struct {
 	Data  []ds.Book `json:"data"`
 }
 
-func FilterBooks(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 	var req FilterBookRequest
-	h := handleQueryRequest(w, r, &req)
-	if h.Aborted() {
+	res := handleQueryRequest(w, r, &req)
+	if res.Aborted() {
 		return
 	}
 
-	books, count, err := service.FilterBooks(req.ToParams())
+	books, count, err := h.service.FilterBooks(req.ToParams())
 	if err != nil {
-		h.Abort(err)
+		res.Abort(err)
 		return
 	}
 
-	h.jsonOK(FilterBookResponse{
+	res.jsonOK(FilterBookResponse{
 		Count: count,
 		Data:  books,
 	})
 }
 
-func GetBookByID(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetBookByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("book_id")
 	jsonOK(w, map[string]string{"id": id})
 }

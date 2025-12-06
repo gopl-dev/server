@@ -43,11 +43,6 @@ func NewDatabasePool(ctx context.Context) (db *pgxpool.Pool, err error) {
 	return
 }
 
-// DB returns the global PostgreSQL connection pool.
-func DB() *pgxpool.Pool {
-	return dbConn
-}
-
 // CloseDatabase closes the global PostgreSQL connection pool if it is not nil.
 func CloseDatabase() {
 	if dbConn != nil {

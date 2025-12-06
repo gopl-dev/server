@@ -8,7 +8,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/email"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -34,13 +33,13 @@ type RegisterUserArgs struct {
 	Password string
 }
 
-func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err error) {
+func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err error) {
 	err = app.Validate(ds.UserValidationRules, &p)
 	if err != nil {
 		return
 	}
 
-	existing, err := repo.FindUserByEmail(ctx, p.Email)
+	existing, err := s.db.FindUserByEmail(ctx, p.Email)
 	if err != nil {
 		return
 	}
@@ -48,7 +47,7 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 		err = app.InputError{"email": "User with this email already exists."}
 		return
 	}
-	existing, err = repo.FindUserByUsername(ctx, p.Username)
+	existing, err = s.db.FindUserByUsername(ctx, p.Username)
 	if err != nil {
 		return
 	}
@@ -57,7 +56,7 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 		return
 	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(p.Password), 11)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(p.Password), app.DefaultBCryptCost)
 	if err != nil {
 		return
 	}
@@ -70,12 +69,12 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 		CreatedAt:      time.Now(),
 	}
 
-	err = repo.CreateUser(ctx, user)
+	err = s.db.CreateUser(ctx, user)
 	if err != nil {
 		return
 	}
 
-	emailConfirmCode, err := CreateEmailConfirmation(ctx, user.ID)
+	emailConfirmCode, err := s.CreateEmailConfirmation(ctx, user.ID)
 	if err != nil {
 		return
 	}
@@ -89,8 +88,8 @@ func RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err e
 	return
 }
 
-func LoginUser(ctx context.Context, email, password string) (user *ds.User, token string, err error) {
-	user, err = repo.FindUserByEmail(ctx, email)
+func (s *Service) LoginUser(ctx context.Context, email, password string) (user *ds.User, token string, err error) {
+	user, err = s.db.FindUserByEmail(ctx, email)
 	if err != nil {
 		return
 	}
@@ -105,7 +104,7 @@ func LoginUser(ctx context.Context, email, password string) (user *ds.User, toke
 		return
 	}
 
-	sess, err := CreateUserSession(ctx, user.ID)
+	sess, err := s.CreateUserSession(ctx, user.ID)
 	if err != nil {
 		return
 	}
@@ -118,27 +117,27 @@ func LoginUser(ctx context.Context, email, password string) (user *ds.User, toke
 	return user, token, nil
 }
 
-func FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
-	return repo.FindUserByID(ctx, id)
+func (s *Service) FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
+	return s.db.FindUserByID(ctx, id)
 }
 
-func CreateUser(u *ds.User) (err error) {
+func (s *Service) CreateUser(u *ds.User) (err error) {
 	//err = database.ORM().Insert(u)
 	return
 }
 
 // SetUserEmailConfirmed sets the email_confirmed flag for a user.
-func SetUserEmailConfirmed(ctx context.Context, userID int64) (err error) {
-	return repo.SetUserEmailConfirmed(ctx, userID)
+func (s *Service) SetUserEmailConfirmed(ctx context.Context, userID int64) (err error) {
+	return s.db.SetUserEmailConfirmed(ctx, userID)
 }
 
-func GetUserAndSessionFromJWT(ctx context.Context, jwt string) (user *ds.User, session *ds.UserSession, err error) {
+func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, jwt string) (user *ds.User, session *ds.UserSession, err error) {
 	sessionID, userID, err := unpackSessionJWT(jwt)
 	if err != nil {
 		return
 	}
 
-	session, err = FindUserSessionByID(ctx, sessionID)
+	session, err = s.FindUserSessionByID(ctx, sessionID)
 	if err != nil || session == nil {
 		return
 	}
@@ -149,7 +148,7 @@ func GetUserAndSessionFromJWT(ctx context.Context, jwt string) (user *ds.User, s
 	}
 
 	if session.ExpiresAt.Before(time.Now()) {
-		err = DeleteUserSession(ctx, session.ID)
+		err = s.DeleteUserSession(ctx, session.ID)
 		if err != nil {
 			return
 		}
@@ -157,7 +156,7 @@ func GetUserAndSessionFromJWT(ctx context.Context, jwt string) (user *ds.User, s
 		return
 	}
 
-	user, err = FindUserByID(ctx, session.UserID)
+	user, err = s.FindUserByID(ctx, session.UserID)
 	if err != nil {
 		return
 	}
@@ -211,11 +210,11 @@ func unpackSessionJWT(jt string) (sessionID string, userID int64, err error) {
 	return
 }
 
-func UserToContext(ctx context.Context, user *ds.User) context.Context {
+func (s *Service) UserToContext(ctx context.Context, user *ds.User) context.Context {
 	return context.WithValue(ctx, ctxUserKey, user)
 }
 
-func UserFromContext(ctx context.Context) *ds.User {
+func (s *Service) UserFromContext(ctx context.Context) *ds.User {
 	if v := ctx.Value(ctxUserKey); v != nil {
 		return v.(*ds.User)
 	}

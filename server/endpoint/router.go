@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gopl-dev/server/frontend"
+	"github.com/gopl-dev/server/server/handler"
 )
 
 type Handler func(w http.ResponseWriter, r *http.Request)
@@ -16,13 +17,15 @@ type Router struct {
 	basePath    string
 	mux         *http.ServeMux
 	routes      map[string]string
+	handler     *handler.Handler
 	middlewares []Middleware
 }
 
-func NewRouter() *Router {
+func NewRouter(h *handler.Handler) *Router {
 	return &Router{
 		basePath:    "/",
 		mux:         http.NewServeMux(),
+		handler:     h,
 		middlewares: []Middleware{},
 	}
 }
@@ -31,6 +34,7 @@ func (r *Router) Group(pattern string) *Router {
 	return &Router{
 		basePath:    path.Join(r.basePath, pattern),
 		mux:         r.mux,
+		handler:     r.handler,
 		middlewares: r.middlewares,
 	}
 }

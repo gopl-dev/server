@@ -7,7 +7,7 @@ import (
 	"github.com/gopl-dev/server/server/endpoint"
 )
 
-func Recovery(next endpoint.Handler) endpoint.Handler {
+func (mw *Middleware) Recovery(next endpoint.Handler) endpoint.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {

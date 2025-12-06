@@ -18,6 +18,7 @@ import (
 	z "github.com/Oudwins/zog"
 	"github.com/a-h/templ"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/response"
@@ -28,7 +29,15 @@ var (
 	ErrIDParamMustBeInt64        = app.ErrBadRequest("ID param must be positive int64")
 )
 
-func StatusHandler(w http.ResponseWriter, req *http.Request) {
+type Handler struct {
+	service *service.Service
+}
+
+func NewHandler(service *service.Service) *Handler {
+	return &Handler{service: service}
+}
+
+func (h *Handler) StatusHandler(w http.ResponseWriter, req *http.Request) {
 	conf := app.Config()
 	jsonOK(w, map[string]any{
 		"env":     conf.App.Env,
@@ -55,7 +64,7 @@ func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 
 	err := bindJSON(r, body)
 	// we'll get EOF error when body is empty,
-	// so proceed as usual
+	// proceed as usual if so
 	if err == io.EOF {
 		err = nil
 	}

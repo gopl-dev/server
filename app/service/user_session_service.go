@@ -7,14 +7,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/app/repo"
 )
 
 const (
 	ctxUserSessionKey contextKey = "user_session"
 )
 
-func CreateUserSession(ctx context.Context, userID int64) (sess *ds.UserSession, err error) {
+func (s *Service) CreateUserSession(ctx context.Context, userID int64) (sess *ds.UserSession, err error) {
 	sess = &ds.UserSession{
 		ID:        uuid.New(),
 		UserID:    userID,
@@ -22,29 +21,29 @@ func CreateUserSession(ctx context.Context, userID int64) (sess *ds.UserSession,
 		ExpiresAt: time.Now().Add(time.Hour * time.Duration(app.Config().Session.DurationHours)),
 	}
 
-	err = repo.CreateUserSession(ctx, sess)
+	err = s.db.CreateUserSession(ctx, sess)
 	return
 }
 
-func FindUserSessionByID(ctx context.Context, id string) (sess *ds.UserSession, err error) {
-	return repo.FindUserSessionByID(ctx, id)
+func (s *Service) FindUserSessionByID(ctx context.Context, id string) (sess *ds.UserSession, err error) {
+	return s.db.FindUserSessionByID(ctx, id)
 }
 
-func ProlongUserSession(ctx context.Context, id uuid.UUID) (err error) {
-	err = repo.ProlongUserSession(ctx, id)
+func (s *Service) ProlongUserSession(ctx context.Context, id uuid.UUID) (err error) {
+	err = s.db.ProlongUserSession(ctx, id)
 	return
 }
 
-func DeleteUserSession(ctx context.Context, id uuid.UUID) (err error) {
-	err = repo.DeleteUserSession(ctx, id)
+func (s *Service) DeleteUserSession(ctx context.Context, id uuid.UUID) (err error) {
+	err = s.db.DeleteUserSession(ctx, id)
 	return
 }
 
-func UserSessionToContext(ctx context.Context, s *ds.UserSession) context.Context {
-	return context.WithValue(ctx, ctxUserSessionKey, s)
+func (s *Service) UserSessionToContext(ctx context.Context, session *ds.UserSession) context.Context {
+	return context.WithValue(ctx, ctxUserSessionKey, session)
 }
 
-func UserSessionFromContext(ctx context.Context) *ds.UserSession {
+func (s *Service) UserSessionFromContext(ctx context.Context) *ds.UserSession {
 	if v := ctx.Value(ctxUserSessionKey); v != nil {
 		return v.(*ds.UserSession)
 	}

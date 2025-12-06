@@ -4,13 +4,12 @@ import (
 	"context"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
 
-func FindEmailConfirmationByCode(ctx context.Context, code string) (ec *ds.EmailConfirmation, err error) {
+func (r *Repo) FindEmailConfirmationByCode(ctx context.Context, code string) (ec *ds.EmailConfirmation, err error) {
 	ec = &ds.EmailConfirmation{}
-	err = pgxscan.Get(ctx, app.DB(), ec,
+	err = pgxscan.Get(ctx, r.db, ec,
 		"SELECT * FROM email_confirmations WHERE code = $1",
 		code,
 	)
@@ -23,18 +22,18 @@ func FindEmailConfirmationByCode(ctx context.Context, code string) (ec *ds.Email
 }
 
 // CreateEmailConfirmation creates a new email confirmation in the database.
-func CreateEmailConfirmation(ctx context.Context, ec *ds.EmailConfirmation) (err error) {
-	r := app.DB().QueryRow(ctx,
+func (r *Repo) CreateEmailConfirmation(ctx context.Context, ec *ds.EmailConfirmation) (err error) {
+	row := r.db.QueryRow(ctx,
 		"INSERT INTO email_confirmations (user_id, code, created_at, expires_at) VALUES ($1, $2, $3, $4) RETURNING id",
 		ec.UserID, ec.Code, ec.CreatedAt, ec.ExpiresAt,
 	)
-	err = r.Scan(&ec.ID)
+	err = row.Scan(&ec.ID)
 
 	return
 }
 
 // DeleteEmailConfirmation deletes an email confirmation from the database.
-func DeleteEmailConfirmation(ctx context.Context, id int64) (err error) {
-	_, err = app.DB().Exec(ctx, "DELETE FROM email_confirmations WHERE id = $1", id)
+func (r *Repo) DeleteEmailConfirmation(ctx context.Context, id int64) (err error) {
+	_, err = r.db.Exec(ctx, "DELETE FROM email_confirmations WHERE id = $1", id)
 	return
 }

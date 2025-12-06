@@ -7,13 +7,12 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/app/repo"
 )
 
 const emailConfirmationTTL = time.Hour * 24
 
-func CreateEmailConfirmation(ctx context.Context, userID int64) (code string, err error) {
-	code, err = createCode(ctx)
+func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (code string, err error) {
+	code, err = s.newEmailConfirmationCode(ctx)
 	if err != nil {
 		return
 	}
@@ -25,13 +24,13 @@ func CreateEmailConfirmation(ctx context.Context, userID int64) (code string, er
 		ExpiresAt: time.Now().Add(emailConfirmationTTL),
 	}
 
-	err = repo.CreateEmailConfirmation(ctx, ec)
+	err = s.db.CreateEmailConfirmation(ctx, ec)
 	return
 }
 
 // ConfirmEmail confirms an email address by setting the email_confirmed flag for a user.
-func ConfirmEmail(ctx context.Context, code string) (err error) {
-	ec, err := repo.FindEmailConfirmationByCode(ctx, code)
+func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
+	ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
 	if err != nil {
 		return
 	}
@@ -41,21 +40,21 @@ func ConfirmEmail(ctx context.Context, code string) (err error) {
 		return
 	}
 
-	err = SetUserEmailConfirmed(ctx, ec.UserID)
+	err = s.SetUserEmailConfirmed(ctx, ec.UserID)
 	if err != nil {
 		return
 	}
 
-	err = SetUserEmailConfirmed(ctx, ec.UserID)
+	err = s.SetUserEmailConfirmed(ctx, ec.UserID)
 	if err != nil {
 		return
 	}
 
-	err = repo.DeleteEmailConfirmation(ctx, ec.ID)
+	err = s.db.DeleteEmailConfirmation(ctx, ec.ID)
 	return
 }
 
-func createCode(ctx context.Context) (string, error) {
+func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) {
 	chars := []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 	length := 5
@@ -70,7 +69,7 @@ func createCode(ctx context.Context) (string, error) {
 
 	for {
 		code := newCode(length)
-		ec, err := repo.FindEmailConfirmationByCode(ctx, code)
+		ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
 		if err != nil {
 			return "", err
 		}

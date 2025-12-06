@@ -4,70 +4,69 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
 )
 
-func RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var req request.RegisterUser
-	h := handleJSON(w, r, &req)
-	if h.Aborted() {
+	res := handleJSON(w, r, &req)
+	if res.Aborted() {
 		return
 	}
 
-	_, err := service.RegisterUser(r.Context(), req.ToParams())
+	_, err := h.service.RegisterUser(r.Context(), req.ToParams())
 	if err != nil {
-		h.Abort(err)
+		res.Abort(err)
 		return
 	}
 
-	h.jsonSuccess()
+	res.jsonSuccess()
 }
 
 // LoginUser is a handler for the user login endpoint.
 // TODO either email or username can be used to login
-func LoginUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var req request.UserLogin
-	h := handleJSON(w, r, &req)
-	if h.Aborted() {
+	res := handleJSON(w, r, &req)
+	if res.Aborted() {
 		return
 	}
 
-	user, token, err := service.LoginUser(r.Context(), req.Email, req.Password)
+	user, token, err := h.service.LoginUser(r.Context(), req.Email, req.Password)
 	if err != nil {
-		h.Abort(err)
+		res.Abort(err)
 		return
 	}
 
 	setSessionCookie(w, token)
 
-	h.jsonOK(response.LoginUser{
+	res.jsonOK(response.UserLogin{
 		ID:       user.ID,
 		Username: user.Username,
 		Token:    token,
 	})
 }
 
-func ConfirmEmail(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
 	var req request.ConfirmEmail
-	h := handleJSON(w, r, &req)
-	if h.Aborted() {
+	res := handleJSON(w, r, &req)
+	if res.Aborted() {
 		return
 	}
 
-	err := service.ConfirmEmail(r.Context(), req.Code)
+	err := h.service.ConfirmEmail(r.Context(), req.Code)
 	if err != nil {
-		h.Abort(err)
+		res.Abort(err)
 		return
 	}
 
-	h.jsonSuccess()
+	res.jsonSuccess()
 }
 
-func RegisterUserView(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RegisterUserView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Register",
 		Body:  page.RegisterUserForm(),
@@ -75,13 +74,13 @@ func RegisterUserView(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-func UserLogout(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 	clearSessionCookie(w)
 
 	ctx := r.Context()
-	session := service.UserSessionFromContext(ctx)
+	session := h.service.UserSessionFromContext(ctx)
 	if session != nil {
-		err := service.DeleteUserSession(ctx, session.ID)
+		err := h.service.DeleteUserSession(ctx, session.ID)
 		if err != nil {
 			log.Println("delete user session: " + err.Error())
 		}
@@ -95,7 +94,7 @@ func UserLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Confirm email",
 		Body:  page.ConfirmEmailForm(),
@@ -103,6 +102,6 @@ func ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-func LoginUserView(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LoginUserView(w http.ResponseWriter, r *http.Request) {
 	RenderLoginPage(w, r, "/")
 }
