@@ -10,8 +10,8 @@ import (
 	"github.com/gopl-dev/server/server/response"
 )
 
-func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var req request.RegisterUser
+func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
+	var req request.UserSignUp
 	res := handleJSON(w, r, &req)
 	if res.Aborted() {
 		return
@@ -26,10 +26,10 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	res.jsonSuccess()
 }
 
-// LoginUser is a handler for the user login endpoint.
+// UserSignIn is a handler for the user login endpoint.
 // TODO either email or username can be used to login
-func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
-	var req request.UserLogin
+func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
+	var req request.UserSignIn
 	res := handleJSON(w, r, &req)
 	if res.Aborted() {
 		return
@@ -43,7 +43,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	setSessionCookie(w, token)
 
-	res.jsonOK(response.UserLogin{
+	res.jsonOK(response.UserSignIn{
 		ID:       user.ID,
 		Username: user.Username,
 		Token:    token,
@@ -66,15 +66,15 @@ func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
 	res.jsonSuccess()
 }
 
-func (h *Handler) RegisterUserView(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserSignUpView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
-		Title: "Register",
-		Body:  page.RegisterUserForm(),
+		Title: "Sign up",
+		Body:  page.UserSignUpForm(),
 		User:  nil, // TODO! resolve user
 	}))
 }
 
-func (h *Handler) UserLogout(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 	clearSessionCookie(w)
 
 	ctx := r.Context()
@@ -102,6 +102,6 @@ func (h *Handler) ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-func (h *Handler) LoginUserView(w http.ResponseWriter, r *http.Request) {
-	RenderLoginPage(w, r, "/")
+func (h *Handler) UserSignInView(w http.ResponseWriter, r *http.Request) {
+	RenderUserSignInPage(w, r, "/")
 }

@@ -23,8 +23,8 @@ templ Default(d Data) {
 				<div class="flex-none">
 					<ul class="menu menu-horizontal px-1">
 						if d.User == nil {
-							<li><a href="/users/login/">Login</a></li>
-							<li><a href="/users/register/">Register</a></li>
+							<li><a href="/users/sign-in/">Sign in</a></li>
+							<li><a href="/users/sign-up/">Sign up</a></li>
 						} else {
 							<li>
 								<details>
@@ -35,7 +35,7 @@ templ Default(d Data) {
 									{ d.User.Username }</summary>
 									<ul class="bg-neutral rounded-t-none p-2">
 										<li><a>Link 1</a></li>
-										<li><a href="/users/logout/">Logout</a></li>
+										<li><a href="/users/sign-out/">Sign out</a></li>
 									</ul>
 								</details>
 							</li>

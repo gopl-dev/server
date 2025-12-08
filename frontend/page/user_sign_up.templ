@@ -2,15 +2,12 @@ package page
 
 import . "github.com/gopl-dev/server/frontend/component"
 
-templ UserLoginForm(redirectTo string) {
-    if redirectTo == "" {
-        {{ redirectTo = "/" }}
-    }
+templ UserSignUpForm() {
 	<script>
-	    let redirectTo = {{ redirectTo }}
-		function userLoginForm() {
+		function userSignUpForm() {
 			return {
 				form: {
+					username: '',
 					email: '',
 					password: '',
 				},
@@ -18,6 +15,7 @@ templ UserLoginForm(redirectTo string) {
 				error: '',
 
 				errors: {
+					username: '',
 					email: '',
 					password: '',
 				},
@@ -25,26 +23,29 @@ templ UserLoginForm(redirectTo string) {
 				submitForm() {
 					this.error = ''
 					this.errors = {
+						username: '',
 						email: '',
 						password: '',
 					}
 
-					fetch('/api/users/login/', {
+					fetch('/api/users/sign-up/', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify(this.form)
 					})
 						.then(resp => resp.json())
 						.then(resp => {
-							if ("token" in resp) {
-								localStorage.setItem('auth_token', resp.token)
-								window.location.href = redirectTo
+							if ("success" in resp && resp.success === true) {
+								window.location.href = '/users/confirm-email/'
 							}
 							if (resp.status !== 200 && "error" in resp) {
-								this.error = resp.error
+								this.error = resp.code + ': ' + resp.error
 							}
 							if (resp.status !== 200 && resp.input_errors !== null) {
 								let ie = resp.input_errors
+								if ("username" in ie) {
+									this.errors.username = ie.username
+								}
 								if ("email" in ie) {
 									this.errors.email = ie.email
 								}
@@ -53,19 +54,28 @@ templ UserLoginForm(redirectTo string) {
 								}
 							}
 				})
-						.catch(response => {})
+						.catch(response => {
+
+						})
 				}
 			}
 		}
 	</script>
 	<div class="flex flex-row justify-center">
 		<div class="w-full lg:w-1/2">
-			<h1 class="text-3xl pb-4">Login</h1>
+			<h1 class="text-3xl pb-4">Sign Up</h1>
 			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
 				<div class="card-body">
-					@Form("userLoginForm") {
+					@Form("userSignUpForm") {
 						<p class="text-red-500" x-text="error" x-show="error !== ''"></p>
 						<fieldset class="fieldset">
+						@Input(InputParams{
+							ID:          "username",
+							Label:       "Username",
+							Model:       "form.username",
+							ErrorModel:  "errors.username",
+							Description: "a-Z, 0-9, dot, underline, dash. Min 2; Max 30",
+						})
 						@Input(InputParams{
 							ID:         "email",
 							Label:      "E-mail",
@@ -78,9 +88,11 @@ templ UserLoginForm(redirectTo string) {
 							Model:      "form.password",
 							ErrorModel: "errors.password",
 							Type:       "password",
+							Description: "Min. 6 characters",
+							NoAutoFill:  true,
 						})
 						<div class="p-2">
-							@SubmitButton("Login")
+							@SubmitButton("Sign up")
 						</div>
 						</fieldset>
 					}

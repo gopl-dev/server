@@ -8,23 +8,23 @@ import (
 	"github.com/gopl-dev/server/app/service"
 )
 
-type RegisterUser struct {
+type UserSignUp struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (r *RegisterUser) Sanitize() {
+func (r *UserSignUp) Sanitize() {
 	r.Username = strings.TrimSpace(r.Username)
 	r.Email = strings.TrimSpace(r.Email)
 	r.Password = strings.TrimSpace(r.Password)
 }
 
-func (r *RegisterUser) ValidationSchema() z.Shape {
+func (r *UserSignUp) ValidationSchema() z.Shape {
 	return ds.UserValidationRules
 }
 
-func (r RegisterUser) ToParams() service.RegisterUserArgs {
+func (r UserSignUp) ToParams() service.RegisterUserArgs {
 	return service.RegisterUserArgs{
 		Username: r.Username,
 		Email:    r.Email,
@@ -40,17 +40,17 @@ func (r *ConfirmEmail) Sanitize() {
 	r.Code = strings.TrimSpace(r.Code)
 }
 
-type UserLogin struct {
+type UserSignIn struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (r *UserLogin) Sanitize() {
+func (r *UserSignIn) Sanitize() {
 	r.Email = strings.TrimSpace(r.Email)
 	r.Password = strings.TrimSpace(r.Password)
 }
 
-func (r *UserLogin) ValidationSchema() z.Shape {
+func (r *UserSignIn) ValidationSchema() z.Shape {
 	return z.Shape{
 		"email":    z.String().Email().Required(z.Message("Email is required")),
 		"password": z.String().Required(z.Message("Password is required")),

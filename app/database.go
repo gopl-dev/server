@@ -19,8 +19,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var dbConn *pgxpool.Pool
-
 // NewDatabasePool creates a new PostgreSQL connection pool.
 // It reads the database configuration from the Config() and establishes a connection.
 // It also verifies the connection by executing a simple query.
@@ -39,15 +37,7 @@ func NewDatabasePool(ctx context.Context) (db *pgxpool.Pool, err error) {
 		err = fmt.Errorf("db.exec: %w", err)
 	}
 
-	dbConn = db
 	return
-}
-
-// CloseDatabase closes the global PostgreSQL connection pool if it is not nil.
-func CloseDatabase() {
-	if dbConn != nil {
-		dbConn.Close()
-	}
 }
 
 //go:embed db_migrations/*.sql
@@ -68,7 +58,7 @@ type migration struct {
 // MigrateDB runs SQL scripts from the './migrations' directory that haven't been committed yet.
 // It reads migration files, compares them with the migrations already applied to the database,
 // and executes the new migrations in a transaction.
-func MigrateDB(ctx context.Context) (err error) {
+func MigrateDB(ctx context.Context, db *pgxpool.Pool) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("[ERROR] [MIGRATE]: %v", err)
@@ -123,14 +113,14 @@ func MigrateDB(ctx context.Context) (err error) {
 	}
 
 selectAll:
-	err = pgxscan.Select(ctx, dbConn, &completedMg, `SELECT * FROM `+mgTable)
+	err = pgxscan.Select(ctx, db, &completedMg, `SELECT * FROM `+mgTable)
 	if err != nil {
 		// on clean db run migrations table not exists yet
 		// check this by code returned and table name
 		// if so, create table and retry
 		pgErr := &pgconn.PgError{}
 		if errors.As(err, &pgErr) && pgErr.Code == "42P01" && strings.Contains(err.Error(), mgTable) {
-			_, err = dbConn.Exec(ctx, `
+			_, err = db.Exec(ctx, `
        CREATE TABLE `+mgTable+` (
           version    BIGINT NOT NULL PRIMARY KEY,
           name       TEXT NOT NULL,
@@ -168,7 +158,7 @@ iterate:
 	})
 
 	for _, m := range newMg {
-		err = RunInTx(ctx, func(ctx context.Context, tx pgx.Tx) error {
+		err = RunInTx(ctx, db, func(ctx context.Context, tx pgx.Tx) error {
 			now := time.Now()
 			_, err = tx.Exec(ctx, m.SQL)
 			if err != nil {
@@ -194,8 +184,8 @@ iterate:
 
 // RunInTx executes a function within a PostgreSQL transaction.
 // It begins a transaction, executes the provided function, and commits or rolls back the transaction based on the function's result.
-func RunInTx(ctx context.Context, f func(ctx context.Context, tx pgx.Tx) error) (err error) {
-	tx, err := dbConn.Begin(ctx)
+func RunInTx(ctx context.Context, db *pgxpool.Pool, f func(ctx context.Context, tx pgx.Tx) error) (err error) {
+	tx, err := db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %v", err)
 	}

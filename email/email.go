@@ -5,12 +5,13 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log"
 	"sync"
 
 	"github.com/gopl-dev/server/app"
-	"github.com/wneessen/go-mail"
 )
+
+var initDriverOnce sync.Once
+var driver Sender
 
 const (
 	SMTPDriver = "smtp"
@@ -21,10 +22,9 @@ const (
 var templateFiles embed.FS
 var templates = template.Must(template.ParseFS(templateFiles, "*.html"))
 
-var (
-	smtpSender = new(SMTPSender)
-	testSender = new(TestSender)
-)
+type Sender interface {
+	Send(to string, c Composer) error
+}
 
 type Composer interface {
 	Subject() string
@@ -33,76 +33,23 @@ type Composer interface {
 }
 
 func Send(to string, c Composer) (err error) {
-	switch app.Config().Email.Driver {
-	case SMTPDriver:
-		err = smtpSender.Send(to, c)
-	case TestDriver:
-		err = testSender.Send(to, c)
-	default:
-		err = fmt.Errorf("invalid email driver '%s'", app.Config().Email.Driver)
-	}
+	initDriverOnce.Do(func() {
+		conf := app.Config().Email
+		switch conf.Driver {
+		case SMTPDriver:
+			driver, err = NewSMTPSender()
+		case TestDriver:
+			driver = new(TestSender)
+		default:
+			err = fmt.Errorf("invalid email driver '%s'", conf.Driver)
+		}
+	})
 
-	return err
-}
-
-type Sender interface {
-	Send(to string, c Composer) error
-}
-
-type SMTPSender struct{}
-
-func (SMTPSender) Send(to string, c Composer) (err error) {
-	body, err := renderTemplate(c)
 	if err != nil {
-		return err
+		return
 	}
 
-	conf := app.Config().Email
-	message := mail.NewMsg()
-	err = message.From(conf.From)
-	if err != nil {
-		return err
-	}
-	err = message.To(to)
-	if err != nil {
-		return err
-	}
-
-	message.Subject("gopl: " + c.Subject())
-	message.SetBodyString(mail.TypeTextHTML, body)
-
-	client, err := mail.NewClient(conf.Host,
-		mail.WithPort(conf.Port),
-		mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithUsername(conf.Username),
-		mail.WithPassword(conf.Password),
-		mail.WithDebugLog(),
-	)
-	if err != nil {
-		log.Printf("failed to create new mail delivery client: %s", err)
-		return err
-	}
-	err = client.DialAndSend(message)
-	if err != nil {
-		log.Printf("failed to deliver mail: %s", err)
-		return err
-	}
-
-	return nil
-}
-
-type TestSender struct {
-	emails sync.Map
-}
-
-func (t *TestSender) Send(to string, c Composer) (err error) {
-	body, err := renderTemplate(c)
-	if err != nil {
-		return err
-	}
-
-	t.emails.Store(to, body)
-	return nil
+	return driver.Send(to, c)
 }
 
 type TemplateData struct {

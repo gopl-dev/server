@@ -86,7 +86,7 @@ func Default(d Data) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if d.User == nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<li><a href=\"/users/login/\">Login</a></li><li><a href=\"/users/register/\">Register</a></li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<li><a href=\"/users/sign-in/\">Sign in</a></li><li><a href=\"/users/sign-up/\">Sign up</a></li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -104,7 +104,7 @@ func Default(d Data) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</summary><ul class=\"bg-neutral rounded-t-none p-2\"><li><a>Link 1</a></li><li><a href=\"/users/logout/\">Logout</a></li></ul></details></li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</summary><ul class=\"bg-neutral rounded-t-none p-2\"><li><a>Link 1</a></li><li><a href=\"/users/sign-out/\">Sign out</a></li></ul></details></li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

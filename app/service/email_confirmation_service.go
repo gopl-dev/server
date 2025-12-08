@@ -10,6 +10,9 @@ import (
 )
 
 const emailConfirmationTTL = time.Hour * 24
+const (
+	InvalidConfirmationCode = "Invalid confirmation code"
+)
 
 func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (code string, err error) {
 	code, err = s.newEmailConfirmationCode(ctx)
@@ -36,12 +39,7 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 	}
 
 	if ec == nil || ec.Invalid() {
-		err = app.InputError{"code": "Invalid confirmation code"}
-		return
-	}
-
-	err = s.SetUserEmailConfirmed(ctx, ec.UserID)
-	if err != nil {
+		err = app.InputError{"code": InvalidConfirmationCode}
 		return
 	}
 
@@ -57,7 +55,7 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) {
 	chars := []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-	length := 5
+	length := rand.Intn(3) + 5
 	newCode := func(length int) string {
 		token := make([]byte, length)
 		for i := 0; i < length; i++ {

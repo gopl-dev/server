@@ -36,7 +36,7 @@ func (mw *Middleware) UserAuthWeb(next endpoint.Handler) endpoint.Handler {
 				redirectTo = "/"
 			}
 
-			handler.RenderLoginPage(w, r, redirectTo)
+			handler.RenderUserSignInPage(w, r, redirectTo)
 			return
 		}
 

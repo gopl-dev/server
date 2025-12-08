@@ -24,6 +24,11 @@ var (
 )
 
 const (
+	UserWithThisEmailAlreadyExists = "User with this email already exists."
+	UsernameAlreadyTaken           = "Username already taken"
+)
+
+const (
 	ctxUserKey contextKey = "user"
 )
 
@@ -44,7 +49,7 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 		return
 	}
 	if existing != nil {
-		err = app.InputError{"email": "User with this email already exists."}
+		err = app.InputError{"email": UserWithThisEmailAlreadyExists}
 		return
 	}
 	existing, err = s.db.FindUserByUsername(ctx, p.Username)
@@ -52,7 +57,7 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 		return
 	}
 	if existing != nil {
-		err = app.InputError{"username": "Username already taken"}
+		err = app.InputError{"username": UsernameAlreadyTaken}
 		return
 	}
 
@@ -119,6 +124,10 @@ func (s *Service) LoginUser(ctx context.Context, email, password string) (user *
 
 func (s *Service) FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
 	return s.db.FindUserByID(ctx, id)
+}
+
+func (s *Service) FindUserByEmail(ctx context.Context, email string) (user *ds.User, err error) {
+	return s.db.FindUserByEmail(ctx, email)
 }
 
 func (s *Service) CreateUser(u *ds.User) (err error) {

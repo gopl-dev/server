@@ -37,12 +37,12 @@ func NewHandler(service *service.Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) StatusHandler(w http.ResponseWriter, req *http.Request) {
+func (h *Handler) ServerStatus(w http.ResponseWriter, req *http.Request) {
 	conf := app.Config()
-	jsonOK(w, map[string]any{
-		"env":     conf.App.Env,
-		"version": conf.App.Version,
-		"time":    time.Now(),
+	jsonOK(w, response.ServerStatus{
+		Env:     conf.App.Env,
+		Version: conf.App.Version,
+		Time:    time.Now(),
 	})
 }
 
@@ -227,10 +227,10 @@ func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) 
 	}
 }
 
-func RenderLoginPage(w http.ResponseWriter, r *http.Request, redirectTo string) {
+func RenderUserSignInPage(w http.ResponseWriter, r *http.Request, redirectTo string) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
-		Title: "Login",
-		Body:  page.UserLoginForm(redirectTo),
+		Title: "Sign In",
+		Body:  page.UserSignInForm(redirectTo),
 	}))
 }
 

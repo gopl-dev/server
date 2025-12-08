@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import . "github.com/gopl-dev/server/frontend/component"
 
-func RegisterUserForm() templ.Component {
+func UserSignUpForm() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -31,7 +31,7 @@ func RegisterUserForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction registerUserForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\tusername: '',\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terror: '',\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\tusername: '',\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.error = ''\r\n\t\t\t\t\tthis.errors = {\r\n\t\t\t\t\t\tusername: '',\r\n\t\t\t\t\t\temail: '',\r\n\t\t\t\t\t\tpassword: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/register/', {\r\n\t\t\t\t\t\tmethod: 'POST',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (\"success\" in resp && resp.success === true) {\r\n\t\t\t\t\t\t\t\twindow.location.href = '/users/confirm-email/'\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"error\" in resp) {\r\n\t\t\t\t\t\t\t\tthis.error = resp.code + ': ' + resp.error\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && resp.input_errors !== null) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"username\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.username = ie.username\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"email\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.email = ie.email\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"password\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.password = ie.password\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t})\r\n\t\t\t\t\t\t.catch(response => {\r\n\r\n\t\t\t\t\t\t})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Register</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction userSignUpForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\tusername: '',\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terror: '',\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\tusername: '',\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.error = ''\r\n\t\t\t\t\tthis.errors = {\r\n\t\t\t\t\t\tusername: '',\r\n\t\t\t\t\t\temail: '',\r\n\t\t\t\t\t\tpassword: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/sign-up/', {\r\n\t\t\t\t\t\tmethod: 'POST',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (\"success\" in resp && resp.success === true) {\r\n\t\t\t\t\t\t\t\twindow.location.href = '/users/confirm-email/'\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"error\" in resp) {\r\n\t\t\t\t\t\t\t\tthis.error = resp.code + ': ' + resp.error\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && resp.input_errors !== null) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"username\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.username = ie.username\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"email\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.email = ie.email\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"password\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.password = ie.password\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t})\r\n\t\t\t\t\t\t.catch(response => {\r\n\r\n\t\t\t\t\t\t})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Sign Up</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -86,7 +86,7 @@ func RegisterUserForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = SubmitButton("Register").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = SubmitButton("Sign up").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -96,7 +96,7 @@ func RegisterUserForm() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Form("registerUserForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Form("userSignUpForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -33,7 +33,7 @@ func main() {
 		return
 	}
 
-	err = app.MigrateDB(ctx)
+	err = app.MigrateDB(ctx, db)
 	if err != nil {
 		log.Fatal(err)
 	}
