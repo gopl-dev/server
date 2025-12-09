@@ -29,10 +29,6 @@ linters:
     - godoclint
     - nlreturn
 
-  settings:
-    nlreturn:
-      block-size: 2
-
 run:
   timeout: 5m
   allow-parallel-runners: true
