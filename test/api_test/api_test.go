@@ -1,4 +1,4 @@
-package apitest
+package api_test
 
 import (
 	"bytes"
@@ -60,11 +60,13 @@ var (
 const ContentTypeJSON = "application/json"
 
 func TestMain(m *testing.M) {
-	tt = &Test{}
+	tt = new(Test)
 	ctx := context.Background()
 	tt.Conf = app.Config()
+
 	var err error
-	tt.DB, err = app.NewDatabasePool(ctx)
+
+	tt.DB, err = app.NewPool(ctx)
 	if err != nil {
 		panic("TEST MAIN: " + err.Error())
 	}
@@ -97,15 +99,18 @@ func TestMain(m *testing.M) {
 
 func makeRequest(t *testing.T, r Request) *httptest.ResponseRecorder {
 	t.Helper()
-	req, err := http.NewRequest(
+	req, err := http.NewRequestWithContext(
+		context.Background(),
 		r.method,
 		r.path,
 		r.bodyReader,
 	)
 	test.CheckErr(t, err)
+
 	if r.method == http.MethodPost || r.method == http.MethodPut {
 		req.Header.Set("Content-Type", ContentTypeJSON)
 	}
+
 	req.Header.Set("Accept", ContentTypeJSON)
 
 	for k, v := range r.headers {
@@ -116,6 +121,7 @@ func makeRequest(t *testing.T, r Request) *httptest.ResponseRecorder {
 	if r.authBearer != "" {
 		bearer = r.authBearer
 	}
+
 	if bearer != "" {
 		req.Header.Set("Authorization", "Bearer "+bearer)
 	}
@@ -128,14 +134,16 @@ func makeRequest(t *testing.T, r Request) *httptest.ResponseRecorder {
 
 // Do sends given request,
 // asserts that status is correct
-// binds response and returns response
+// binds response and returns response.
 func Do(t *testing.T, req Request) *httptest.ResponseRecorder {
 	t.Helper()
 
-	var body []byte
-	var err error
+	var (
+		body []byte
+		err  error
+	)
 
-	req.path = path.Join("/", tt.Conf.Server.ApiBasePath, req.path)
+	req.path = path.Join("/", tt.Conf.Server.APIBasePath, req.path)
 
 	if !strings.HasSuffix(req.path, "/") && !strings.Contains(req.path, "/?") {
 		req.path += "/"
@@ -151,9 +159,11 @@ func Do(t *testing.T, req Request) *httptest.ResponseRecorder {
 	}
 
 	req.bodyReader = bytes.NewReader(body)
+
 	resp := makeRequest(t, req)
 	if resp.Code != req.assertStatus {
 		t.Errorf(aurora.Red("(%d) %s %s").Bold().String(), resp.Code, req.method, req.path)
+
 		if req.body != nil {
 			println(aurora.Bold("Request:").String())
 			println(string(body))
@@ -163,6 +173,7 @@ func Do(t *testing.T, req Request) *httptest.ResponseRecorder {
 		// otherwise print it as is
 		if responseContentType(resp) == ContentTypeJSON {
 			var respBody map[string]any
+
 			err = json.Unmarshal(resp.Body.Bytes(), &respBody)
 			if err == nil {
 				body2, err2 := json.MarshalIndent(respBody, "", "  ")
@@ -178,9 +189,9 @@ func Do(t *testing.T, req Request) *httptest.ResponseRecorder {
 
 		t.FailNow()
 		return resp
-	} else {
-		t.Logf(aurora.Green("(%d) %s %s").Bold().String(), resp.Code, req.method, req.path)
 	}
+
+	t.Logf(aurora.Green("(%d) %s %s").Bold().String(), resp.Code, req.method, req.path)
 
 	if responseContentType(resp) == ContentTypeJSON {
 		err = json.Unmarshal(resp.Body.Bytes(), &req.bindResponse)
@@ -203,44 +214,47 @@ func responseContentType(resp *httptest.ResponseRecorder) string {
 	return frags[0]
 }
 
-// POST is a wrapper for Do
+// POST is a wrapper for Do.
 func POST(t *testing.T, req Request) *httptest.ResponseRecorder {
 	t.Helper()
 	req.method = http.MethodPost
 	return Do(t, req)
 }
 
-// PUT is a wrapper for Do
+// PUT is a wrapper for Do.
 func PUT(t *testing.T, req Request) *httptest.ResponseRecorder {
 	t.Helper()
+
 	req.method = http.MethodPut
 	return Do(t, req)
 }
 
-// PATCH is a wrapper for Do
+// PATCH is a wrapper for Do.
 func PATCH(t *testing.T, req Request) *httptest.ResponseRecorder {
 	t.Helper()
 	req.method = http.MethodPatch
 	return Do(t, req)
 }
 
-// DELETE is a wrapper for Do
+// DELETE is a wrapper for Do.
 func DELETE(t *testing.T, req Request) *httptest.ResponseRecorder {
 	t.Helper()
 	req.method = http.MethodDelete
 	return Do(t, req)
 }
 
-// GET is a wrapper for Do
+// GET is a wrapper for Do.
 func GET(t *testing.T, req Request) *httptest.ResponseRecorder {
 	t.Helper()
+
 	req.method = http.MethodGet
 	return Do(t, req)
 }
 
-// testCREATE makes "create" POST request that expects response type of response arg and 201 status code
+// testCREATE makes "create" POST request that expects response type of response arg and 201 status code.
 func testCREATE(t *testing.T, path string, body, response any) *httptest.ResponseRecorder {
 	t.Helper()
+
 	req := Request{
 		path:         path,
 		body:         body,
@@ -251,9 +265,10 @@ func testCREATE(t *testing.T, path string, body, response any) *httptest.Respons
 	return POST(t, req)
 }
 
-// testUPDATE makes "update" request
+// testUPDATE makes "update" request.
 func testUPDATE(t *testing.T, path string, body, response any) *httptest.ResponseRecorder {
 	t.Helper()
+
 	req := Request{
 		path:         path,
 		body:         body,
@@ -264,7 +279,7 @@ func testUPDATE(t *testing.T, path string, body, response any) *httptest.Respons
 	return PUT(t, req)
 }
 
-// testDELETE makes "delete" request
+// testDELETE makes "delete" request.
 func testDELETE(t *testing.T, path string, response any) *httptest.ResponseRecorder {
 	t.Helper()
 	req := Request{
@@ -276,9 +291,10 @@ func testDELETE(t *testing.T, path string, response any) *httptest.ResponseRecor
 	return DELETE(t, req)
 }
 
-// testGET makes simple "get" request
+// testGET makes simple "get" request.
 func testGET(t *testing.T, path string, response any) *httptest.ResponseRecorder {
 	t.Helper()
+
 	req := Request{
 		path:         path,
 		bindResponse: response,
@@ -288,7 +304,7 @@ func testGET(t *testing.T, path string, response any) *httptest.ResponseRecorder
 	return GET(t, req)
 }
 
-// testQuery makes "get" request with query params
+// testQuery makes "get" request with query params.
 func testQuery(t *testing.T, path string, request, response any) *httptest.ResponseRecorder {
 	t.Helper()
 	query, err := test.StructToQueryString(request)
@@ -339,7 +355,7 @@ func login(t *testing.T) *ds.User {
 }
 
 // Shortcut to fmt.Sprint
-// Hey, this is not laziness, this is speed ^^
+// Hey, this is not laziness, this is speed ^^.
 func f(s string, args ...any) string {
 	return fmt.Sprintf(s, args...)
 }

@@ -1,6 +1,7 @@
 package endpoint
 
-func (r *Router) PublicApiEndpoints() {
+// PublicAPIEndpoints ...
+func (r *Router) PublicAPIEndpoints() {
 	r.GET("status", r.handler.ServerStatus)
 
 	r.Group("users").

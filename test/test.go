@@ -1,3 +1,4 @@
+// Package test ...
 package test
 
 import (
@@ -15,47 +16,64 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
+// Data is a type alias representing a map of database columns and their expected values,
+// used for assertions against the database.
 type Data map[string]any
+
+// notNull is an unexported type used as a marker value within the Data map
+// to check if a database column contains a non-NULL value.
 type notNull bool
 
+// NotNull is the exported constant marker value to assert that a database column
+// must not be NULL. Use it as a value in a Data map: Data{"column_name": test.NotNull}.
 var NotNull notNull
 
+// CheckErr is a test helper function that fails the test immediately if the provided error is not nil.
 func CheckErr(t *testing.T, err error) {
 	t.Helper()
+
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-// StructToQueryString converts flat struct to query string
-func StructToQueryString(in interface{}) (out string, err error) {
+// StructToQueryString converts a flat Go struct into a standard URL query string (key=value&...).
+func StructToQueryString(in any) (out string, err error) {
 	jsonBytes, err := json.Marshal(in)
 	if err != nil {
 		return
 	}
 
-	data := map[string]interface{}{}
+	data := map[string]any{}
+
 	err = json.Unmarshal(jsonBytes, &data)
 	if err != nil {
 		return
 	}
 
 	vals := url.Values{}
+
 	for key, v := range data {
-		vSlice, ok := v.([]interface{})
+		vSlice, ok := v.([]any)
 		if ok {
 			for _, s := range vSlice {
 				vals.Add(key, fmt.Sprintf("%v", s))
 			}
+
 			continue
 		}
+
 		vals.Add(key, fmt.Sprintf("%v", v))
 	}
 
 	return vals.Encode(), nil
 }
 
+// LoadEmailVars retrieves the template variables from the most recent email sent to the given recipient
+// via the TestSender email driver.
 func LoadEmailVars(t *testing.T, to string) map[string]any {
+	t.Helper()
+
 	c, err := email.LoadTestEmail(to)
 	if err != nil {
 		t.Error(err)
@@ -69,14 +87,18 @@ func dbIdent(i string) string {
 }
 
 func countDatabaseRows(t *testing.T, db *pgxpool.Pool, table string, data Data) int {
-	args := make([]interface{}, 0)
+	t.Helper()
+
+	args := make([]any, 0)
 	wheres := make([]string, 0)
 
 	argIndex := 1
+
 	for col, val := range data {
 		col = dbIdent(col)
 		if val == nil {
 			wheres = append(wheres, fmt.Sprintf(`"%s" IS NULL`, col))
+
 			continue
 		}
 
@@ -89,6 +111,7 @@ func countDatabaseRows(t *testing.T, db *pgxpool.Pool, table string, data Data) 
 			whereExpr = col + " IS NOT NULL"
 		default:
 			whereExpr = fmt.Sprintf(`%s = $%d`, col, argIndex)
+
 			args = append(args, val)
 			argIndex++
 		}
@@ -99,6 +122,7 @@ func countDatabaseRows(t *testing.T, db *pgxpool.Pool, table string, data Data) 
 	query := fmt.Sprintf("SELECT COUNT(1) AS COUNT FROM %s WHERE %s", dbIdent(table), strings.Join(wheres, " AND "))
 
 	var count int
+
 	err := pgxscan.Get(context.Background(), db, &count, query, args...)
 	if err != nil {
 		t.Errorf("CountDatabaseRows: %s", err)
@@ -107,22 +131,30 @@ func countDatabaseRows(t *testing.T, db *pgxpool.Pool, table string, data Data) 
 	return count
 }
 
+// AssertInDB asserts that at least one row exists in the given table that matches the criteria in 'data'.
 func AssertInDB(t *testing.T, db *pgxpool.Pool, table string, data Data) {
+	t.Helper()
+
 	count := countDatabaseRows(t, db, table, data)
 	if count == 0 {
 		t.Fail()
 		println(aurora.Bold(aurora.Red("❌ Table '" + table + "' missing row with data:")).String())
+
 		for k, v := range data {
 			println("\t" + k + ": " + fmt.Sprintf("%+v", v))
 		}
 	}
 }
 
+// AssertNotInDB asserts that no rows exist in the given table that match the criteria in 'data'.
 func AssertNotInDB(t *testing.T, db *pgxpool.Pool, table string, data Data) {
+	t.Helper()
+
 	count := countDatabaseRows(t, db, table, data)
 	if count != 0 {
 		t.Fail()
 		println(aurora.Bold(aurora.Red("❌ Table '" + table + "' has row with data:")).String())
+
 		for k, v := range data {
 			println("\t" + k + ": " + fmt.Sprintf("%+v", v))
 		}

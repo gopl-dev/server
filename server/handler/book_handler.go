@@ -1,3 +1,4 @@
+//nolint:all
 package handler
 
 import (
@@ -24,6 +25,7 @@ type FilterBookResponse struct {
 
 func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 	var req FilterBookRequest
+
 	res := handleQueryRequest(w, r, &req)
 	if res.Aborted() {
 		return

@@ -1,3 +1,4 @@
+// Package factory ...
 package factory
 
 import (
@@ -9,10 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Factory holds dependencies required by factory methods.
 type Factory struct {
 	repo *repo.Repo
 }
 
+// New is a factory function that creates and returns a new Factory instance.
 func New(db *pgxpool.Pool) *Factory {
 	return &Factory{repo: repo.New(db)}
 }
@@ -24,7 +27,15 @@ func merge(dst, src any) {
 	}
 }
 
+// X is a function that repeatedly executes a data creation function ('fn')
+// a specified number of times and returns a slice of pointers to the created objects.
+//
+// T is the type of the struct being created (e.g., ds.User).
+// fn is the function that creates a single instance of T (e.g., CreateUser).
+// override allows passing custom field values to override defaults in the created instances.
 func X[T any](t *testing.T, times int, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
+	t.Helper()
+
 	data := make([]*T, times)
 	for i := range data {
 		data[i] = fn(t, override...)
@@ -33,25 +44,26 @@ func X[T any](t *testing.T, times int, fn func(t *testing.T, m ...T) *T, overrid
 	return data
 }
 
+// Two is a convenience function to create exactly two instances of a data structure T.
+// It is a wrapper around X with times=2.
 func Two[T any](t *testing.T, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
-	return X(t, 2, fn, override...)
+	t.Helper()
+
+	return X(t, 2, fn, override...) //nolint:mnd
 }
 
+// Five is a convenience function to create exactly five instances of a data structure T.
+// It is a wrapper around X with times=5.
 func Five[T any](t *testing.T, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
-	return X(t, 5, fn, override...)
+	t.Helper()
+
+	return X(t, 5, fn, override...) //nolint:mnd
 }
 
+// Ten is a convenience function to create exactly ten instances of a data structure T.
+// It is a wrapper around X with times=10.
 func Ten[T any](t *testing.T, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
-	return X(t, 10, fn, override...)
-}
+	t.Helper()
 
-func DerefArray[T any](arr []*T) (r []T) {
-	r = make([]T, 0)
-	for _, v := range arr {
-		if v != nil {
-			r = append(r, *v)
-		}
-	}
-
-	return
+	return X(t, 10, fn, override...) //nolint:mnd
 }

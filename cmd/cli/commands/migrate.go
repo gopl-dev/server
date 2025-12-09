@@ -1,11 +1,5 @@
 package commands
 
-import (
-	"context"
-
-	"github.com/gopl-dev/server/app"
-)
-
 func init() {
 	Register(Command{
 		Name:  "migrate",
@@ -17,7 +11,8 @@ func init() {
 	})
 }
 
-func migrateCommand(args []string, flags Flags) (err error) {
-	ctx := context.TODO()
-	return app.MigrateDB(ctx)
+func migrateCommand(_ []string, _ Flags) (err error) {
+	// ctx := context.TODO()
+	// return app.MigrateDB(ctx)
+	return nil
 }

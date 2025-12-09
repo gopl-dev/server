@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"path"
 	"regexp"
 	"sort"
@@ -19,16 +20,29 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// NewDatabasePool creates a new PostgreSQL connection pool.
-// It reads the database configuration from the Config() and establishes a connection.
-// It also verifies the connection by executing a simple query.
-func NewDatabasePool(ctx context.Context) (db *pgxpool.Pool, err error) {
+var (
+	// ErrNoFilenameSeparator indicates a migration filename is missing the required '_' separator.
+	ErrNoFilenameSeparator = errors.New("no required filename separator '_' found")
+	// ErrMultipleSameVersion indicates two or more migration files share the same version number.
+	ErrMultipleSameVersion = errors.New("multiple migrations of same version found")
+)
+
+// NewPool creates a new PostgreSQL connection pool.
+func NewPool(ctx context.Context) (db *pgxpool.Pool, err error) {
 	c := Config().DB
-	conf, err := pgxpool.ParseConfig(fmt.Sprintf("postgres://%s:%s@%s:%s/%s", c.User, c.Password, c.Host, c.Port, c.Name))
+
+	conf, err := pgxpool.ParseConfig(
+		fmt.Sprintf("postgres://%s:%s@%s/%s", c.User, c.Password, net.JoinHostPort(c.Host, c.Port), c.Name))
+	if err != nil {
+		return nil, err
+	}
+
 	conf.ConnConfig.Tracer = NewLoggingQueryTracer(slog.Default())
+
 	db, err = pgxpool.NewWithConfig(ctx, conf)
 	if err != nil {
 		err = fmt.Errorf("create db connection pool: %w", err)
+
 		return
 	}
 
@@ -61,7 +75,7 @@ type migration struct {
 func MigrateDB(ctx context.Context, db *pgxpool.Pool) (err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("[ERROR] [MIGRATE]: %v", err)
+			err = fmt.Errorf("[ERROR] [MIGRATE]: %w", err)
 		}
 	}()
 
@@ -71,19 +85,20 @@ func MigrateDB(ctx context.Context, db *pgxpool.Pool) (err error) {
 
 	dir, err := mgFiles.ReadDir(mgDir)
 	if err != nil {
-		return fmt.Errorf("read migrations: %v", err)
+		return fmt.Errorf("read migrations: %w", err)
 	}
 
 	for _, file := range dir {
 		mgData, err := mgFiles.ReadFile(path.Join(mgDir, file.Name()))
 		if err != nil {
-			return fmt.Errorf("read '%s': %v", file.Name(), err)
+			return fmt.Errorf("read '%s': %w", file.Name(), err)
 		}
 
 		name := strings.TrimSuffix(file.Name(), ".sql")
+
 		idx := strings.Index(name, "_")
 		if idx < 0 {
-			return fmt.Errorf("%s: no filename separator '_' found", name)
+			return fmt.Errorf("filename %s: %w", name, ErrNoFilenameSeparator)
 		}
 
 		version, err := strconv.ParseInt(name[:idx], 10, 64)
@@ -95,7 +110,7 @@ func MigrateDB(ctx context.Context, db *pgxpool.Pool) (err error) {
 
 		for _, m := range allMg {
 			if m.Version == version {
-				return fmt.Errorf("multiple migrations of version %d found", version)
+				return fmt.Errorf("version '%d': %w", version, ErrMultipleSameVersion)
 			}
 		}
 
@@ -109,16 +124,18 @@ func MigrateDB(ctx context.Context, db *pgxpool.Pool) (err error) {
 
 	if len(allMg) == 0 {
 		fmt.Println("no migrations found in " + mgDir)
+
 		return
 	}
 
 selectAll:
 	err = pgxscan.Select(ctx, db, &completedMg, `SELECT * FROM `+mgTable)
+
 	if err != nil {
 		// on clean db run migrations table not exists yet
 		// check this by code returned and table name
 		// if so, create table and retry
-		pgErr := &pgconn.PgError{}
+		pgErr := new(pgconn.PgError)
 		if errors.As(err, &pgErr) && pgErr.Code == "42P01" && strings.Contains(err.Error(), mgTable) {
 			_, err = db.Exec(ctx, `
        CREATE TABLE `+mgTable+` (
@@ -127,14 +144,17 @@ selectAll:
           migrated_at TIMESTAMPTZ NOT NULL
        );`)
 			if err != nil {
-				return fmt.Errorf("init migrations table: %v", err)
+				return fmt.Errorf("init migrations table: %w", err)
 			}
+
 			goto selectAll
 		}
+
 		return err
 	}
+
 	if err != nil {
-		return fmt.Errorf("load completed migrations: %v", err)
+		return fmt.Errorf("load completed migrations: %w", err)
 	}
 
 iterate:
@@ -150,6 +170,7 @@ iterate:
 
 	if len(newMg) == 0 {
 		fmt.Println("[MIGRATION] ✅ Nothing to migrate")
+
 		return
 	}
 
@@ -160,18 +181,22 @@ iterate:
 	for _, m := range newMg {
 		err = RunInTx(ctx, db, func(ctx context.Context, tx pgx.Tx) error {
 			now := time.Now()
+
 			_, err = tx.Exec(ctx, m.SQL)
 			if err != nil {
-				return fmt.Errorf("❌ %d %s: %v", m.Version, m.Name, err)
+				return fmt.Errorf("❌ %d %s: %w", m.Version, m.Name, err)
 			}
 
 			m.MigratedAt = &now
-			_, err = tx.Exec(ctx, "INSERT INTO "+mgTable+" (version, name, migrated_at) VALUES ($1, $2, $3)", m.Version, m.Name, m.MigratedAt)
+
+			_, err = tx.Exec(ctx, "INSERT INTO "+mgTable+" (version, name, migrated_at) VALUES ($1, $2, $3)",
+				m.Version, m.Name, m.MigratedAt)
 			if err != nil {
-				return fmt.Errorf("❌ save migration %d %s: %v", m.Version, m.Name, err)
+				return fmt.Errorf("❌ save migration %d %s: %w", m.Version, m.Name, err)
 			}
 
 			fmt.Printf("[MIGRATION] %d\n✅ %s\n%s\n", m.Version, m.Name, time.Since(now).String())
+
 			return nil
 		})
 		if err != nil {
@@ -182,26 +207,27 @@ iterate:
 	return nil
 }
 
-// RunInTx executes a function within a PostgreSQL transaction.
-// It begins a transaction, executes the provided function, and commits or rolls back the transaction based on the function's result.
-func RunInTx(ctx context.Context, db *pgxpool.Pool, f func(ctx context.Context, tx pgx.Tx) error) (err error) {
+// RunInTx executes a function within transaction.
+func RunInTx(ctx context.Context, db *pgxpool.Pool,
+	f func(ctx context.Context, tx pgx.Tx) error) (err error) {
 	tx, err := db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin transaction: %v", err)
+		return fmt.Errorf("begin transaction: %w", err)
 	}
 
 	err = f(ctx, tx)
 	if err != nil {
 		err2 := tx.Rollback(ctx)
 		if err2 != nil {
-			err = fmt.Errorf("%v (rollback transaction: %v)", err, err2)
+			err = fmt.Errorf("%w (rollback transaction: %w)", err, err2)
 		}
+
 		return err
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		err = fmt.Errorf("commit transaction: %v", err)
+		err = fmt.Errorf("commit transaction: %w", err)
 	}
 
 	return
@@ -213,7 +239,7 @@ func RunInTx(ctx context.Context, db *pgxpool.Pool, f func(ctx context.Context, 
 // //////////////////////////////////////////////////////////////////////////////
 // Took bellow code from
 // https://gist.github.com/zaydek/91f27cdd35c6240701f81415c3ba7c07
-// Leaving it as-is for now
+// Leaving it as-is for now.
 var (
 	replaceTabs                      = regexp.MustCompile(`\t+`)
 	replaceSpacesBeforeOpeningParens = regexp.MustCompile(`\s+\(`)
@@ -240,24 +266,30 @@ func prettyPrintSQL(sql string) string {
 	return strings.TrimSpace(pretty)
 }
 
+// LoggingQueryTracer implements the pgx.QueryTracer interface to log query execution details.
 type LoggingQueryTracer struct {
 	logger *slog.Logger
 }
 
+// NewLoggingQueryTracer creates and returns a new LoggingQueryTracer instance.
 func NewLoggingQueryTracer(logger *slog.Logger) *LoggingQueryTracer {
 	return &LoggingQueryTracer{logger: logger}
 }
 
-func (l *LoggingQueryTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+// TraceQueryStart is called before a query is sent to the database.
+func (l *LoggingQueryTracer) TraceQueryStart(
+	ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
 	l.logger.
 		Info("query start",
 			slog.String("sql", prettyPrintSQL(data.SQL)),
 			slog.Any("args", data.Args),
 		)
+
 	return ctx
 }
 
-func (l *LoggingQueryTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+// TraceQueryEnd is called after a query has completed (successfully or with an error).
+func (l *LoggingQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, data pgx.TraceQueryEndData) {
 	// Failure
 	if data.Err != nil {
 		l.logger.
@@ -265,6 +297,7 @@ func (l *LoggingQueryTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, 
 				slog.String("error", data.Err.Error()),
 				slog.String("command_tag", data.CommandTag.String()),
 			)
+
 		return
 	}
 

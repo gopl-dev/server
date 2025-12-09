@@ -9,11 +9,19 @@ import (
 	"github.com/gopl-dev/server/app/ds"
 )
 
-const emailConfirmationTTL = time.Hour * 24
 const (
+	emailConfirmationTTL     = time.Hour * 24
+	emailConfirmationCodeLen = 6
+)
+
+const (
+	// InvalidConfirmationCode is the specific error message returned
+	// when an email confirmation code is invalid or expired.
 	InvalidConfirmationCode = "Invalid confirmation code"
 )
 
+// CreateEmailConfirmation generates a unique confirmation code, calculates its expiration time,
+// and saves the email confirmation record to the database for the given user ID.
 func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (code string, err error) {
 	code, err = s.newEmailConfirmationCode(ctx)
 	if err != nil {
@@ -28,10 +36,12 @@ func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (co
 	}
 
 	err = s.db.CreateEmailConfirmation(ctx, ec)
+
 	return
 }
 
-// ConfirmEmail confirms an email address by setting the email_confirmed flag for a user.
+// ConfirmEmail confirms an email address by validating the provided code,
+// setting the email_confirmed flag for the associated user, and then deleting the used confirmation record.
 func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 	ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
 	if err != nil {
@@ -40,6 +50,7 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 
 	if ec == nil || ec.Invalid() {
 		err = app.InputError{"code": InvalidConfirmationCode}
+
 		return
 	}
 
@@ -48,18 +59,19 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 		return
 	}
 
-	err = s.db.DeleteEmailConfirmation(ctx, ec.ID)
+	err = s.db.DeleteEmailConfirmation(ctx, ec.ID) // Assumes s.db implements this method
+
 	return
 }
 
 func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) {
 	chars := []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-	length := rand.Intn(3) + 5
+	length := emailConfirmationCodeLen
 	newCode := func(length int) string {
 		token := make([]byte, length)
-		for i := 0; i < length; i++ {
-			token[i] = chars[rand.Intn(len(chars))]
+		for i := range length {
+			token[i] = chars[rand.Intn(len(chars))] //nolint:gosec
 		}
 
 		return string(token)
@@ -67,10 +79,12 @@ func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) 
 
 	for {
 		code := newCode(length)
+
 		ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
 		if err != nil {
 			return "", err
 		}
+
 		if ec == nil {
 			return code, nil
 		}

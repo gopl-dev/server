@@ -1,9 +1,10 @@
-package ds
+package ds_test
 
 import (
 	"testing"
 
 	z "github.com/Oudwins/zog"
+	"github.com/gopl-dev/server/app/ds"
 )
 
 func TestUsernameValidation(t *testing.T) {
@@ -44,17 +45,17 @@ func TestUsernameValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test basic regex
-			if !usernameBasicRegex.MatchString(tt.username) && tt.valid {
+			if !ds.UsernameBasicRegex.MatchString(tt.username) && tt.valid {
 				t.Errorf("usernameBasicRegex.MatchString() = false, want true for username: %s", tt.username)
 			}
 
 			// Test special chars regex
-			if !usernameSpecialCharsRegex.MatchString(tt.username) && tt.valid {
+			if !ds.UsernameSpecialCharsRegex.MatchString(tt.username) && tt.valid {
 				t.Errorf("usernameSpecialCharsRegex.MatchString() = false, want true for username: %s", tt.username)
 			}
 
 			// Test full validation rules
-			err := z.Struct(UserValidationRules).Validate(&user{
+			err := z.Struct(ds.UserValidationRules).Validate(&user{
 				Username: tt.username,
 				Email:    "test@example.com", // Required for validation
 				Password: "password123",      // Required for validation

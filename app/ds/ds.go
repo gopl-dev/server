@@ -1,0 +1,5 @@
+// Package ds (Data Structure)
+// All data models belonging to the app are stored here.
+// Global functions should not be created here.
+// Methods on types are welcome.
+package ds

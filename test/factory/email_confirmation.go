@@ -10,11 +10,12 @@ import (
 	"github.com/gopl-dev/server/test/factory/random"
 )
 
+// NewEmailConfirmation ...
 func (f *Factory) NewEmailConfirmation(overrideOpt ...ds.EmailConfirmation) (m *ds.EmailConfirmation) {
 	m = &ds.EmailConfirmation{
 		ID:          0,
 		UserID:      0,
-		Code:        random.String(16),
+		Code:        random.String(16), //nolint:mnd
 		CreatedAt:   time.Now(),
 		ExpiresAt:   time.Now().Add(time.Hour),
 		ConfirmedAt: nil,
@@ -27,7 +28,10 @@ func (f *Factory) NewEmailConfirmation(overrideOpt ...ds.EmailConfirmation) (m *
 	return
 }
 
+// CreateEmailConfirmation ...
 func (f *Factory) CreateEmailConfirmation(t *testing.T, overrideOpt ...ds.EmailConfirmation) (m *ds.EmailConfirmation) {
+	t.Helper()
+
 	m = f.NewEmailConfirmation(overrideOpt...)
 
 	if m.UserID == 0 {
@@ -36,5 +40,6 @@ func (f *Factory) CreateEmailConfirmation(t *testing.T, overrideOpt ...ds.EmailC
 
 	err := f.repo.CreateEmailConfirmation(context.Background(), m)
 	test.CheckErr(t, err)
+
 	return
 }

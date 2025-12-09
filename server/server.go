@@ -1,3 +1,4 @@
+// Package server ...
 package server
 
 import (
@@ -14,11 +15,15 @@ import (
 	"github.com/gopl-dev/server/server/middleware"
 )
 
+// RWTimeout defines server's Read&Write timeout in seconds.
+const RWTimeout = 10 * time.Second
+
+// New creates new server.
 func New(s *service.Service) *http.Server {
 	conf := app.Config().Server
 
-	h := handler.NewHandler(s)
-	mw := middleware.NewMiddleware(s)
+	h := handler.New(s)
+	mw := middleware.New(s)
 	r := endpoint.NewRouter(h)
 	r.HandleAssets()
 
@@ -36,16 +41,16 @@ func New(s *service.Service) *http.Server {
 	web.ProtectedWebEndpoints()
 
 	// API endpoints
-	api := common.Group(conf.ApiBasePath)
+	api := common.Group(conf.APIBasePath)
 	api.Use()
 
-	api.PublicApiEndpoints()
+	api.PublicAPIEndpoints()
 
 	return &http.Server{
 		Addr:         net.JoinHostPort(conf.Host, conf.Port),
 		Handler:      r,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  RWTimeout,
+		WriteTimeout: RWTimeout,
 	}
 }
 
@@ -61,7 +66,7 @@ func corsConfig() gin.HandlerFunc { // TODO review
 			"X-Client",
 		},
 		AllowCredentials: false,
-		MaxAge:           24 * time.Hour,
+		// MaxAge:           24 * time.Hour,
 	}
 
 	return cors.New(conf)

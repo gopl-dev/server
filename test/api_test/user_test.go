@@ -1,4 +1,4 @@
-package apitest
+package api_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/server/handler"
@@ -38,8 +39,8 @@ func TestUserSignUp(t *testing.T) {
 
 	vars := test.LoadEmailVars(t, req.Email)
 
-	assert.Equal(t, req.Username, vars["username"].(string))
-	assert.Equal(t, req.Email, vars["email"].(string))
+	assert.Equal(t, req.Username, app.String(vars["username"]))
+	assert.Equal(t, req.Email, app.String(vars["email"]))
 
 	user, err := tt.Service.FindUserByEmail(context.Background(), req.Email)
 	if err != nil {

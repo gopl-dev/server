@@ -7,6 +7,9 @@ import (
 	"github.com/gopl-dev/server/server/handler"
 )
 
+// ResolveUserFromCookie is a middleware that attempts to find a user's session token
+// in an HTTP cookie, validate the token and the session, and if successful,
+// adds the authenticated user and session objects to the request's context.
 func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		jwt := handler.GetSessionFromCookie(r)
@@ -27,6 +30,7 @@ func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Hand
 	}
 }
 
+// UserAuthWeb is a middleware that enforces user authentication for web requests.
 func (mw *Middleware) UserAuthWeb(next endpoint.Handler) endpoint.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := mw.service.UserFromContext(r.Context())

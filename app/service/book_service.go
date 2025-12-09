@@ -1,14 +1,19 @@
+//nolint:all
 package service
 
-import "github.com/gopl-dev/server/app/ds"
+import (
+	"time"
+
+	"github.com/gopl-dev/server/app/ds"
+)
 
 func (s *Service) CreateBook(u *ds.Book) (err error) {
-	//err = database.ORM().Insert(u)
+	// err = database.ORM().Insert(u)
 	return
 }
 
 func (s *Service) UpdateBook(u *ds.Book) (err error) {
-	//err = database.ORM().Update(u)
+	// err = database.ORM().Update(u)
 	return
 }
 
@@ -22,11 +27,46 @@ func (s *Service) FilterBooks(params FilterBooksParams) (data []ds.Book, count i
 	_ = params
 	count = 5
 	data = []ds.Book{
-		{Title: "Hello World"},
-		{Title: "Hello App"},
-		{Title: "Hello Server"},
-		{Title: "Hello Mobile"},
-		{Title: "Hello Web"},
+		{
+			ID:          1,
+			Title:       "Hello World",
+			Description: "",
+			CreatedAt:   time.Time{},
+			UpdatedAt:   nil,
+			DeletedAt:   nil,
+		},
+		{
+			ID:          2,
+			Title:       "Hello App",
+			Description: "",
+			CreatedAt:   time.Time{},
+			UpdatedAt:   nil,
+			DeletedAt:   nil,
+		},
+		{
+			ID:          3,
+			Title:       "Hello Server",
+			Description: "",
+			CreatedAt:   time.Time{},
+			UpdatedAt:   nil,
+			DeletedAt:   nil,
+		},
+		{
+			ID:          4,
+			Title:       "Hello Mobile",
+			Description: "",
+			CreatedAt:   time.Time{},
+			UpdatedAt:   nil,
+			DeletedAt:   nil,
+		},
+		{
+			ID:          5,
+			Title:       "Hello Web",
+			Description: "",
+			CreatedAt:   time.Time{},
+			UpdatedAt:   nil,
+			DeletedAt:   nil,
+		},
 	}
 
 	return

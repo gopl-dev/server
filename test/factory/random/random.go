@@ -1,3 +1,4 @@
+// Package random provides utility functions for generating various types of random data.
 package random
 
 import (
@@ -11,62 +12,74 @@ var (
 	digits  = []byte("0123456789")
 )
 
+// String generates a random alphanumeric string.
+// The length of the string defaults to 10 if no argument is provided.
 func String(lengthOpt ...int) string {
 	length := 10
 	if len(lengthOpt) == 1 {
 		length = lengthOpt[0]
 	}
+
 	alphanum := letters
 	alphanum = append(alphanum, digits...)
+
 	s := make([]byte, length)
-	for i := 0; i < length; i++ {
-		s[i] = alphanum[rand.Intn(len(alphanum))]
+	for i := range length {
+		s[i] = alphanum[rand.Intn(len(alphanum))] //nolint:gosec
 	}
+
 	return string(s)
 }
 
+// Email generates randomly constructed email address.
 func Email() string {
-	return strings.ToLower(fmt.Sprintf("%s@%s.%s", Letters(6), Letters(6), Letters(3)))
+	return strings.ToLower(fmt.Sprintf("%s@%s.%s", Letters(6), Letters(6), Letters(3))) //nolint:mnd
 }
 
+// Letters generates a random string consisting only of alphabetic characters (a-z, A-Z).
 func Letters(length int) string {
-	l := ""
-	for i := 0; i < length; i++ {
-		l += Letter()
+	var sb strings.Builder
+	sb.Grow(length)
+
+	for range length {
+		sb.WriteString(Letter())
 	}
-	return l
+
+	return sb.String()
 }
 
+// Digits generates a random string consisting only of numeric characters (0-9).
 func Digits(length int) string {
-	d := ""
-	for i := 0; i < length; i++ {
-		d += Digit()
+	var sb strings.Builder
+	sb.Grow(length)
+
+	for range length {
+		sb.WriteString(Digit())
 	}
-	return d
+
+	return sb.String()
 }
 
+// Digit returns a single random numeric character (0-9) as a string.
 func Digit() string {
-	d := digits[rand.Intn(len(digits))]
+	d := digits[rand.Intn(len(digits))] //nolint:gosec
+
 	return string(d)
 }
 
+// Letter returns a single random alphabetic character (a-z, A-Z) as a string.
 func Letter() string {
-	l := letters[rand.Intn(len(letters))]
+	l := letters[rand.Intn(len(letters))] //nolint:gosec
+
 	return string(l)
 }
 
-func IntSlice(lenght int) []int {
-	var s []int
-	for i := 0; i < lenght; i++ {
-		s = append(s, rand.Intn(10))
-	}
-	return s
-}
-
-func Int(min, max int) int {
-	if max < min {
-		min, max = max, min
+// Int generates a random integer within the specified inclusive range [min, max].
+// If max is less than min, the arguments are swapped to ensure the range is valid.
+func Int(from, to int) int {
+	if to < from {
+		from, to = to, from
 	}
 
-	return rand.Intn(max-min+1) + min
+	return rand.Intn(to-from+1) + from //nolint:gosec
 }

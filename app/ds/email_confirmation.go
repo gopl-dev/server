@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+// EmailConfirmation represents a record used to verify a user's email address
+// after registration or a change request.
 type EmailConfirmation struct {
 	ID          int64
 	UserID      int64
@@ -13,6 +15,8 @@ type EmailConfirmation struct {
 	ConfirmedAt *time.Time
 }
 
+// Invalid checks if the confirmation record is expired.
+// Returns true if the token is no longer valid, false otherwise.
 func (c *EmailConfirmation) Invalid() bool {
 	return c.ExpiresAt.Before(time.Now())
 }

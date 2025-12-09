@@ -8,6 +8,7 @@ import (
 	"github.com/gopl-dev/server/frontend/page"
 )
 
+// Home sweet home.
 func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Welcome!",

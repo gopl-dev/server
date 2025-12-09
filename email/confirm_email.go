@@ -6,21 +6,25 @@ import (
 	"github.com/gopl-dev/server/app"
 )
 
+// ConfirmEmail ...
 type ConfirmEmail struct {
 	Username   string
 	Email      string
 	Code       string
-	ConfirmUrl string
+	ConfirmURL string
 }
 
+// Subject ...
 func (ConfirmEmail) Subject() string {
 	return "Email confirmation"
 }
 
+// TemplateName ...
 func (ConfirmEmail) TemplateName() string {
 	return "confirm_email"
 }
 
+// Variables ...
 func (c ConfirmEmail) Variables() map[string]any {
 	return map[string]any{
 		"username":    c.Username,

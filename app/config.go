@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// ConfigT ...
 type ConfigT struct {
 	App struct {
 		ID      string `yaml:"id"`
@@ -19,7 +20,7 @@ type ConfigT struct {
 	Server struct {
 		Port        string `yaml:"port"`
 		Host        string `yaml:"host"`
-		ApiBasePath string `yaml:"api_base_path"`
+		APIBasePath string `yaml:"api_base_path"`
 		Addr        string `yaml:"addr"`
 	} `yaml:"server"`
 
@@ -40,22 +41,25 @@ type ConfigT struct {
 		Port     int    `yaml:"port"`
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
-	}
+	} `yaml:"email"`
 
 	Session struct {
 		DurationHours int    `yaml:"duration_hours"`
 		Key           string `yaml:"key"`
-	}
+	} `yaml:"session"`
 }
 
+// IsDevEnv ...
 func (c ConfigT) IsDevEnv() bool {
 	return c.App.Env == DevEnv
 }
 
+// IsTestEnv ...
 func (c ConfigT) IsTestEnv() bool {
 	return c.App.Env == TestEnv
 }
 
+// IsReleaseEnv ...
 func (c ConfigT) IsReleaseEnv() bool {
 	return c.App.Env == ReleaseEnv
 }
@@ -63,17 +67,19 @@ func (c ConfigT) IsReleaseEnv() bool {
 var loadConfigOnce sync.Once
 var conf *ConfigT
 
-// Config returns config from .config.yaml
+// Config returns config from .config.yaml.
 func Config() *ConfigT {
 	loadConfigOnce.Do(func() {
 		name := ".config.yaml"
+
 		data, err := os.ReadFile(name)
 		if err != nil {
-			err = fmt.Errorf("read '.config.yaml': %v", err)
+			err = fmt.Errorf("read '.config.yaml': %w", err)
 			panic(err)
 		}
 
-		conf = &ConfigT{}
+		conf = new(ConfigT)
+
 		err = yaml.Unmarshal(data, conf)
 		if err != nil {
 			panic(err)

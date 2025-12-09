@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// NewUser ...
 func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 	m = &ds.User{
 		ID:             0,
@@ -31,7 +32,10 @@ func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 	return
 }
 
+// CreateUser ...
 func (f *Factory) CreateUser(t *testing.T, overrideOpt ...ds.User) (m *ds.User) {
+	t.Helper()
+
 	m = f.NewUser(overrideOpt...)
 
 	password := m.Password
@@ -46,5 +50,6 @@ func (f *Factory) CreateUser(t *testing.T, overrideOpt ...ds.User) (m *ds.User) 
 
 	err = f.repo.CreateUser(context.Background(), m)
 	test.CheckErr(t, err)
+
 	return
 }

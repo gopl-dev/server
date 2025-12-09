@@ -1,6 +1,8 @@
+// New DB migration.
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,14 +11,18 @@ import (
 	"time"
 )
 
+const privateFileMode os.FileMode = 0600
+
 func main() {
 	args := make([]string, 0)
 	if len(os.Args) > 1 {
 		args = os.Args[1:]
 	}
+
 	err := newMigration(args)
 	if err != nil {
 		println(err.Error())
+
 		return
 	}
 }
@@ -30,13 +36,14 @@ func newMigration(args []string) (err error) {
 	name = time.Now().UTC().Format("20060102150405") + "_" + name + ".sql"
 	mg := resolveSampleMg(name)
 
-	err = os.WriteFile("app/db_migrations/"+name, []byte(mg+"\n"), os.ModePerm)
+	err = os.WriteFile("app/db_migrations/"+name, []byte(mg+"\n"), privateFileMode)
 	if err != nil {
-		return err
+		return fmt.Errorf("write file: %w", err)
 	}
 
 	if runtime.GOOS == "windows" {
-		cmd := exec.Command("cmd", "/C start app/db_migrations/"+name)
+		cmd := exec.CommandContext(context.Background(), "cmd", "/C start app/db_migrations/"+name)
+
 		err = cmd.Run()
 		if err != nil {
 			return
@@ -44,6 +51,7 @@ func newMigration(args []string) (err error) {
 	}
 
 	fmt.Println("app/db_migrations/" + name)
+
 	return nil
 }
 

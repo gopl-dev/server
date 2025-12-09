@@ -1,0 +1,42 @@
+version: "2"
+
+linters:
+  default: all
+  disable:
+    - unused
+    - cyclop
+    - depguard
+    - exhaustruct
+    - exhaustive
+    - forbidigo
+    - funlen
+    - gochecknoglobals
+    - gocognit
+    - godox
+    - nakedret
+    - nestif
+    - gochecknoinits
+    - nonamedreturns
+    - paralleltest
+    - wsl
+    - wrapcheck
+    - varnamelen
+    - unqueryvet
+    - tagliatelle
+    - tagalign
+    - ireturn
+    - wsl_v5
+    - godoclint
+    - nlreturn
+
+  settings:
+    nlreturn:
+      block-size: 2
+
+run:
+  timeout: 5m
+  allow-parallel-runners: true
+  allow-serial-runners: true
+
+output:
+  path-mode: "abs"

@@ -10,8 +10,10 @@ import (
 	"github.com/gopl-dev/server/server/response"
 )
 
+// UserSignUp is the API handler for user registration.
 func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
 	var req request.UserSignUp
+
 	res := handleJSON(w, r, &req)
 	if res.Aborted() {
 		return
@@ -26,10 +28,11 @@ func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
 	res.jsonSuccess()
 }
 
-// UserSignIn is a handler for the user login endpoint.
-// TODO either email or username can be used to login
+// UserSignIn is the API handler for the user login endpoint.
+// TODO either email or username can be used to login.
 func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
 	var req request.UserSignIn
+
 	res := handleJSON(w, r, &req)
 	if res.Aborted() {
 		return
@@ -50,8 +53,10 @@ func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ConfirmEmail is the API handler for confirming a user's email address via a confirmation code.
 func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
 	var req request.ConfirmEmail
+
 	res := handleJSON(w, r, &req)
 	if res.Aborted() {
 		return
@@ -66,18 +71,23 @@ func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
 	res.jsonSuccess()
 }
 
+// UserSignUpView renders the static HTML form for user registration.
 func (h *Handler) UserSignUpView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Sign up",
-		Body:  page.UserSignUpForm(),
-		User:  nil, // TODO! resolve user
+		Body:  page.UserSignUpForm(), // Assumes page.UserSignUpForm is the templ component for the form
+		User:  nil,                   // TODO! resolve user (Placeholder for authenticated user object, if required)
 	}))
 }
 
+// UserSignOut handles user log-out by clearing the session cookie and deleting the session
+// record from the database.
 func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
+	// Removes the session cookie from the client.
 	clearSessionCookie(w)
 
 	ctx := r.Context()
+
 	session := h.service.UserSessionFromContext(ctx)
 	if session != nil {
 		err := h.service.DeleteUserSession(ctx, session.ID)
@@ -94,14 +104,18 @@ func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+// ConfirmEmailView renders the static HTML form page where a user can manually enter
+// an email confirmation code.
 func (h *Handler) ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Confirm email",
-		Body:  page.ConfirmEmailForm(),
-		User:  nil, // TODO! resolve user
+		Body:  page.ConfirmEmailForm(), // Assumes page.ConfirmEmailForm is the templ component
+		User:  nil,                     // TODO! resolve user
 	}))
 }
 
+// UserSignInView renders the static HTML form for user login.
+// It is a wrapper around the RenderUserSignInPage helper.
 func (h *Handler) UserSignInView(w http.ResponseWriter, r *http.Request) {
 	RenderUserSignInPage(w, r, "/")
 }

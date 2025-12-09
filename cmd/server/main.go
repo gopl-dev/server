@@ -1,3 +1,4 @@
+// Package main ...
 package main
 
 import (
@@ -26,29 +27,35 @@ func main() {
 	)
 
 	ctx := context.Background()
-	db, err := app.NewDatabasePool(ctx)
-	defer db.Close()
+
+	db, err := app.NewPool(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return
 	}
+	defer db.Close()
 
 	err = app.MigrateDB(ctx, db)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	services := service.New(db)
 	srv := server.New(services)
+
 	go func() {
 		<-quit
-		if err := srv.Close(); err != nil {
+
+		err := srv.Close()
+		if err != nil {
 			log.Println(err.Error())
 			return
 		}
 	}()
 
 	log.Println(conf.App.Name + " (" + conf.App.Version + ") serving at " + conf.Server.Host + ":" + conf.Server.Port)
+
 	err = srv.ListenAndServe()
 	if err != nil && errors.Is(err, http.ErrServerClosed) {
 		log.Println(err.Error())

@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+// AuthToken represents container for authentication-related
+// data.
 type AuthToken struct {
 	ID         int64
 	UserID     int64

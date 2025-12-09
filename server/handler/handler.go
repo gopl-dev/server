@@ -25,19 +25,24 @@ import (
 )
 
 var (
+	// ErrIDParamMissingFromRequest is returned when an expected ID URL parameter is absent.
 	ErrIDParamMissingFromRequest = app.ErrBadRequest("ID param missing from request")
-	ErrIDParamMustBeInt64        = app.ErrBadRequest("ID param must be positive int64")
+	// ErrIDParamMustBeInt64 is returned when an ID URL parameter is present but cannot be parsed as a positive int64.
+	ErrIDParamMustBeInt64 = app.ErrBadRequest("ID param must be positive int64")
 )
 
+// Handler holds dependencies required by request handlers.
 type Handler struct {
 	service *service.Service
 }
 
-func NewHandler(service *service.Service) *Handler {
+// New creates and returns a new Handler instance.
+func New(service *service.Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) ServerStatus(w http.ResponseWriter, req *http.Request) {
+// ServerStatus is an HTTP handler that returns basic information about the running server.
+func (h *Handler) ServerStatus(w http.ResponseWriter, _ *http.Request) {
 	conf := app.Config()
 	jsonOK(w, response.ServerStatus{
 		Env:     conf.App.Env,
@@ -46,12 +51,15 @@ func (h *Handler) ServerStatus(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
+// Request is a wrapper around the standard http.Request and http.ResponseWriter
+// that provides convenience methods for handling the current request/response lifecycle.
 type Request struct {
 	Request  *http.Request
 	Response http.ResponseWriter
 	aborted  bool
 }
 
+// NewRequest creates and returns a new Request wrapper object.
 func NewRequest(r *http.Request, w http.ResponseWriter) *Request {
 	return &Request{
 		Request:  r,
@@ -59,18 +67,19 @@ func NewRequest(r *http.Request, w http.ResponseWriter) *Request {
 	}
 }
 
+// handleJSON is a helper function that attempts to parse a JSON request body into the
+// provided 'body' struct, performs validation/sanitization, and handles errors.
+// It returns a Request object wrapper for subsequent actions.
 func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 	h := NewRequest(r, w)
 
 	err := bindJSON(r, body)
 	// we'll get EOF error when body is empty,
 	// proceed as usual if so
-	if err == io.EOF {
-		err = nil
-	}
 	if errors.Is(err, io.EOF) {
 		err = nil
 	}
+
 	if err != nil {
 		h.Abort(err)
 		return h
@@ -83,6 +92,7 @@ func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 	if v, ok := body.(Validator); ok {
 		err := app.NewInputError()
 		v.Validate(&err)
+
 		if err.Has() {
 			h.Abort(err)
 			return h
@@ -100,46 +110,20 @@ func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 	return h
 }
 
-func (h *Request) bindJSON(body any) *Request {
-	return handleJSON(h.Response, h.Request, body)
-}
-
-func handleQueryRequest(w http.ResponseWriter, r *http.Request, body any) *Request {
-	h := &Request{
-		Request:  r,
-		Response: w,
-	}
-
-	err := bindQuery(r, body)
-	if err != nil {
-		h.Abort(err)
-	}
-
-	if v, ok := body.(Sanitizer); ok {
-		v.Sanitize()
-	}
-
-	if v, ok := body.(Validator); ok {
-		err := app.NewInputError()
-		v.Validate(&err)
-		if err.Has() {
-			h.Abort(err)
-		}
-	}
-
-	return h
-}
-
+// MapHeaders parses request headers and maps values to fields in the 'to' struct
+// based on the struct's 'h' tags.
 func (h *Request) MapHeaders(to any) {
 	val := reflect.ValueOf(to).Elem()
 	typ := val.Type()
 
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		field := typ.Field(i)
+
 		tag := field.Tag.Get("h")
 		if tag == "" {
 			continue
 		}
+
 		headerName := tag
 		if commaIndex := strings.Index(tag, ","); commaIndex != -1 {
 			headerName = tag[:commaIndex]
@@ -161,23 +145,29 @@ func (h *Request) MapHeaders(to any) {
 	}
 }
 
-func (h *Request) jsonOK(body any) {
-	jsonOK(h.Response, body)
-}
-
-func (h *Request) jsonSuccess() {
-	jsonOK(h.Response, response.Success)
-}
-
+// Abort flags the request as aborted and writes the provided error to the response.
 func (h *Request) Abort(err error) {
 	h.aborted = true
 	Abort(h.Response, err)
 }
 
+// Aborted returns true if the request lifecycle has been stopped due to an error.
 func (h *Request) Aborted() bool {
 	return h.aborted
 }
 
+// jsonOK writes a standard HTTP 200 OK JSON response with the provided body.
+func (h *Request) jsonOK(body any) {
+	jsonOK(h.Response, body)
+}
+
+// jsonSuccess writes a standard HTTP 200 OK JSON response using the predefined
+// success struct.
+func (h *Request) jsonSuccess() {
+	jsonOK(h.Response, response.Success)
+}
+
+// bindJSON reads and decodes the request body as JSON into the provided object.
 func bindJSON(r *http.Request, obj any) error {
 	decoder := json.NewDecoder(r.Body)
 	decoder.UseNumber()
@@ -190,6 +180,39 @@ func bindJSON(r *http.Request, obj any) error {
 	return err
 }
 
+// bindJSON is a convenience method to bind a JSON body and handle errors within the Request lifecycle.
+func (h *Request) bindJSON(body any) *Request {
+	return handleJSON(h.Response, h.Request, body)
+}
+
+// handleQueryRequest is a helper function that binds URL query parameters to the
+// provided 'body' struct, performs validation/sanitization, and handles errors.
+func handleQueryRequest(w http.ResponseWriter, r *http.Request, body any) *Request {
+	h := &Request{
+		Request:  r,
+		Response: w,
+	}
+
+	bindQuery(r, body)
+
+	if v, ok := body.(Sanitizer); ok {
+		v.Sanitize()
+	}
+
+	if v, ok := body.(Validator); ok {
+		err := app.NewInputError()
+		v.Validate(&err)
+
+		if err.Has() {
+			h.Abort(err)
+		}
+	}
+
+	return h
+}
+
+// writeJSON serializes the provided body into a JSON response, sets the Content-Type,
+// and writes the given HTTP status code.
 func writeJSON(w http.ResponseWriter, body any, status int) (err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -202,6 +225,7 @@ func writeJSON(w http.ResponseWriter, body any, status int) (err error) {
 	return nil
 }
 
+// jsonOK writes a standard HTTP 200 OK JSON response with the provided body.
 func jsonOK(w http.ResponseWriter, body any) {
 	err := writeJSON(w, body, http.StatusOK)
 	if err != nil {
@@ -209,10 +233,14 @@ func jsonOK(w http.ResponseWriter, body any) {
 	}
 }
 
+// isJSON checks if the request indicates that it accepts or contains JSON data
+// based on the Content-Type header.
 func isJSON(r *http.Request) bool {
 	return r.Header.Get("Content-Type") == "application/json"
 }
 
+// renderTempl renders a templ.Component to the http.ResponseWriter, setting the
+// Content-Type to HTML and the status to 200 OK.
 func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -220,6 +248,7 @@ func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) 
 	err := t.Render(ctx, w)
 	if err != nil {
 		log.Println(err)
+
 		_, err = w.Write([]byte(err.Error()))
 		if err != nil {
 			log.Println(err)
@@ -227,6 +256,8 @@ func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) 
 	}
 }
 
+// RenderUserSignInPage renders the HTML page containing the user sign-in form,
+// optionally specifying a redirect-to path after successful login.
 func RenderUserSignInPage(w http.ResponseWriter, r *http.Request, redirectTo string) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Sign In",
@@ -234,45 +265,52 @@ func RenderUserSignInPage(w http.ResponseWriter, r *http.Request, redirectTo str
 	}))
 }
 
+// Validator is an interface for structs that can perform custom, multi-field validation.
 type Validator interface {
 	Validate(err *app.InputError)
 }
 
+// ValidateSchemaProvider is an interface for structs that provide a validation schema for structural validation.
 type ValidateSchemaProvider interface {
-	ValidationSchema() z.Schema
+	ValidationSchema() z.Shape
 }
 
+// Sanitizer is an interface for structs that can clean or normalize their input data.
 type Sanitizer interface {
 	Sanitize()
 }
 
-//func bindID(c *gin.Context, id *int64, paramNameOpt ...string) (ok bool) {
-//	name := "id"
-//	if len(paramNameOpt) == 1 {
-//		name = paramNameOpt[0]
-//	}
-//
-//	val := c.Param(name)
-//	if val == "" {
-//		abort(c, ErrIDParamMissingFromRequest)
-//		return
-//	}
-//
-//	intVal, err := strconv.ParseInt(val, 10, 64)
-//	if err != nil {
-//		abort(c, ErrIDParamMustBeInt64)
-//		return
-//	}
-//
-//	if intVal < 1 {
-//		abort(c, ErrIDParamMustBeInt64)
-//		return
-//	}
-//
-//	*id = intVal
-//	return true
-//}
+/*
+func bindID(c *gin.Context, id *int64, paramNameOpt ...string) (ok bool) {
+    name := "id"
+    if len(paramNameOpt) == 1 {
+       name = paramNameOpt[0]
+    }
 
+    val := c.Param(name)
+    if val == "" {
+       abort(c, ErrIDParamMissingFromRequest)
+       return
+    }
+
+    intVal, err := strconv.ParseInt(val, 10, 64)
+    if err != nil {
+       abort(c, ErrIDParamMustBeInt64)
+       return
+    }
+
+    if intVal < 1 {
+       abort(c, ErrIDParamMustBeInt64)
+       return
+    }
+
+    *id = intVal
+    return true
+}
+*/
+
+// copyRequestBody reads the entire request body into a byte slice,
+// and then resets the request's Body reader so it can be read again later.
 func copyRequestBody(r *http.Request) (body []byte, err error) {
 	body, err = io.ReadAll(r.Body)
 	if err != nil {
@@ -283,19 +321,26 @@ func copyRequestBody(r *http.Request) (body []byte, err error) {
 	return
 }
 
+// Abort serializes and writes an application error (app.Error or app.InputError)
+// to the client, handling appropriate HTTP status codes and logging internal errors.
 func Abort(w http.ResponseWriter, err error) {
 	resp := Error{
 		Code: app.CodeInternal,
 	}
 
-	switch e := err.(type) {
-	case app.Error:
-		resp.Code = e.Code
-		resp.Error = e.Error()
-	case app.InputError:
+	var (
+		appErr   app.Error
+		inputErr app.InputError
+	)
+
+	if errors.As(err, &appErr) {
+		resp.Code = appErr.Code
+		resp.Error = appErr.Error()
+	}
+	if errors.As(err, &inputErr) {
 		resp.Code = app.CodeUnprocessable
-		resp.InputErrors = e
-	default:
+		resp.InputErrors = inputErr
+	} else {
 		resp.Error = err.Error()
 	}
 
@@ -311,6 +356,8 @@ func Abort(w http.ResponseWriter, err error) {
 	}
 }
 
+// Error is the structure used for serializing and returning structured JSON error responses
+// to the client, categorized by code.
 type Error struct {
 	Code        int               `json:"code"`
 	Error       string            `json:"error,omitempty"`
@@ -318,14 +365,16 @@ type Error struct {
 	InputErrors map[string]string `json:"input_errors,omitempty"`
 }
 
-func bindQuery(r *http.Request, to any) (err error) {
+// bindQuery binds URL query parameters to fields in the 'to' struct based on the struct's 'q' tags.
+func bindQuery(r *http.Request, to any) {
 	query := r.URL.Query()
 
 	val := reflect.ValueOf(to).Elem()
 	typ := val.Type()
 
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		field := typ.Field(i)
+
 		tag := field.Tag.Get("q")
 		if tag == "" {
 			continue
@@ -345,12 +394,11 @@ func bindQuery(r *http.Request, to any) (err error) {
 			}
 		}
 	}
-
-	return nil
 }
 
 const sessionCookieName = "session"
 
+// setSessionCookie sets the user authentication token as an HTTP-only, secure, same-site cookie.
 func setSessionCookie(w http.ResponseWriter, token string) {
 	cookie := http.Cookie{
 		Name:     sessionCookieName,
@@ -365,6 +413,7 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &cookie)
 }
 
+// clearSessionCookie sets an expired cookie with the session name to effectively remove it from the client.
 func clearSessionCookie(w http.ResponseWriter) {
 	cookie := http.Cookie{
 		Name:     sessionCookieName,
@@ -379,6 +428,7 @@ func clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &cookie)
 }
 
+// GetSessionFromCookie retrieves the authentication token string from the request cookies.
 func GetSessionFromCookie(r *http.Request) string {
 	cookie, _ := r.Cookie(sessionCookieName)
 	if cookie != nil {

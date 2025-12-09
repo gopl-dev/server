@@ -1,5 +1,6 @@
 package endpoint
 
+// PublicWebEndpoints ...
 func (r *Router) PublicWebEndpoints() {
 	r.GET("/", r.handler.Home)
 	r.GET("/users/sign-up/", r.handler.UserSignUpView)
