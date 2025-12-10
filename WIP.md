@@ -2,7 +2,6 @@
 
 for simplicity, I keep todo list and progress here for now
 
-- add linter
 - add tracer
 - add openAPI
 ---

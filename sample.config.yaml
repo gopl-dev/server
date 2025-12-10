@@ -54,3 +54,9 @@ email:
 session:
   duration_hours: 24
   key: "secret-key"
+
+trace:
+  enabled: true
+  driver: uptrace
+  # https://uptrace.dev/get#dsn
+  uptrace_dsn: "https://**********@api.uptrace.dev?grpc=4317"

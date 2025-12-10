@@ -22,6 +22,7 @@ import (
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/response"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -34,15 +35,22 @@ var (
 // Handler holds dependencies required by request handlers.
 type Handler struct {
 	service *service.Service
+	tracer  trace.Tracer
 }
 
 // New creates and returns a new Handler instance.
-func New(service *service.Service) *Handler {
-	return &Handler{service: service}
+func New(service *service.Service, t trace.Tracer) *Handler {
+	return &Handler{
+		service: service,
+		tracer:  t,
+	}
 }
 
 // ServerStatus is an HTTP handler that returns basic information about the running server.
-func (h *Handler) ServerStatus(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) ServerStatus(w http.ResponseWriter, r *http.Request) {
+	_, span := h.tracer.Start(r.Context(), "serverStatus")
+	defer span.End()
+
 	conf := app.Config()
 	jsonOK(w, response.ServerStatus{
 		Env:     conf.App.Env,

@@ -12,11 +12,17 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/service"
+	"github.com/gopl-dev/server/pkg/trace"
 	"github.com/gopl-dev/server/server"
 )
 
 func main() {
 	conf := app.Config()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	tracer, err := trace.New(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit,
@@ -25,8 +31,6 @@ func main() {
 		syscall.SIGINT,  // kill -SIGINT or Ctrl+c
 		syscall.SIGQUIT, // kill -SIGQUIT
 	)
-
-	ctx := context.Background()
 
 	db, err := app.NewPool(ctx)
 	if err != nil {
@@ -41,12 +45,12 @@ func main() {
 		return
 	}
 
-	services := service.New(db)
-	srv := server.New(services)
+	services := service.New(db, tracer)
+	srv := server.New(services, tracer)
 
 	go func() {
 		<-quit
-
+		cancelCtx()
 		err := srv.Close()
 		if err != nil {
 			log.Println(err.Error())

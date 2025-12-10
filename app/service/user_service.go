@@ -2,28 +2,27 @@ package service
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/email"
+	"github.com/gopl-dev/server/pkg/email"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var (
 	// ErrInvalidEmailOrPassword is returned when a user attempts to log in with credentials
 	// that do not match any record.
-	ErrInvalidEmailOrPassword = errors.New("invalid email or password")
+	ErrInvalidEmailOrPassword = app.ErrUnprocessable("invalid email or password")
 
 	// ErrInvalidJWT is returned when an authentication token is malformed,
 	// invalidly signed, or contains unexpected claims.
-	ErrInvalidJWT = errors.New("invalid token")
+	ErrInvalidJWT = app.ErrForbidden("invalid token")
 
 	// ErrSessionExpired is returned when a JWT is validly signed but the associated
 	// database session has expired based on its timestamp.
-	ErrSessionExpired = errors.New("session expired")
+	ErrSessionExpired = app.ErrForbidden("session expired")
 )
 
 var (
@@ -52,6 +51,9 @@ type RegisterUserArgs struct {
 
 // RegisterUser handles the complete user registration process.
 func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err error) {
+	ctx, span := s.tracer.Start(ctx, "RegisterUser")
+	defer span.End()
+
 	err = app.Validate(ds.UserValidationRules, &p)
 	if err != nil {
 		return
@@ -113,6 +115,9 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 
 // LoginUser authenticates a user using their email and password.
 func (s *Service) LoginUser(ctx context.Context, email, password string) (user *ds.User, token string, err error) {
+	ctx, span := s.tracer.Start(ctx, "loginUser")
+	defer span.End()
+
 	user, err = s.db.FindUserByEmail(ctx, email)
 	if err != nil {
 		return
@@ -120,16 +125,18 @@ func (s *Service) LoginUser(ctx context.Context, email, password string) (user *
 
 	if user == nil {
 		err = ErrInvalidEmailOrPassword
-
 		return
 	}
+
+	now := time.Now()
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		err = ErrInvalidEmailOrPassword
-
 		return
 	}
+
+	println("TIME:", time.Since(now).String())
 
 	sess, err := s.CreateUserSession(ctx, user.ID)
 	if err != nil {
@@ -146,23 +153,25 @@ func (s *Service) LoginUser(ctx context.Context, email, password string) (user *
 
 // FindUserByID retrieves a user record from the database by their ID.
 func (s *Service) FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
+	ctx, span := s.tracer.Start(ctx, "FindUserByID")
+	defer span.End()
+
 	return s.db.FindUserByID(ctx, id)
 }
 
 // FindUserByEmail retrieves a user record from the database by their email address.
 func (s *Service) FindUserByEmail(ctx context.Context, email string) (user *ds.User, err error) {
-	return s.db.FindUserByEmail(ctx, email)
-}
+	ctx, span := s.tracer.Start(ctx, "FindUserByEmail")
+	defer span.End()
 
-// CreateUser is a placeholder method for creating a user, currently non-functional
-// or delegated/deprecated in favor of RegisterUser.
-func (s *Service) CreateUser(_ *ds.User) (err error) {
-	// err = database.ORM().Insert(u)
-	return
+	return s.db.FindUserByEmail(ctx, email)
 }
 
 // SetUserEmailConfirmed sets the email_confirmed flag to true for a user in the database.
 func (s *Service) SetUserEmailConfirmed(ctx context.Context, userID int64) (err error) {
+	ctx, span := s.tracer.Start(ctx, "SetUserEmailConfirmed")
+	defer span.End()
+
 	return s.db.SetUserEmailConfirmed(ctx, userID)
 }
 
@@ -170,6 +179,9 @@ func (s *Service) SetUserEmailConfirmed(ctx context.Context, userID int64) (err 
 // against the database, and retrieves the corresponding user record.
 func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, jwt string) (
 	user *ds.User, session *ds.UserSession, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetUserAndSessionFromJWT")
+	defer span.End()
+
 	sessionID, userID, err := unpackSessionJWT(jwt)
 	if err != nil {
 		return

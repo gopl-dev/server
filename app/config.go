@@ -33,6 +33,14 @@ type ConfigT struct {
 		LogQueries bool   `yaml:"log_queries"`
 	} `yaml:"db"`
 
+	Tracing struct {
+		Enabled bool `yaml:"enabled"`
+		// uptrace | log
+		Driver string `yaml:"driver"`
+		// https://uptrace.dev/
+		UptraceDSN string `yaml:"uptrace_dsn"`
+	} `yaml:"tracing"`
+
 	Email struct {
 		// Driver can be: smtp or test
 		Driver   string `yaml:"driver"`
@@ -62,6 +70,11 @@ func (c ConfigT) IsTestEnv() bool {
 // IsReleaseEnv ...
 func (c ConfigT) IsReleaseEnv() bool {
 	return c.App.Env == ReleaseEnv
+}
+
+// TracingDisabled ...
+func (c ConfigT) TracingDisabled() bool {
+	return !c.Tracing.Enabled
 }
 
 var loadConfigOnce sync.Once

@@ -16,7 +16,9 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/app/service"
+	"github.com/gopl-dev/server/pkg/trace"
 	"github.com/gopl-dev/server/server"
 	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
@@ -63,8 +65,10 @@ func TestMain(m *testing.M) {
 	tt = new(Test)
 	ctx := context.Background()
 	tt.Conf = app.Config()
-
-	var err error
+	tracer, err := trace.New(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	tt.DB, err = app.NewPool(ctx)
 	if err != nil {
@@ -82,9 +86,9 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	tt.Service = service.New(tt.DB)
-	tt.Factory = factory.New(tt.DB)
-	router = server.New(tt.Service).Handler
+	tt.Service = service.New(tt.DB, tracer)
+	tt.Factory = factory.New(repo.New(tt.DB, tracer))
+	router = server.New(tt.Service, tracer).Handler
 	code := m.Run()
 
 	// shutdown

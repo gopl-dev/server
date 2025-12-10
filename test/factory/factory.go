@@ -7,7 +7,6 @@ import (
 
 	"dario.cat/mergo"
 	"github.com/gopl-dev/server/app/repo"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Factory holds dependencies required by factory methods.
@@ -16,8 +15,8 @@ type Factory struct {
 }
 
 // New is a factory function that creates and returns a new Factory instance.
-func New(db *pgxpool.Pool) *Factory {
-	return &Factory{repo: repo.New(db)}
+func New(r *repo.Repo) *Factory {
+	return &Factory{repo: r}
 }
 
 func merge(dst, src any) {

@@ -16,6 +16,9 @@ var (
 // FindUserByEmail retrieves a user from the database by their email address.
 // If no user is found, it returns (nil, nil).
 func (r *Repo) FindUserByEmail(ctx context.Context, email string) (user *ds.User, err error) {
+	_, span := r.tracer.Start(ctx, "FindUserByEmail")
+	defer span.End()
+
 	user = new(ds.User)
 
 	err = pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE email = $1`, email)
@@ -30,8 +33,10 @@ func (r *Repo) FindUserByEmail(ctx context.Context, email string) (user *ds.User
 // FindUserByUsername retrieves a user from the database by their username.
 // If no user is found, it returns (nil, nil).
 func (r *Repo) FindUserByUsername(ctx context.Context, username string) (user *ds.User, err error) {
-	user = new(ds.User)
+	_, span := r.tracer.Start(ctx, "FindUserByUsername")
+	defer span.End()
 
+	user = new(ds.User)
 	err = pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE username = $1`, username)
 	if noRows(err) {
 		user = nil
@@ -45,8 +50,10 @@ func (r *Repo) FindUserByUsername(ctx context.Context, username string) (user *d
 // If no user is found, it returns (nil, ErrUserNotFound).
 // Note: This method returns an explicit error on not found, unlike the other Find* methods.
 func (r *Repo) FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
-	user = new(ds.User)
+	_, span := r.tracer.Start(ctx, "FindUserByID")
+	defer span.End()
 
+	user = new(ds.User)
 	err = pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE id = $1`, id)
 	if noRows(err) {
 		user = nil
@@ -58,6 +65,9 @@ func (r *Repo) FindUserByID(ctx context.Context, id int64) (user *ds.User, err e
 
 // CreateUser inserts a new user record into the database.
 func (r *Repo) CreateUser(ctx context.Context, user *ds.User) (err error) {
+	_, span := r.tracer.Start(ctx, "CreateUser")
+	defer span.End()
+
 	row := r.db.QueryRow(ctx,
 		"INSERT INTO users (username, email, email_confirmed, password, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
 		user.Username, user.Email, user.EmailConfirmed, user.Password, user.CreatedAt)
@@ -69,7 +79,9 @@ func (r *Repo) CreateUser(ctx context.Context, user *ds.User) (err error) {
 // SetUserEmailConfirmed updates a user's record to set the email_confirmed flag to true
 // and updates the updated_at timestamp.
 func (r *Repo) SetUserEmailConfirmed(ctx context.Context, userID int64) (err error) {
-	_, err = r.db.Exec(ctx, "UPDATE users SET email_confirmed = true, updated_at = NOW() WHERE id = $1", userID)
+	_, span := r.tracer.Start(ctx, "SetUserEmailConfirmed")
+	defer span.End()
 
+	_, err = r.db.Exec(ctx, "UPDATE users SET email_confirmed = true, updated_at = NOW() WHERE id = $1", userID)
 	return
 }

@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
-	"github.com/gopl-dev/server/email"
+	"github.com/gopl-dev/server/pkg/email"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/logrusorgru/aurora"

@@ -23,6 +23,9 @@ const (
 // CreateEmailConfirmation generates a unique confirmation code, calculates its expiration time,
 // and saves the email confirmation record to the database for the given user ID.
 func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (code string, err error) {
+	ctx, span := s.tracer.Start(ctx, "CreateEmailConfirmation")
+	defer span.End()
+
 	code, err = s.newEmailConfirmationCode(ctx)
 	if err != nil {
 		return
@@ -43,6 +46,9 @@ func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (co
 // ConfirmEmail confirms an email address by validating the provided code,
 // setting the email_confirmed flag for the associated user, and then deleting the used confirmation record.
 func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ConfirmEmail")
+	defer span.End()
+
 	ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
 	if err != nil {
 		return

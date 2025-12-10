@@ -13,22 +13,24 @@ import (
 	"github.com/gopl-dev/server/server/endpoint"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/middleware"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // RWTimeout defines server's Read&Write timeout in seconds.
 const RWTimeout = 10 * time.Second
 
 // New creates new server.
-func New(s *service.Service) *http.Server {
+func New(s *service.Service, t trace.Tracer) *http.Server {
 	conf := app.Config().Server
 
-	h := handler.New(s)
-	mw := middleware.New(s)
+	h := handler.New(s, t)
+	mw := middleware.New(s, t)
 	r := endpoint.NewRouter(h)
 	r.HandleAssets()
 
 	// Middlewares that is common to "web" and "api" endpoint groups
 	common := r.Use(
+		mw.Tracing,
 		mw.Recovery,
 		mw.Logging,
 	)
