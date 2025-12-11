@@ -2,14 +2,13 @@
 
 for simplicity, I keep todo list and progress here for now
 
-- add tracer
-- add openAPI
 ---
 - [ ] core user features:
     - [x] register user
     - [x] confirm email
     - [ ] restore password
     - [x] login
+    - [ ] logout
     - [ ] handle frontend logic for user auth status 
     - [ ] change password
     - [ ] change login

@@ -57,6 +57,11 @@ session:
 
 trace:
   enabled: true
+  # uptrace | log
   driver: uptrace
   # https://uptrace.dev/get#dsn
   uptrace_dsn: "https://**********@api.uptrace.dev?grpc=4317"
+
+openapi:
+  enabled: true
+  serve_path: openapi

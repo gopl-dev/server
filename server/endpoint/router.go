@@ -3,13 +3,20 @@ package endpoint
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/frontend"
+	"github.com/gopl-dev/server/server/docs"
 	"github.com/gopl-dev/server/server/handler"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
+
+const exactMatchSuffix = "{$}"
 
 // Handler is the function signature for a standard request handler.
 type Handler func(w http.ResponseWriter, r *http.Request)
@@ -89,6 +96,51 @@ func (r *Router) HandleAssets() *Router {
 	return r
 }
 
+// HandleOpenAPI registers a file server handler to serve static swagger files.
+func (r *Router) HandleOpenAPI() *Router {
+	conf := app.Config()
+	if !conf.OpenAPI.Enabled {
+		return r
+	}
+
+	serverURL, err := url.Parse(conf.Server.Addr)
+	if err != nil {
+		log.Printf("OpenAPIHandler: could not parse server address: %s\n", err)
+		return r
+	}
+
+	docs.SwaggerInfo.Title = fmt.Sprintf("%s API (%s %s)", conf.App.Name, conf.App.Env, conf.App.Version)
+	docs.SwaggerInfo.Host = serverURL.Host
+	docs.SwaggerInfo.BasePath = "/" + conf.Server.APIBasePath
+	docs.SwaggerInfo.Schemes = []string{serverURL.Scheme}
+
+	servePath := "/" + strings.Trim(conf.OpenAPI.ServePath, "/") + "/"
+	docPath := servePath + "doc.json"
+
+	r.mux.Handle(servePath, httpSwagger.Handler(
+		httpSwagger.URL(docPath),
+	))
+
+	return r
+}
+
+// HandleNotFound registers a handler for any request that does not match other registered routes
+// within the current router's base path.
+func (r *Router) HandleNotFound() *Router {
+	pattern := r.basePath
+
+	if !strings.HasSuffix(pattern, "/") {
+		pattern += "/"
+	}
+
+	r.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		println(r.Method, r.RequestURI, "404 NOT FOUND")
+		http.NotFound(w, r)
+	})
+
+	return r
+}
+
 // ServeHTTP implements the http.Handler interface, delegating the request handling
 // to the underlying http.ServeMux.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -100,14 +152,19 @@ func (r *Router) register(method, pattern string, handler Handler) {
 		handler = r.middlewares[i](handler)
 	}
 
+	withSlash := strings.HasSuffix(pattern, "/")
 	pattern = path.Join(r.basePath, pattern)
 
 	if !strings.HasPrefix(pattern, "/") {
 		pattern = "/" + pattern
 	}
 
-	if !strings.HasSuffix(pattern, "/") {
-		pattern += "/"
+	if withSlash && !strings.HasSuffix(pattern, "/") {
+		pattern += "/" + exactMatchSuffix
+	}
+
+	if pattern == "/" {
+		pattern += exactMatchSuffix
 	}
 
 	pattern = method + " " + pattern

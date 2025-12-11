@@ -11,6 +11,18 @@ import (
 )
 
 // UserSignUp is the API handler for user registration.
+//
+//	@ID			UserSignUp
+//	@Summary	User registration
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.UserSignUp	true	"Request body"
+//	@Success	200		{object}	response.Status
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/users/sign-up/ [post]
+//	@Security	ApiKeyAuth
 func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
 	var req request.UserSignUp
 
@@ -29,6 +41,19 @@ func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 // UserSignIn is the API handler for the user login endpoint.
+//
+//	@ID			UserSignIn
+//	@Summary	User auth
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.UserSignIn	true	"Request body"
+//	@Success	200		{object}	response.UserSignIn
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/users/sign-in/ [post]
+//	@Security	ApiKeyAuth
+//
 // TODO either email or username can be used to login.
 func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
 	var req request.UserSignIn
@@ -54,6 +79,18 @@ func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 // ConfirmEmail is the API handler for confirming a user's email address via a confirmation code.
+//
+//	@ID			ConfirmEmail
+//	@Summary	Confirm email
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.ConfirmEmail	true	"Request body"
+//	@Success	200		{object}	response.Status
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/users/confirm-email/ [post]
+//	@Security	ApiKeyAuth
 func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
 	var req request.ConfirmEmail
 
@@ -82,6 +119,16 @@ func (h *Handler) UserSignUpView(w http.ResponseWriter, r *http.Request) {
 
 // UserSignOut handles user log-out by clearing the session cookie and deleting the session
 // record from the database.
+//
+//	@ID			UserSignOut
+//	@Summary	Logout
+//	@Tags		users
+//	@Produce	json
+//	@Success	200		{object}	response.Status
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/users/confirm-email/ [post]
+//	@Security	ApiKeyAuth
 func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 	// Removes the session cookie from the client.
 	clearSessionCookie(w)

@@ -55,6 +55,11 @@ type ConfigT struct {
 		DurationHours int    `yaml:"duration_hours"`
 		Key           string `yaml:"key"`
 	} `yaml:"session"`
+
+	OpenAPI struct {
+		Enabled   bool   `yaml:"enabled"`
+		ServePath string `yaml:"serve_path"`
+	} `yaml:"openapi"`
 }
 
 // IsDevEnv ...

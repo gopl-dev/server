@@ -26,7 +26,9 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 	h := handler.New(s, t)
 	mw := middleware.New(s, t)
 	r := endpoint.NewRouter(h)
+
 	r.HandleAssets()
+	r.HandleOpenAPI()
 
 	// Middlewares that is common to "web" and "api" endpoint groups
 	common := r.Use(
@@ -41,6 +43,7 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 	web.PublicWebEndpoints()
 	web.Use(mw.UserAuthWeb)
 	web.ProtectedWebEndpoints()
+	common.HandleNotFound()
 
 	// API endpoints
 	api := common.Group(conf.APIBasePath)

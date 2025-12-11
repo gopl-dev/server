@@ -8,5 +8,11 @@ A humble server that serves gopl.dev
 `npx @tailwindcss/cli -i ./frontend/assets/input.css -o ./frontend/assets/output.css --watch`
 
 # linting
+https://golangci-lint.run/docs/welcome/install/local/
+
 `golangci-lint run`
 
+
+# openapi
+`swag fmt --dir server/handler`
+`swag init --parseDependency  --parseDepth 1 --dir server/handler -g handler.go -o server/docs`
