@@ -65,9 +65,12 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 		return
 	}
 
-	err = s.db.DeleteEmailConfirmation(ctx, ec.ID) // Assumes s.db implements this method
+	err = s.db.DeleteEmailConfirmation(ctx, ec.ID)
+	if err != nil {
+		return
+	}
 
-	return
+	return s.LogEmailConfirmed(ctx, ec.UserID)
 }
 
 func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) {

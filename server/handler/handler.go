@@ -1,3 +1,6 @@
+// Package handler contains HTTP handlers for the app's API endpoints.
+// It provides utilities for request binding, validation, and response rendering.
+// Route handlers must not contain any business logic; this belongs in the service layer..
 package handler
 
 import (

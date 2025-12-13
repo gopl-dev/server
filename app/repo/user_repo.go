@@ -14,47 +14,40 @@ var (
 )
 
 // FindUserByEmail retrieves a user from the database by their email address.
-// If no user is found, it returns (nil, nil).
-func (r *Repo) FindUserByEmail(ctx context.Context, email string) (user *ds.User, err error) {
+func (r *Repo) FindUserByEmail(ctx context.Context, email string) (*ds.User, error) {
 	_, span := r.tracer.Start(ctx, "FindUserByEmail")
 	defer span.End()
 
-	user = new(ds.User)
-
-	err = pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE email = $1`, email)
+	user := new(ds.User)
+	err := pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE email = $1`, email)
 	if noRows(err) {
-		user = nil
-		err = nil
+		return nil, ErrUserNotFound
 	}
 
 	return user, err
 }
 
 // FindUserByUsername retrieves a user from the database by their username.
-// If no user is found, it returns (nil, nil).
-func (r *Repo) FindUserByUsername(ctx context.Context, username string) (user *ds.User, err error) {
+func (r *Repo) FindUserByUsername(ctx context.Context, username string) (*ds.User, error) {
 	_, span := r.tracer.Start(ctx, "FindUserByUsername")
 	defer span.End()
 
-	user = new(ds.User)
-	err = pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE username = $1`, username)
+	user := new(ds.User)
+	err := pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE username = $1`, username)
 	if noRows(err) {
-		user = nil
-		err = nil
+		return nil, ErrUserNotFound
 	}
 
 	return user, err
 }
 
 // FindUserByID retrieves a user from the database by their ID.
-// If no user is found, it returns (nil, ErrUserNotFound).
-// Note: This method returns an explicit error on not found, unlike the other Find* methods.
-func (r *Repo) FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
+func (r *Repo) FindUserByID(ctx context.Context, id int64) (*ds.User, error) {
 	_, span := r.tracer.Start(ctx, "FindUserByID")
 	defer span.End()
 
-	user = new(ds.User)
-	err = pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE id = $1`, id)
+	user := new(ds.User)
+	err := pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE id = $1`, id)
 	if noRows(err) {
 		user = nil
 		err = ErrUserNotFound

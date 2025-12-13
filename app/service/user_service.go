@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/pkg/email"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -59,26 +61,20 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 		return
 	}
 
-	existing, err := s.db.FindUserByEmail(ctx, p.Email)
-	if err != nil {
-		return
+	_, err = s.db.FindUserByEmail(ctx, p.Email)
+	if err == nil {
+		return nil, app.InputError{"email": UserWithThisEmailAlreadyExists}
+	}
+	if !errors.Is(err, repo.ErrUserNotFound) {
+		return nil, err
 	}
 
-	if existing != nil {
-		err = app.InputError{"email": UserWithThisEmailAlreadyExists}
-
-		return
+	_, err = s.db.FindUserByUsername(ctx, p.Username)
+	if err == nil {
+		return nil, app.InputError{"username": UsernameAlreadyTaken}
 	}
-
-	existing, err = s.db.FindUserByUsername(ctx, p.Username)
-	if err != nil {
-		return
-	}
-
-	if existing != nil {
-		err = app.InputError{"username": UsernameAlreadyTaken}
-
-		return
+	if !errors.Is(err, repo.ErrUserNotFound) {
+		return nil, err
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(p.Password), app.DefaultBCryptCost)
@@ -104,12 +100,17 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 		return
 	}
 
+	// todo send email async
 	err = email.Send(user.Email, email.ConfirmEmail{
 		Username: user.Username,
 		Email:    p.Email,
 		Code:     emailConfirmCode,
 	})
+	if err != nil {
+		return
+	}
 
+	err = s.LogUserRegistered(ctx, user.ID)
 	return
 }
 
@@ -120,12 +121,10 @@ func (s *Service) LoginUser(ctx context.Context, email, password string) (user *
 
 	user, err = s.db.FindUserByEmail(ctx, email)
 	if err != nil {
-		return
-	}
-
-	if user == nil {
-		err = ErrInvalidEmailOrPassword
-		return
+		if errors.Is(err, repo.ErrUserNotFound) {
+			return nil, "", ErrInvalidEmailOrPassword
+		}
+		return nil, "", err
 	}
 
 	now := time.Now()

@@ -8,6 +8,7 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	useractivity "github.com/gopl-dev/server/app/ds/user_activity"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/request"
@@ -52,6 +53,12 @@ func TestUserSignUp(t *testing.T) {
 		"code":    vars["code"],
 	})
 
+	test.AssertInDB(t, tt.DB, "user_activity_logs", test.Data{
+		"user_id":     user.ID,
+		"action_type": useractivity.UserRegistered,
+		"is_public":   false, // "New user" event should not be public by default
+	})
+
 	t.Run("username already taken", func(t *testing.T) {
 		req := request.UserSignUp{
 			Username: user.Username,
@@ -91,6 +98,10 @@ func TestUserSignUp(t *testing.T) {
 
 func TestUserConfirmEmail(t *testing.T) {
 	ec := tt.Factory.CreateEmailConfirmation(t)
+	log := tt.Factory.CreateUserActivityLog(t, ds.UserActivityLog{
+		UserID:     ec.UserID,
+		ActionType: useractivity.UserRegistered,
+	})
 
 	req := request.ConfirmEmail{
 		Code: ec.Code,
@@ -111,6 +122,13 @@ func TestUserConfirmEmail(t *testing.T) {
 
 	test.AssertNotInDB(t, tt.DB, "email_confirmations", test.Data{
 		"code": ec.Code,
+	})
+
+	test.AssertInDB(t, tt.DB, "user_activity_logs", test.Data{
+		"id":          log.ID,
+		"user_id":     ec.UserID,
+		"action_type": useractivity.UserRegistered,
+		"is_public":   true,
 	})
 }
 
