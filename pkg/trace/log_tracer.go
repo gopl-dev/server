@@ -48,8 +48,11 @@ func (t *Log) Start(ctx context.Context, _ string, _ ...trace.SpanStartOption) (
 			}
 		}
 
+		name := names[len(names)-1]
+		name = strings.Replace(name, "middleware.(*Middleware)", "MW", 1)
+		name = strings.Replace(name, "service.(*Service)", "Service", 1)
 		// Print the function name and file location
-		println("> " + names[len(names)-1])
+		println("> " + name)
 		println("@ " + file + ":" + strconv.Itoa(line))
 		println("")
 	}

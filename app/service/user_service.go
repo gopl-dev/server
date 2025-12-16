@@ -18,6 +18,10 @@ var (
 	// that do not match any record.
 	ErrInvalidEmailOrPassword = app.ErrUnprocessable("invalid email or password")
 
+	// ErrInvalidPassword is returned when a user tries to change their password
+	// but provides an incorrect old password.
+	ErrInvalidPassword = app.ErrUnprocessable("invalid password")
+
 	// ErrInvalidJWT is returned when an authentication token is malformed,
 	// invalidly signed, or contains unexpected claims.
 	ErrInvalidJWT = app.ErrForbidden("invalid token")
@@ -25,6 +29,9 @@ var (
 	// ErrSessionExpired is returned when a JWT is validly signed but the associated
 	// database session has expired based on its timestamp.
 	ErrSessionExpired = app.ErrForbidden("session expired")
+
+	// ErrTokenExpired err.
+	ErrTokenExpired = app.ErrUnprocessable("token expired")
 )
 
 var (
@@ -38,6 +45,8 @@ const (
 
 	// UsernameAlreadyTaken is the specific error message for username validation failure during registration.
 	UsernameAlreadyTaken = "Username already taken"
+
+	sessionTokenLength = 32
 )
 
 const (
@@ -52,16 +61,16 @@ type RegisterUserArgs struct {
 }
 
 // RegisterUser handles the complete user registration process.
-func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *ds.User, err error) {
+func (s *Service) RegisterUser(ctx context.Context, args RegisterUserArgs) (user *ds.User, err error) {
 	ctx, span := s.tracer.Start(ctx, "RegisterUser")
 	defer span.End()
 
-	err = app.Validate(ds.UserValidationRules, &p)
+	err = app.Validate(ds.UserValidationRules, &args)
 	if err != nil {
 		return
 	}
 
-	_, err = s.db.FindUserByEmail(ctx, p.Email)
+	_, err = s.db.FindUserByEmail(ctx, args.Email)
 	if err == nil {
 		return nil, app.InputError{"email": UserWithThisEmailAlreadyExists}
 	}
@@ -69,7 +78,7 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 		return nil, err
 	}
 
-	_, err = s.db.FindUserByUsername(ctx, p.Username)
+	_, err = s.db.FindUserByUsername(ctx, args.Username)
 	if err == nil {
 		return nil, app.InputError{"username": UsernameAlreadyTaken}
 	}
@@ -77,14 +86,14 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 		return nil, err
 	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(p.Password), app.DefaultBCryptCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(args.Password), app.DefaultBCryptCost)
 	if err != nil {
 		return
 	}
 
 	user = &ds.User{
-		Username:       p.Username,
-		Email:          p.Email,
+		Username:       args.Username,
+		Email:          args.Email,
 		Password:       string(passwordHash),
 		EmailConfirmed: false,
 		CreatedAt:      time.Now(),
@@ -103,7 +112,7 @@ func (s *Service) RegisterUser(ctx context.Context, p RegisterUserArgs) (user *d
 	// todo send email async
 	err = email.Send(user.Email, email.ConfirmEmail{
 		Username: user.Username,
-		Email:    p.Email,
+		Email:    args.Email,
 		Code:     emailConfirmCode,
 	})
 	if err != nil {
@@ -127,15 +136,11 @@ func (s *Service) LoginUser(ctx context.Context, email, password string) (user *
 		return nil, "", err
 	}
 
-	now := time.Now()
-
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		err = ErrInvalidEmailOrPassword
 		return
 	}
-
-	println("TIME:", time.Since(now).String())
 
 	sess, err := s.CreateUserSession(ctx, user.ID)
 	if err != nil {
@@ -148,6 +153,48 @@ func (s *Service) LoginUser(ctx context.Context, email, password string) (user *
 	}
 
 	return user, token, nil
+}
+
+// ChangeUserPasswordArgs defines the input for changing a user's password.
+type ChangeUserPasswordArgs struct {
+	UserID      int64
+	OldPassword string
+	NewPassword string
+}
+
+// ChangeUserPassword handles the logic for an authenticated user to change their own password.
+func (s *Service) ChangeUserPassword(ctx context.Context, args ChangeUserPasswordArgs) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ChangeUserPassword")
+	defer span.End()
+
+	err = app.Validate(ds.ChangePasswordValidationRules, &args)
+	if err != nil {
+		return
+	}
+
+	// The user is usually already resolved at this point,
+	// but we do not know where this method will be used,
+	// so we select the user again to keep things simple
+	//
+	// (TODO?) When/if performance becomes an issue, this could be split into two methods:
+	// 1. ChangePasswordByUser(ctx, *ds.User?) - explicitly uses the user from context or argument.
+	// 2. ChangePasswordByUserID(int64) - selects the user from the repo (current behavior).
+	user, err := s.FindUserByID(ctx, args.UserID)
+	if user == nil {
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(args.OldPassword))
+	if err != nil {
+		return app.InputError{"old_password": ErrInvalidPassword.Error()}
+	}
+
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(args.NewPassword), app.DefaultBCryptCost)
+	if err != nil {
+		return err
+	}
+
+	return s.db.UpdateUserPassword(ctx, user.ID, string(newPasswordHash))
 }
 
 // FindUserByID retrieves a user record from the database by their ID.
@@ -212,6 +259,73 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, jwt string) (
 	}
 
 	return
+}
+
+// RequestPasswordReset handles the logic for initiating a password reset.
+// It finds the user by email, generates a unique token, and sends it to the user's email.
+func (s *Service) RequestPasswordReset(ctx context.Context, emailAddr string) error {
+	ctx, span := s.tracer.Start(ctx, "RequestPasswordReset")
+	defer span.End()
+
+	user, err := s.db.FindUserByEmail(ctx, emailAddr)
+	if err != nil {
+		// If the user is not found, we don't return an error to prevent email enumeration attacks.
+		if errors.Is(err, repo.ErrUserNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	token, err := app.Token(sessionTokenLength)
+	if err != nil {
+		return err
+	}
+
+	prt := &ds.PasswordResetToken{
+		UserID:    user.ID,
+		Token:     token,
+		ExpiresAt: time.Now().Add(time.Hour * 1), // Token is valid for 1 hour
+		CreatedAt: time.Now(),
+	}
+
+	err = s.db.CreatePasswordResetToken(ctx, prt)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Send email asynchronously
+	return email.Send(user.Email, email.PasswordResetRequest{
+		Username: user.Username,
+		Token:    token,
+	})
+}
+
+// ResetPassword handles the logic for resetting a user's password using a token.
+// It validates the token, checks for expiration, updates the user's password, and deletes the token.
+func (s *Service) ResetPassword(ctx context.Context, token, newPassword string) error {
+	ctx, span := s.tracer.Start(ctx, "ResetPassword")
+	defer span.End()
+
+	prt, err := s.db.FindPasswordResetToken(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	if time.Now().After(prt.ExpiresAt) {
+		return ErrTokenExpired
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), app.DefaultBCryptCost)
+	if err != nil {
+		return err
+	}
+
+	err = s.db.UpdateUserPassword(ctx, prt.UserID, string(passwordHash))
+	if err != nil {
+		return err
+	}
+
+	return s.db.DeletePasswordResetToken(ctx, prt.ID)
 }
 
 // UserToContext adds the given user object to the provided context.

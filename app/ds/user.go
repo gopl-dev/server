@@ -35,6 +35,12 @@ var UserValidationRules = z.Shape{
 	"password": z.String().Min(UserPasswordMinLen).Required(z.Message("Password is required")),
 }
 
+// ChangePasswordValidationRules ...
+var ChangePasswordValidationRules = z.Shape{
+	"OldPassword": z.String().Required(z.Message("Password is required")),
+	"NewPassword": z.String().Min(UserPasswordMinLen).Required(z.Message("Password is required")),
+}
+
 // User ...
 type User struct {
 	ID             int64      `json:"id"`

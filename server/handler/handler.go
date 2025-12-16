@@ -87,10 +87,10 @@ func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 	err := bindJSON(r, body)
 	// we'll get EOF error when body is empty,
 	// proceed as usual if so
+	// (valid requests can be without body)
 	if errors.Is(err, io.EOF) {
 		err = nil
 	}
-
 	if err != nil {
 		h.Abort(err)
 		return h
@@ -154,6 +154,11 @@ func (h *Request) MapHeaders(to any) {
 			}
 		}
 	}
+}
+
+// AbortUnauthorized wraps Abort with 401 Unauthorized.
+func (h *Request) AbortUnauthorized() {
+	Abort(h.Response, app.ErrUnauthorized())
 }
 
 // Abort flags the request as aborted and writes the provided error to the response.
@@ -242,12 +247,6 @@ func jsonOK(w http.ResponseWriter, body any) {
 	if err != nil {
 		log.Println(err)
 	}
-}
-
-// isJSON checks if the request indicates that it accepts or contains JSON data
-// based on the Content-Type header.
-func isJSON(r *http.Request) bool {
-	return r.Header.Get("Content-Type") == "application/json"
 }
 
 // renderTempl renders a templ.Component to the http.ResponseWriter, setting the
@@ -411,7 +410,12 @@ const sessionCookieName = "session"
 
 // setSessionCookie sets the user authentication token as an HTTP-only, secure, same-site cookie.
 func setSessionCookie(w http.ResponseWriter, token string) {
-	cookie := http.Cookie{
+	http.SetCookie(w, NewSessionCookie(token))
+}
+
+// NewSessionCookie creates and returns a new session cookie.
+func NewSessionCookie(token string) *http.Cookie {
+	return &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    token,
 		Path:     "/",
@@ -420,8 +424,6 @@ func setSessionCookie(w http.ResponseWriter, token string) {
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
-
-	http.SetCookie(w, &cookie)
 }
 
 // clearSessionCookie sets an expired cookie with the session name to effectively remove it from the client.

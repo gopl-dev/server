@@ -20,6 +20,7 @@ import (
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/pkg/trace"
 	"github.com/gopl-dev/server/server"
+	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
@@ -46,7 +47,7 @@ type Request struct {
 	path         string
 	body         any
 	bodyReader   io.Reader
-	authBearer   string
+	authToken    string
 	headers      Headers
 	bindResponse any
 	assertStatus int
@@ -121,13 +122,13 @@ func makeRequest(t *testing.T, r Request) *httptest.ResponseRecorder {
 		req.Header.Set(k, v)
 	}
 
-	bearer := authToken
-	if r.authBearer != "" {
-		bearer = r.authBearer
+	token := authToken
+	if r.authToken != "" {
+		token = r.authToken
 	}
 
-	if bearer != "" {
-		req.Header.Set("Authorization", "Bearer "+bearer)
+	if token != "" {
+		req.AddCookie(handler.NewSessionCookie(token))
 	}
 
 	w := httptest.NewRecorder()

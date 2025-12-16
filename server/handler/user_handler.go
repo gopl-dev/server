@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/request"
@@ -143,7 +144,7 @@ func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if isJSON(r) {
+	if request.IsJSON(r) {
 		jsonOK(w, response.Success)
 		return
 	}
@@ -151,13 +152,73 @@ func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-// ConfirmEmailView renders the static HTML form page where a user can manually enter
+// ChangePassword handles the API request for an authenticated user to change their password.
+//
+//	@ID			ChangePassword
+//	@Summary	Change user password
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.ChangePassword	true	"Old and new passwords"
+//	@Success	200		{object}	response.Status
+//	@Failure	401		{object}	Error "Unauthorized"
+//	@Failure	422		{object}	Error "Validation error or incorrect old password"
+//	@Failure	500		{object}	Error
+//	@Router		/users/change-password/ [post]
+//	@Security	ApiKeyAuth
+func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	var req request.ChangePassword
+	res := handleJSON(w, r, &req)
+	if res.Aborted() {
+		return
+	}
+
+	user := h.service.UserFromContext(r.Context())
+	if user == nil {
+		res.AbortUnauthorized()
+		return
+	}
+
+	err := h.service.ChangeUserPassword(r.Context(), service.ChangeUserPasswordArgs{
+		UserID:      user.ID,
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
+	})
+	if err != nil {
+		res.Abort(err)
+		return
+	}
+
+	res.jsonSuccess()
+}
+
+// ConfirmEmailView renders the static HTML form page where a user can enter
 // an email confirmation code.
 func (h *Handler) ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	renderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Confirm email",
-		Body:  page.ConfirmEmailForm(), // Assumes page.ConfirmEmailForm is the templ component
-		User:  nil,                     // TODO! resolve user
+		Body:  page.ConfirmEmailForm(),
+		User:  nil, // TODO! resolve user
+	}))
+}
+
+// UserSettingsView renders the static HTML page where a user can manually enter
+// an email confirmation code.
+func (h *Handler) UserSettingsView(w http.ResponseWriter, r *http.Request) {
+	renderTempl(r.Context(), w, layout.Default(layout.Data{
+		Title: "Settings",
+		Body:  page.UserSettings(),
+		User:  nil, // TODO! resolve user
+	}))
+}
+
+// ChangePasswordView renders the static HTML page where a user can manually enter
+// an email confirmation code.
+func (h *Handler) ChangePasswordView(w http.ResponseWriter, r *http.Request) {
+	renderTempl(r.Context(), w, layout.Default(layout.Data{
+		Title: "Change password",
+		Body:  page.ChangePasswordForm(),
+		User:  nil, // TODO! resolve user
 	}))
 }
 

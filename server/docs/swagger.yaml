@@ -14,6 +14,13 @@ definitions:
           type: string
         type: object
     type: object
+  request.ChangePassword:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
   request.ConfirmEmail:
     properties:
       code:
@@ -52,6 +59,42 @@ definitions:
 info:
   contact: {}
 paths:
+  /users/change-password/:
+    post:
+      consumes:
+      - application/json
+      operationId: ChangePassword
+      parameters:
+      - description: Old and new passwords
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Validation error or incorrect old password
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Change user password
+      tags:
+      - users
   /users/confirm-email/:
     post:
       operationId: UserSignOut

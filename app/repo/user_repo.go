@@ -9,8 +9,11 @@ import (
 )
 
 var (
-	// ErrUserNotFound is returned when lookup method fails to find a user.
+	// ErrUserNotFound is a sentinel error returned when a user lookup fails.
 	ErrUserNotFound = errors.New("user not found")
+
+	// ErrPasswordResetTokenNotFound is a sentinel error returned when a password reset token is not found.
+	ErrPasswordResetTokenNotFound = errors.New("password reset token not found")
 )
 
 // FindUserByEmail retrieves a user from the database by their email address.
@@ -76,5 +79,14 @@ func (r *Repo) SetUserEmailConfirmed(ctx context.Context, userID int64) (err err
 	defer span.End()
 
 	_, err = r.db.Exec(ctx, "UPDATE users SET email_confirmed = true, updated_at = NOW() WHERE id = $1", userID)
+	return
+}
+
+// UpdateUserPassword updates the password hash for a specific user.
+func (r *Repo) UpdateUserPassword(ctx context.Context, userID int64, password string) (err error) {
+	_, span := r.tracer.Start(ctx, "UpdateUserPassword")
+	defer span.End()
+
+	_, err = r.db.Exec(ctx, "UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2", password, userID)
 	return
 }

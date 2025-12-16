@@ -7,7 +7,9 @@ func (r *Router) PublicAPIEndpoints() {
 	r.Group("users").
 		POST("sign-up/", r.handler.UserSignUp).
 		POST("sign-in/", r.handler.UserSignIn).
-		POST("confirm-email/", r.handler.ConfirmEmail)
+		POST("confirm-email/", r.handler.ConfirmEmail).
+		POST("password-reset/", r.handler.PasswordResetRequest).
+		POST("password-reset-confirm/", r.handler.PasswordResetConfirm)
 
 	r.Group("books").
 		GET("/", r.handler.FilterBooks).

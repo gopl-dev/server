@@ -28,20 +28,20 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 	r := endpoint.NewRouter(h)
 
 	r.HandleAssets()
-	r.HandleOpenAPI()
+	r.HandleOpenAPIDocs()
 
 	// Middlewares that is common to "web" and "api" endpoint groups
 	common := r.Use(
 		mw.Tracing,
 		mw.Recovery,
 		mw.Logging,
+		mw.ResolveUserFromCookie,
 	)
 
 	// Frontend endpoints
 	web := common.Group("/")
-	web.Use(mw.ResolveUserFromCookie)
 	web.PublicWebEndpoints()
-	web.Use(mw.UserAuthWeb)
+	web.Use(mw.UserAuth)
 	web.ProtectedWebEndpoints()
 	common.HandleNotFound()
 
@@ -50,6 +50,9 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 	api.Use()
 
 	api.PublicAPIEndpoints()
+	api.Use(mw.UserAuth)
+	api.ProtectedAPIEndpoints()
+	api.HandleNotFound()
 
 	return &http.Server{
 		Addr:         net.JoinHostPort(conf.Host, conf.Port),

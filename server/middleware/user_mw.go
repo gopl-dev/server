@@ -3,8 +3,10 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/server/endpoint"
 	"github.com/gopl-dev/server/server/handler"
+	"github.com/gopl-dev/server/server/request"
 )
 
 // ResolveUserFromCookie is a middleware that attempts to find a user's session token
@@ -30,11 +32,18 @@ func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Hand
 	}
 }
 
-// UserAuthWeb is a middleware that enforces user authentication for web requests.
-func (mw *Middleware) UserAuthWeb(next endpoint.Handler) endpoint.Handler {
+// UserAuth is a middleware that enforces user authentication.
+// For API (JSON) requests, it returns a JSON 401 Unauthorized error if the user is not authenticated.
+// For all other requests (e.g., web pages), it renders login form.
+func (mw *Middleware) UserAuth(next endpoint.Handler) endpoint.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := mw.service.UserFromContext(r.Context())
 		if user == nil {
+			if request.IsJSON(r) {
+				handler.Abort(w, app.ErrUnauthorized())
+				return
+			}
+
 			redirectTo := r.URL.Path
 			if redirectTo == "/users/logout/" {
 				redirectTo = "/"

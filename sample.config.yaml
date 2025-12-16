@@ -55,7 +55,7 @@ session:
   duration_hours: 24
   key: "secret-key"
 
-trace:
+tracing:
   enabled: true
   # uptrace | log
   driver: uptrace

@@ -13,7 +13,7 @@ templ Default(d Data) {
 			<meta name="description" content={ d.MetaDescription }/>
 			<meta name="keywords" content={ d.MetaKeywords }/>
 		</head>
-		<body class="bg-gray-100 font-sans">
+		<body class="bg-gray-100 font-sans w-full">
 			<div class="navbar bg-neutral text-neutral-content shadow-sm">
 				<div class="flex-1 pl-10">
 					<a class="text-white no-underline " href="/">
@@ -34,7 +34,7 @@ templ Default(d Data) {
                                     </svg>
 									{ d.User.Username }</summary>
 									<ul class="bg-neutral rounded-t-none p-2">
-										<li><a>Link 1</a></li>
+										<li><a href="/users/settings/">Settings</a></li>
 										<li><a href="/users/sign-out/">Sign out</a></li>
 									</ul>
 								</details>

@@ -2,8 +2,11 @@
 package app
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	z "github.com/Oudwins/zog"
@@ -11,17 +14,30 @@ import (
 
 const (
 	// DevEnv is used for the local development environment.
-	DevEnv = "DEV"
+	DevEnv = "dev"
 
 	// TestEnv is used for running automated tests and quality assurance (QA) checks.
-	TestEnv = "TEST"
+	TestEnv = "test"
 
 	// StagingEnv is a production-like environment used for final testing before a full public release.
-	StagingEnv = "STAGING"
+	StagingEnv = "staging"
 
 	// ReleaseEnv refers to the final production environment serving live users.
-	ReleaseEnv = "RELEASE"
+	ReleaseEnv = "release"
 )
+
+var (
+	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
+)
+
+// CamelCaseToSnakeCase converts a string from CamelCase to snake_case.
+func CamelCaseToSnakeCase(str string) string {
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+
+	return strings.ToLower(snake)
+}
 
 // Pointer is a generic helper function that returns a pointer to the value provided.
 func Pointer[T any](v T) *T {
@@ -50,12 +66,10 @@ func Validate(schema z.Shape, data any) (err error) {
 		if r := recover(); r != nil {
 			if e, ok := r.(error); ok {
 				err = e
-
 				return
 			}
 
 			err = fmt.Errorf("%v", r) //nolint:err113
-
 			return
 		}
 	}()
@@ -66,7 +80,6 @@ func Validate(schema z.Shape, data any) (err error) {
 	}
 
 	ie := NewInputError()
-
 	for key, issues := range issueMap {
 		messages := make([]string, 0, len(issues))
 		for _, issue := range issues {
@@ -77,7 +90,7 @@ func Validate(schema z.Shape, data any) (err error) {
 			messages = append(messages, issue.Message)
 		}
 
-		ie.Add(key, strings.Join(messages, "\n"))
+		ie.Add(CamelCaseToSnakeCase(key), strings.Join(messages, "\n"))
 	}
 
 	return ie
@@ -102,4 +115,19 @@ func String(v any) string {
 	}
 
 	return fmt.Sprintf("%v", v)
+}
+
+// Token creates a cryptographically secure random token.
+func Token(lengthOpt ...int) (string, error) {
+	length := 32
+	if len(lengthOpt) > 0 {
+		length = lengthOpt[0]
+	}
+
+	bytes := make([]byte, length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }

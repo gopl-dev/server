@@ -6,21 +6,24 @@ for simplicity, I keep todo list and progress here for now
 - [ ] core user features:
     - [x] register user
     - [x] confirm email
-    - [ ] restore password
     - [x] login
     - [ ] logout
     - [ ] handle frontend logic for user auth status 
     - [ ] change password
+    - [ ] reset password
     - [ ] change login
-    - [ ] change email
+    - [ ] change username
     - [ ] delete account
 
-- [ ] user activity log
+- [x] user activity log
 - [ ] books
   - [ ] create book
   - [ ] update book
   - [ ] view book
   - [ ] delete book
   - [ ] list books
+  - 
+- [ ] Review "TODO!"
+- [ ] enable "unused" linter 
 - [ ] RELEASE
 ---

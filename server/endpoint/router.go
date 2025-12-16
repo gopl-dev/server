@@ -90,14 +90,28 @@ func (r *Router) DELETE(pattern string, handler Handler) *Router {
 	return r
 }
 
-// HandleAssets registers a file server handler to serve static assets from the "/assets/" path.
+// HandleAssets registers the handler for serving static assets.
+// It uses a different approach depending on the environment:
+//   - In development (`dev`), it serves files directly from the local disk
+//     to allow for live reloading without recompiling the application.
+//   - In production (`prod`) or any other environment, it serves files from
+//     the embedded filesystem (`embed.FS`) for a self-contained binary.
 func (r *Router) HandleAssets() *Router {
-	r.mux.Handle("GET /assets/", http.FileServer(http.FS(frontend.AssetsFs)))
+	var h http.Handler
+
+	if app.Config().IsDevEnv() {
+		localAssets := http.Dir("./frontend/assets/")
+		h = http.StripPrefix("/assets/", http.FileServer(localAssets))
+	} else {
+		h = http.FileServer(http.FS(frontend.AssetsFs))
+	}
+
+	r.mux.Handle("GET /assets/", h)
 	return r
 }
 
-// HandleOpenAPI registers a file server handler to serve static swagger files.
-func (r *Router) HandleOpenAPI() *Router {
+// HandleOpenAPIDocs registers a file server handler to serve static swagger files.
+func (r *Router) HandleOpenAPIDocs() *Router {
 	conf := app.Config()
 	if !conf.OpenAPI.Enabled {
 		return r

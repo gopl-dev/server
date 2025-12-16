@@ -5,7 +5,7 @@ A humble server that serves gopl.dev
 `go tool templ generate --watch --proxy="http://localhost:8080" --cmd="go run ./cmd/server/main.go"`
 
 # tailwind watch
-`npx @tailwindcss/cli -i ./frontend/assets/input.css -o ./frontend/assets/output.css --watch`
+`tailwindcss -i ./frontend/assets/input.css -o ./frontend/assets/output.css --watch`
 
 # linting
 https://golangci-lint.run/docs/welcome/install/local/
@@ -13,6 +13,6 @@ https://golangci-lint.run/docs/welcome/install/local/
 `golangci-lint run`
 
 
-# openapi
+# openapi & swagger
 `swag fmt --dir server/handler`
 `swag init --parseDependency  --parseDepth 1 --dir server/handler -g handler.go -o server/docs`

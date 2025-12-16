@@ -5,10 +5,8 @@ package layout
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
-)
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
 
 func Default(d Data) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -83,7 +81,7 @@ func Default(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></head><body class=\"bg-gray-100 font-sans\"><div class=\"navbar bg-neutral text-neutral-content shadow-sm\"><div class=\"flex-1 pl-10\"><a class=\"text-white no-underline \" href=\"/\"><img src=\"/assets/gopl.svg\" width=\"60\"></a></div><div class=\"flex-none\"><ul class=\"menu menu-horizontal px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></head><body class=\"bg-gray-100 font-sans w-full\"><div class=\"navbar bg-neutral text-neutral-content shadow-sm\"><div class=\"flex-1 pl-10\"><a class=\"text-white no-underline \" href=\"/\"><img src=\"/assets/gopl.svg\" width=\"60\"></a></div><div class=\"flex-none\"><ul class=\"menu menu-horizontal px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -106,7 +104,7 @@ func Default(d Data) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</summary><ul class=\"bg-neutral rounded-t-none p-2\"><li><a>Link 1</a></li><li><a href=\"/users/sign-out/\">Sign out</a></li></ul></details></li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</summary><ul class=\"bg-neutral rounded-t-none p-2\"><li><a href=\"/users/settings/\">Settings</a></li><li><a href=\"/users/sign-out/\">Sign out</a></li></ul></details></li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

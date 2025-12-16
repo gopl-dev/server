@@ -5,7 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"log/slog"
+	"log"
 	"net"
 	"path"
 	"regexp"
@@ -37,7 +37,9 @@ func NewPool(ctx context.Context) (db *pgxpool.Pool, err error) {
 		return nil, err
 	}
 
-	conf.ConnConfig.Tracer = NewLoggingQueryTracer(slog.Default())
+	// For now, I just print logs
+	// TODO: make proper logging
+	conf.ConnConfig.Tracer = NewLoggingQueryTracer()
 
 	db, err = pgxpool.NewWithConfig(ctx, conf)
 	if err != nil {
@@ -247,6 +249,27 @@ var (
 	replaceSpaces                    = regexp.MustCompile(`\s+`)
 )
 
+// interpolateSQL replaces placeholders ($1, $2, ...) in an SQL query
+// with their actual values for "pretty logging" purposes.
+func interpolateSQL(sql string, args []any) string {
+	for i, arg := range args {
+		placeholder := fmt.Sprintf("$%d", i+1)
+		var value string
+		switch v := arg.(type) {
+		case string:
+			value = "'" + strings.ReplaceAll(v, "'", "''") + "'"
+		case []byte:
+			value = "'" + string(v) + "'"
+		case time.Time:
+			value = "'" + v.Format(time.RFC3339) + "'"
+		default:
+			value = fmt.Sprintf("%v", v)
+		}
+		sql = strings.Replace(sql, placeholder, value, 1)
+	}
+	return prettyPrintSQL(sql)
+}
+
 // prettyPrintSQL removes empty lines and trims spaces.
 func prettyPrintSQL(sql string) string {
 	lines := strings.Split(sql, "\n")
@@ -264,44 +287,55 @@ func prettyPrintSQL(sql string) string {
 	return strings.TrimSpace(pretty)
 }
 
-// LoggingQueryTracer implements the pgx.QueryTracer interface to log query execution details.
-type LoggingQueryTracer struct {
-	logger *slog.Logger
+type queryTraceKey struct{}
+type queryTraceData struct {
+	SQL       string
+	Args      []any
+	StartTime time.Time
 }
 
+// LoggingQueryTracer ...
+type LoggingQueryTracer struct{}
+
 // NewLoggingQueryTracer creates and returns a new LoggingQueryTracer instance.
-func NewLoggingQueryTracer(logger *slog.Logger) *LoggingQueryTracer {
-	return &LoggingQueryTracer{logger: logger}
+func NewLoggingQueryTracer() *LoggingQueryTracer {
+	return &LoggingQueryTracer{}
 }
 
 // TraceQueryStart is called before a query is sent to the database.
+// It records the query SQL and start time into the context.
 func (l *LoggingQueryTracer) TraceQueryStart(
-	ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
-	l.logger.
-		Info("query start",
-			slog.String("sql", prettyPrintSQL(data.SQL)),
-			slog.Any("args", data.Args),
-		)
+	ctx context.Context,
+	_ *pgx.Conn,
+	data pgx.TraceQueryStartData,
+) context.Context {
+	traceData := queryTraceData{
+		SQL:       data.SQL,
+		Args:      data.Args,
+		StartTime: time.Now(),
+	}
 
-	return ctx
+	// Помещаем структуру в контекст и возвращаем новый контекст.
+	return context.WithValue(ctx, queryTraceKey{}, traceData)
 }
 
-// TraceQueryEnd is called after a query has completed (successfully or with an error).
-func (l *LoggingQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, data pgx.TraceQueryEndData) {
-	// Failure
-	if data.Err != nil {
-		l.logger.
-			Error("query end",
-				slog.String("error", data.Err.Error()),
-				slog.String("command_tag", data.CommandTag.String()),
-			)
-
+// TraceQueryEnd is called after a query has completed.
+// It retrieves the start time and SQL from the context, calculates the duration,
+// and logs the complete query information.
+func (l *LoggingQueryTracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, endData pgx.TraceQueryEndData) {
+	data, ok := ctx.Value(queryTraceKey{}).(queryTraceData)
+	if !ok {
+		log.Println("[ERROR] TraceQueryEnd: could not retrieve trace data from context")
 		return
 	}
 
-	// Success
-	l.logger.
-		Info("query end",
-			slog.String("command_tag", data.CommandTag.String()),
-		)
+	dur := time.Since(data.StartTime)
+	sql := interpolateSQL(data.SQL, data.Args)
+
+	if endData.Err != nil {
+		log.Printf("[%s] %s;\n[ERROR] %s", dur, sql, endData.Err)
+		return
+	}
+
+	log.Printf("[%s] %s;\n", dur, sql)
 }

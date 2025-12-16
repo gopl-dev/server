@@ -151,3 +151,72 @@ func TestUserSignIn(t *testing.T) {
 		assertStatus: http.StatusOK,
 	})
 }
+
+func TestChangePassword(t *testing.T) {
+	oldPassword := random.String(10)
+	newPassword := random.String(10)
+
+	user := tt.Factory.CreateUser(t, ds.User{Password: oldPassword})
+
+	_, token, err := tt.Service.LoginUser(context.Background(), user.Email, oldPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := request.ChangePassword{
+		OldPassword: oldPassword,
+		NewPassword: newPassword,
+	}
+
+	var resp response.Status
+	POST(t, Request{
+		path:         "/users/change-password/",
+		body:         req,
+		authToken:    token,
+		bindResponse: &resp,
+		assertStatus: http.StatusOK,
+	})
+
+	// Login with the old password
+	var signInResp handler.Error
+	POST(t, Request{
+		path: "/users/sign-in/",
+		body: request.UserSignIn{
+			Email:    user.Email,
+			Password: oldPassword,
+		},
+		bindResponse: &signInResp,
+		assertStatus: http.StatusUnprocessableEntity,
+	})
+
+	t.Run("login with new password", func(t *testing.T) {
+		var signInResp response.UserSignIn
+		POST(t, Request{
+			path: "/users/sign-in/",
+			body: request.UserSignIn{
+				Email:    user.Email,
+				Password: newPassword,
+			},
+			bindResponse: &signInResp,
+			assertStatus: http.StatusOK,
+		})
+	})
+
+	t.Run("incorrect old password", func(t *testing.T) {
+		req := request.ChangePassword{
+			OldPassword: "incorrect-password",
+			NewPassword: newPassword,
+		}
+
+		var resp handler.Error
+		POST(t, Request{
+			path:         "/users/change-password/",
+			body:         req,
+			authToken:    token,
+			bindResponse: &resp,
+			assertStatus: http.StatusUnprocessableEntity,
+		})
+
+		assert.Equal(t, resp.InputErrors["old_password"], service.ErrInvalidPassword.Error())
+	})
+}
