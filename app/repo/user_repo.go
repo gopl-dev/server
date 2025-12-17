@@ -14,6 +14,9 @@ var (
 
 	// ErrPasswordResetTokenNotFound is a sentinel error returned when a password reset token is not found.
 	ErrPasswordResetTokenNotFound = errors.New("password reset token not found")
+
+	// ErrChangeEmailRequestNotFound ...
+	ErrChangeEmailRequestNotFound = errors.New("change email request not found")
 )
 
 // FindUserByEmail retrieves a user from the database by their email address.
@@ -88,5 +91,14 @@ func (r *Repo) UpdateUserPassword(ctx context.Context, userID int64, password st
 	defer span.End()
 
 	_, err = r.db.Exec(ctx, "UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2", password, userID)
+	return
+}
+
+// UpdateUserEmail updates the email for a specific user.
+func (r *Repo) UpdateUserEmail(ctx context.Context, userID int64, email string) (err error) {
+	_, span := r.tracer.Start(ctx, "UpdateUserEmail")
+	defer span.End()
+
+	_, err = r.db.Exec(ctx, "UPDATE users SET email = $1, updated_at = NOW() WHERE id = $2", email, userID)
 	return
 }

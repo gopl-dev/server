@@ -236,7 +236,7 @@ func TestPasswordReset(t *testing.T) {
 	test.AssertInDB(t, tt.DB, "password_reset_tokens", test.Data{"user_id": user.ID})
 
 	emailVars := test.LoadEmailVars(t, user.Email)
-	token := app.String(emailVars["token"])
+	token := app.String(emailVars["authToken"])
 	assert.NotZero(t, token)
 
 	// 2. Successfully reset the password
@@ -252,8 +252,8 @@ func TestPasswordReset(t *testing.T) {
 		assertStatus: http.StatusOK,
 	})
 
-	// Assert the token was deleted
-	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"token": token})
+	// Assert the authToken was deleted
+	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"authToken": token})
 
 	// 3. Verify login with the new password
 	var signInResp response.UserSignIn
@@ -268,12 +268,12 @@ func TestPasswordReset(t *testing.T) {
 	})
 
 	// 4. Test failure cases
-	t.Run("reset with invalid token", func(t *testing.T) {
+	t.Run("reset with invalid authToken", func(t *testing.T) {
 		var errorResp handler.Error
 		POST(t, Request{
 			path: "users/password-reset",
 			body: request.PasswordReset{
-				Token:    "invalid-token",
+				Token:    "invalid-authToken",
 				Password: newPassword,
 			},
 			bindResponse: &errorResp,
@@ -294,4 +294,64 @@ func TestPasswordReset(t *testing.T) {
 		})
 		assert.NotZero(t, errorResp.InputErrors["password"])
 	})
+}
+
+func TestChangeEmail(t *testing.T) {
+	user := tt.Factory.CreateUser(t)
+	token := loginAs(t, user)
+
+	// Request email change
+	newEmail := random.Email()
+	var reqEmailChangeResp response.Status
+	POST(t, Request{
+		path:         "/users/email/",
+		body:         request.EmailChangeRequest{Email: newEmail},
+		authToken:    token,
+		bindResponse: &reqEmailChangeResp,
+		assertStatus: http.StatusOK,
+	})
+
+	test.AssertInDB(t, tt.DB, "change_email_requests", test.Data{
+		"user_id":   user.ID,
+		"new_email": newEmail,
+	})
+
+	emailVars := test.LoadEmailVars(t, newEmail)
+	confirmToken := app.String(emailVars["token"])
+	assert.NotZero(t, confirmToken)
+
+	// Confirm the email change with the confirmToken
+	var confirmResp response.Status
+	PUT(t, Request{
+		path: "/users/email/",
+		body: request.EmailChangeConfirm{
+			Token: confirmToken,
+		},
+		authToken:    token,
+		bindResponse: &confirmResp,
+		assertStatus: http.StatusOK,
+	})
+
+	test.AssertInDB(t, tt.DB, "users", test.Data{
+		"id":    user.ID,
+		"email": newEmail,
+	})
+
+	test.AssertNotInDB(t, tt.DB, "change_email_requests", test.Data{
+		"token": confirmToken,
+	})
+
+	// Test failure case: using the same authToken again
+	var errorResp handler.Error
+	PUT(t, Request{
+		path: "/users/email/",
+		body: request.EmailChangeConfirm{
+			Token: confirmToken,
+		},
+		authToken:    token,
+		bindResponse: &errorResp,
+		assertStatus: http.StatusUnprocessableEntity,
+	})
+
+	assert.Equal(t, service.ErrInvalidChangeEmailToken.Error(), errorResp.Error)
 }

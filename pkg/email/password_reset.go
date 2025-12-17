@@ -26,7 +26,7 @@ func (p PasswordResetRequest) TemplateName() string {
 func (p PasswordResetRequest) Variables() map[string]any {
 	return map[string]any{
 		"Username": p.Username,
-		"Link":     fmt.Sprintf("%sreset-password/%s/", app.Config().Server.Addr, p.Token),
+		"Link":     fmt.Sprintf("%spassword-reset/%s/", app.Config().Server.Addr, p.Token),
 
 		// Token var is not used in email template, it is here to make testing easier.
 		"token": p.Token,

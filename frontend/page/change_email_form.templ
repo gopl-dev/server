@@ -1,0 +1,85 @@
+package page
+
+import . "github.com/gopl-dev/server/frontend/component"
+
+templ ChangeEmailForm() {
+<script>
+    function changeEmailForm() {
+        return {
+            form: {
+                email: '',
+            },
+
+            success: false,
+            error: '',
+            errors: {
+                email: '',
+            },
+
+            submitForm() {
+                this.error = ''
+                this.errors = {
+                    email: '',
+                }
+
+                fetch('/api/users/email/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(this.form)
+                })
+                    .then(resp => resp.json())
+                    .then(resp => {
+                        if ("success" in resp && resp.success === true) {
+                            this.success = true
+                        }
+                        if (resp.status !== 200 && "error" in resp) {
+                            this.error = resp.error
+                        }
+                        if (resp.status !== 200 && resp.input_errors !== null) {
+                            let ie = resp.input_errors
+                            if ("email" in ie) {
+                                this.errors.email = ie.email
+                            }
+                        }
+                    })
+                    .catch(response => {
+                    })
+            }
+        }
+    }
+</script>
+<div class="flex flex-row justify-center">
+    <div class="w-full lg:w-1/2">
+        <h1 class="text-3xl pb-4">Change email</h1>
+        <div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+            <div class="card-body">
+                @Form("changeEmailForm") {
+                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+                <div role="alert" class="alert alert-success" x-show="success">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>A confirmation link has been sent to your new email address.</span>
+                </div>
+                <div x-show="!success">
+                    <p>We'll send a confirmation link to your new email address.</p>
+                    <fieldset class="fieldset">
+                        @Input(InputParams{
+                            ID: "email",
+                            Label: "New e-mail",
+                            Model: "form.email",
+                            ErrorModel: "errors.email",
+                        })
+                        <div class="p-2">
+                            @SubmitButton("Submit")
+                        </div>
+                    </fieldset>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}

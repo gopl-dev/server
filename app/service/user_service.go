@@ -35,6 +35,12 @@ var (
 
 	// ErrInvalidPasswordResetToken ...
 	ErrInvalidPasswordResetToken = app.ErrUnprocessable("password reset request is either expired or invalid")
+
+	// ErrChangeEmailToSameEmail ...
+	ErrChangeEmailToSameEmail = app.ErrUnprocessable("you already use this email, no change needed")
+
+	// ErrInvalidChangeEmailToken ...
+	ErrInvalidChangeEmailToken = app.ErrUnprocessable("change email request is expired or invalid")
 )
 
 var (
@@ -50,6 +56,7 @@ const (
 	UsernameAlreadyTaken = "Username already taken"
 
 	passwordResetTokenLength = 32
+	emailChangeTokenLength   = 32
 )
 
 // RegisterUserArgs defines the expected input parameters for the user registration process.
@@ -146,7 +153,7 @@ func (s *Service) LoginUser(ctx context.Context, email, password string) (user *
 		return
 	}
 
-	token, err = newSignedSessionJWT(sess.ID.String(), user.ID)
+	token, err = NewSignedSessionJWT(sess.ID.String(), user.ID)
 	if err != nil {
 		return
 	}
@@ -350,9 +357,85 @@ func (s *Service) ResetPassword(ctx context.Context, token, newPassword string) 
 	return s.db.DeletePasswordResetToken(ctx, prt.ID)
 }
 
-// newSignedSessionJWT creates a new, signed JWT token containing the session ID and user ID claims.
+// EmailChangeRequest handles the business logic for a user initiating an email change.
+func (s *Service) EmailChangeRequest(ctx context.Context, userID int64, newEmail string) error {
+	ctx, span := s.tracer.Start(ctx, "EmailChangeRequest")
+	defer span.End()
+
+	user, err := s.FindUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if user.Email == newEmail {
+		return ErrChangeEmailToSameEmail
+	}
+
+	// Check if the new email is already taken by another user.
+	existingUser, err := s.db.FindUserByEmail(ctx, newEmail)
+	if errors.Is(err, repo.ErrUserNotFound) {
+		err = nil
+	}
+	if err != nil {
+		return err
+	}
+	if existingUser != nil && existingUser.ID != user.ID {
+		return app.InputError{"email": UserWithThisEmailAlreadyExists}
+	}
+
+	token, err := app.Token(emailChangeTokenLength)
+	if err != nil {
+		return err
+	}
+
+	req := &ds.ChangeEmailRequest{
+		UserID:    user.ID,
+		NewEmail:  newEmail,
+		Token:     token,
+		ExpiresAt: time.Now().Add(time.Hour * 1), // Token is valid for 1 hour
+		CreatedAt: time.Now(),
+	}
+
+	err = s.db.CreateChangeEmailRequest(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Send email asynchronously
+	return email.Send(newEmail, email.ConfirmEmailChange{
+		Username: user.Username,
+		Token:    token,
+	})
+}
+
+// EmailChangeConfirm handles the logic for finalizing an email change via a token.
+func (s *Service) EmailChangeConfirm(ctx context.Context, token string) error {
+	ctx, span := s.tracer.Start(ctx, "EmailChangeConfirm")
+	defer span.End()
+
+	req, err := s.db.FindChangeEmailRequestByToken(ctx, token)
+	if errors.Is(err, repo.ErrChangeEmailRequestNotFound) {
+		return ErrInvalidChangeEmailToken
+	}
+	if err != nil {
+		return err
+	}
+
+	if req.Invalid() {
+		return ErrInvalidChangeEmailToken
+	}
+
+	err = s.db.UpdateUserEmail(ctx, req.UserID, req.NewEmail)
+	if err != nil {
+		return err
+	}
+
+	return s.db.DeleteChangeEmailRequest(ctx, req.ID)
+}
+
+// NewSignedSessionJWT creates a new, signed JWT token containing the session ID and user ID claims.
 // The token is signed using the secret key from the application configuration.
-func newSignedSessionJWT(sessionID string, userID int64) (token string, err error) {
+func NewSignedSessionJWT(sessionID string, userID int64) (token string, err error) {
 	jt := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		jwt.MapClaims{

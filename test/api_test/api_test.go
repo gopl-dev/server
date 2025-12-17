@@ -21,8 +21,6 @@ import (
 	"github.com/gopl-dev/server/pkg/trace"
 	"github.com/gopl-dev/server/server"
 	"github.com/gopl-dev/server/server/handler"
-	"github.com/gopl-dev/server/server/request"
-	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -339,24 +337,26 @@ func login(t *testing.T) *ds.User {
 		return authUser
 	}
 
-	// create new user and make auth request to get auth token
-	password := "mytestpassword"
-	usr := tt.Factory.CreateUser(t, ds.User{
-		Password: password,
-	})
-
-	resp := response.UserSignIn{}
-	POST(t, Request{
-		path:         "auth",
-		body:         request.UserSignIn{Email: usr.Email, Password: password},
-		bindResponse: &resp,
-		assertStatus: 200,
-	})
-
-	authToken = resp.Token
-	authUser = usr
+	authUser = tt.Factory.CreateUser(t)
+	authToken = loginAs(t, authUser)
 
 	return authUser
+}
+
+func loginAs(t *testing.T, u *ds.User) (token string) {
+	t.Helper()
+
+	s, err := tt.Service.CreateUserSession(context.Background(), u.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	token, err = service.NewSignedSessionJWT(s.ID.String(), u.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return token
 }
 
 // Shortcut to fmt.Sprint

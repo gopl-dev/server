@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import . "github.com/gopl-dev/server/frontend/component"
 
-func PasswordResetRequestForm() templ.Component {
+func ChangeEmailForm() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -31,7 +31,7 @@ func PasswordResetRequestForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n    function passwordResetRequestForm() {\r\n        return {\r\n            form: {\r\n                email: '',\r\n            },\r\n\r\n            success: false,\r\n            error: '',\r\n            errors: {\r\n                email: '',\r\n            },\r\n\r\n            submitForm() {\r\n                this.error = ''\r\n                this.errors = {\r\n                    email: '',\r\n                }\r\n\r\n                fetch('/api/users/password-reset-request/', {\r\n                    method: 'POST',\r\n                    headers: {'Content-Type': 'application/json'},\r\n                    body: JSON.stringify(this.form)\r\n                })\r\n                    .then(resp => resp.json())\r\n                    .then(resp => {\r\n                        if (\"success\" in resp && resp.success === true) {\r\n                            this.success = true\r\n                        }\r\n                        if (resp.status !== 200 && \"error\" in resp) {\r\n                            this.error = resp.error\r\n                        }\r\n                        if (resp.status !== 200 && resp.input_errors !== null) {\r\n                            let ie = resp.input_errors\r\n                            if (\"email\" in ie) {\r\n                                this.errors.email = ie.email\r\n                            }\r\n                        }\r\n                    })\r\n                    .catch(response => {\r\n                    })\r\n            }\r\n        }\r\n    }\r\n</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Password reset</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\n    function changeEmailForm() {\n        return {\n            form: {\n                email: '',\n            },\n\n            success: false,\n            error: '',\n            errors: {\n                email: '',\n            },\n\n            submitForm() {\n                this.error = ''\n                this.errors = {\n                    email: '',\n                }\n\n                fetch('/api/users/email/', {\n                    method: 'POST',\n                    headers: {'Content-Type': 'application/json'},\n                    body: JSON.stringify(this.form)\n                })\n                    .then(resp => resp.json())\n                    .then(resp => {\n                        if (\"success\" in resp && resp.success === true) {\n                            this.success = true\n                        }\n                        if (resp.status !== 200 && \"error\" in resp) {\n                            this.error = resp.error\n                        }\n                        if (resp.status !== 200 && resp.input_errors !== null) {\n                            let ie = resp.input_errors\n                            if (\"email\" in ie) {\n                                this.errors.email = ie.email\n                            }\n                        }\n                    })\n                    .catch(response => {\n                    })\n            }\n        }\n    }\n</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Change email</h1><div class=\"card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -47,13 +47,13 @@ func PasswordResetRequestForm() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><div role=\"alert\" class=\"alert alert-success\" x-show=\"success\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span>We've sent an email with password reset instructions.</span></div><div x-show=\"!success\"><p>The password reset flow involves sending an email.</p><fieldset class=\"fieldset\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><div role=\"alert\" class=\"alert alert-success\" x-show=\"success\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span>A confirmation link has been sent to your new email address.</span></div><div x-show=\"!success\"><p>We'll send a confirmation link to your new email address.</p><fieldset class=\"fieldset\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = Input(InputParams{
 				ID:         "email",
-				Label:      "Your e-mail",
+				Label:      "New e-mail",
 				Model:      "form.email",
 				ErrorModel: "errors.email",
 			}).Render(ctx, templ_7745c5c3_Buffer)
@@ -64,7 +64,7 @@ func PasswordResetRequestForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = SubmitButton("Reset password").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = SubmitButton("Submit").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -74,7 +74,7 @@ func PasswordResetRequestForm() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Form("passwordResetRequestForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Form("changeEmailForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

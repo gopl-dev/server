@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -237,6 +238,117 @@ func (h *Handler) ChangePasswordView(w http.ResponseWriter, r *http.Request) {
 	renderDefaultLayout(ctx, w, layout.Data{
 		Title: "Change password",
 		Body:  page.ChangePasswordForm(),
+	})
+}
+
+// RequestEmailChangeView renders the page with the form to request an email change.
+func (h *Handler) RequestEmailChangeView(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "RequestEmailChangeView")
+	defer span.End()
+
+	renderDefaultLayout(ctx, w, layout.Data{
+		Title: "Change Email",
+		Body:  page.ChangeEmailForm(),
+	})
+}
+
+// RequestEmailChange handles the request for an email change.
+//
+//	@ID			EmailChangeRequest
+//	@Summary	Request to change user email
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.EmailChangeRequest	true	"Old and new passwords"
+//	@Success	200		{object}	response.Status
+//	@Failure	401		{object}	Error "Unauthorized"
+//	@Failure	422		{object}	Error "Validation error"
+//	@Failure	500		{object}	Error
+//	@Router		/users/email/ [post]
+//	@Security	ApiKeyAuth
+func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "EmailChangeRequest")
+	defer span.End()
+
+	var req request.EmailChangeRequest
+	res := handleJSON(w, r, &req)
+	if res.Aborted() {
+		return
+	}
+
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		res.AbortUnauthorized()
+		return
+	}
+
+	err := h.service.EmailChangeRequest(ctx, user.ID, req.Email)
+	if err != nil {
+		res.Abort(err)
+		return
+	}
+
+	res.jsonSuccess()
+}
+
+// ConfirmEmailChange handles the confirmation for an email change.
+//
+//	@ID			EmailChangeConfirm
+//	@Summary	Confirm changing user email
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.EmailChangeRequest	true	"Old and new passwords"
+//	@Success	200		{object}	response.Status
+//	@Failure	401		{object}	Error "Unauthorized"
+//	@Failure	422		{object}	Error "Validation error"
+//	@Failure	500		{object}	Error
+//	@Router		/users/email/ [post]
+//	@Security	ApiKeyAuth
+func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "EmailChangeConfirm")
+	defer span.End()
+
+	var req request.EmailChangeConfirm
+	res := handleJSON(w, r, &req)
+	if res.Aborted() {
+		return
+	}
+
+	err := h.service.EmailChangeConfirm(ctx, req.Token)
+	if err != nil {
+		res.Abort(err)
+		return
+	}
+
+	res.jsonSuccess()
+}
+
+// ConfirmEmailChangeView handles the confirmation link for an email change.
+func (h *Handler) ConfirmEmailChangeView(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "ConfirmEmailChangeView")
+	defer span.End()
+
+	token := r.PathValue("token")
+	err := h.service.EmailChangeConfirm(ctx, token)
+	if errors.Is(err, service.ErrInvalidChangeEmailToken) {
+		renderDefaultLayout(ctx, w, layout.Data{
+			Title: "Change email",
+			Body:  page.Err422(err.Error()),
+		})
+		return
+	}
+	if err != nil {
+		renderDefaultLayout(ctx, w, layout.Data{
+			Title: "Change email",
+			Body:  page.Err500(err.Error()),
+		})
+		return
+	}
+
+	renderDefaultLayout(ctx, w, layout.Data{
+		Title: "Change email",
+		Body:  page.SuccessMessage("Your email successfully changed!"),
 	})
 }
 

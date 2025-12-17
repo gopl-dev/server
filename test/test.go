@@ -125,7 +125,7 @@ func countDatabaseRows(t *testing.T, db *pgxpool.Pool, table string, data Data) 
 
 	err := pgxscan.Get(context.Background(), db, &count, query, args...)
 	if err != nil {
-		t.Errorf("CountDatabaseRows: %s", err)
+		t.Fatal(aurora.Bold(aurora.Red(fmt.Sprintf("CountDatabaseRows: %s", err))).String())
 	}
 
 	return count
