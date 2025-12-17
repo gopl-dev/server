@@ -1,6 +1,7 @@
 package ds
 
 import (
+	"context"
 	"regexp"
 	"time"
 
@@ -24,21 +25,39 @@ const (
 	UserPasswordMinLen = 6
 )
 
+const (
+	userCtxKey ctxKey = "user"
+)
+
+var passwordValidation = z.String().Min(UserPasswordMinLen).Required(z.Message("Password is required"))
+var emailValidation = z.String().Email().Required(z.Message("Email is required"))
+
 // UserValidationRules specifies the validation rules for the User struct.
 var UserValidationRules = z.Shape{
-	"username": z.String().Min(UsernameMinLen).Max(UsernameMaxLen).Required(z.Message("Username is required")).
+	"Username": z.String().Min(UsernameMinLen).Max(UsernameMaxLen).Required(z.Message("Username is required")).
 		Match(UsernameBasicRegex,
 			z.Message("Username can only contain letters, numbers, dots, underscores, and dashes")).
 		Match(UsernameSpecialCharsRegex,
 			z.Message("Username cannot contain more than two dots, underscores, or dashes")),
-	"email":    z.String().Email().Required(z.Message("Email is required")),
-	"password": z.String().Min(UserPasswordMinLen).Required(z.Message("Password is required")),
+	"Email":    emailValidation,
+	"Password": passwordValidation,
 }
 
 // ChangePasswordValidationRules ...
 var ChangePasswordValidationRules = z.Shape{
 	"OldPassword": z.String().Required(z.Message("Password is required")),
-	"NewPassword": z.String().Min(UserPasswordMinLen).Required(z.Message("Password is required")),
+	"NewPassword": passwordValidation,
+}
+
+// PasswordResetRequestValidationRules ...
+var PasswordResetRequestValidationRules = z.Shape{
+	"Email": emailValidation,
+}
+
+// PasswordResetValidationRules ...
+var PasswordResetValidationRules = z.Shape{
+	"Token":    z.String().Required(z.Message("Token is required")),
+	"Password": passwordValidation,
 }
 
 // User ...
@@ -51,4 +70,20 @@ type User struct {
 	CreatedAt      time.Time  `json:"-"`
 	UpdatedAt      *time.Time `json:"-"`
 	DeletedAt      *time.Time `json:"-"`
+}
+
+// ToContext adds the given user object to the provided context.
+func (u *User) ToContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, userCtxKey, u)
+}
+
+// UserFromContext attempts to retrieve user object from the context.
+func UserFromContext(ctx context.Context) *User {
+	if v := ctx.Value(userCtxKey); v != nil {
+		if user, ok := v.(*User); ok {
+			return user
+		}
+	}
+
+	return nil
 }

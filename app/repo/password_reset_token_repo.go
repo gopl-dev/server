@@ -8,7 +8,7 @@ import (
 )
 
 // CreatePasswordResetToken inserts a new password reset token into the database.
-func (r *Repo) CreatePasswordResetToken(ctx context.Context, token *ds.PasswordResetToken) error {
+func (r *Repo) CreatePasswordResetToken(ctx context.Context, t *ds.PasswordResetToken) error {
 	_, span := r.tracer.Start(ctx, "CreatePasswordResetToken")
 	defer span.End()
 
@@ -17,7 +17,7 @@ func (r *Repo) CreatePasswordResetToken(ctx context.Context, token *ds.PasswordR
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
-	return r.db.QueryRow(ctx, query, token.UserID, token.Token, token.ExpiresAt, token.CreatedAt).Scan(&token.ID)
+	return r.db.QueryRow(ctx, query, t.UserID, t.Token, t.ExpiresAt, t.CreatedAt).Scan(&t.ID)
 }
 
 // FindPasswordResetToken retrieves a password reset token from the database by the token string.
@@ -26,12 +26,12 @@ func (r *Repo) FindPasswordResetToken(ctx context.Context, token string) (*ds.Pa
 	_, span := r.tracer.Start(ctx, "FindPasswordResetToken")
 	defer span.End()
 
-	prt := new(ds.PasswordResetToken)
-	err := pgxscan.Get(ctx, r.db, prt, `SELECT * FROM password_reset_tokens WHERE token = $1`, token)
+	t := new(ds.PasswordResetToken)
+	err := pgxscan.Get(ctx, r.db, t, `SELECT * FROM password_reset_tokens WHERE token = $1`, token)
 	if noRows(err) {
 		return nil, ErrPasswordResetTokenNotFound
 	}
-	return prt, err
+	return t, err
 }
 
 // DeletePasswordResetToken removes a password reset token from the database by its ID.

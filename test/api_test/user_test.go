@@ -220,3 +220,78 @@ func TestChangePassword(t *testing.T) {
 		assert.Equal(t, resp.InputErrors["old_password"], service.ErrInvalidPassword.Error())
 	})
 }
+
+func TestPasswordReset(t *testing.T) {
+	user := tt.Factory.CreateUser(t)
+
+	// 1. Request password reset
+	var reqResetResp response.Status
+	POST(t, Request{
+		path:         "users/password-reset-request",
+		body:         request.PasswordResetRequest{Email: user.Email},
+		bindResponse: &reqResetResp,
+		assertStatus: http.StatusOK,
+	})
+
+	test.AssertInDB(t, tt.DB, "password_reset_tokens", test.Data{"user_id": user.ID})
+
+	emailVars := test.LoadEmailVars(t, user.Email)
+	token := app.String(emailVars["token"])
+	assert.NotZero(t, token)
+
+	// 2. Successfully reset the password
+	newPassword := random.String()
+	var resetResp response.Status
+	POST(t, Request{
+		path: "users/password-reset",
+		body: request.PasswordReset{
+			Token:    token,
+			Password: newPassword,
+		},
+		bindResponse: &resetResp,
+		assertStatus: http.StatusOK,
+	})
+
+	// Assert the token was deleted
+	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"token": token})
+
+	// 3. Verify login with the new password
+	var signInResp response.UserSignIn
+	POST(t, Request{
+		path: "users/sign-in",
+		body: request.UserSignIn{
+			Email:    user.Email,
+			Password: newPassword,
+		},
+		bindResponse: &signInResp,
+		assertStatus: http.StatusOK,
+	})
+
+	// 4. Test failure cases
+	t.Run("reset with invalid token", func(t *testing.T) {
+		var errorResp handler.Error
+		POST(t, Request{
+			path: "users/password-reset",
+			body: request.PasswordReset{
+				Token:    "invalid-token",
+				Password: newPassword,
+			},
+			bindResponse: &errorResp,
+			assertStatus: http.StatusUnprocessableEntity,
+		})
+	})
+
+	t.Run("reset with password too short", func(t *testing.T) {
+		var errorResp handler.Error
+		POST(t, Request{
+			path: "users/password-reset",
+			body: request.PasswordReset{
+				Token:    token,
+				Password: "short",
+			},
+			bindResponse: &errorResp,
+			assertStatus: http.StatusUnprocessableEntity,
+		})
+		assert.NotZero(t, errorResp.InputErrors["password"])
+	})
+}

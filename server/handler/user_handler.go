@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
@@ -93,14 +94,16 @@ func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
 //	@Router		/users/confirm-email/ [post]
 //	@Security	ApiKeyAuth
 func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
-	var req request.ConfirmEmail
+	ctx, span := h.tracer.Start(r.Context(), "ConfirmEmail")
+	defer span.End()
 
+	var req request.ConfirmEmail
 	res := handleJSON(w, r, &req)
 	if res.Aborted() {
 		return
 	}
 
-	err := h.service.ConfirmEmail(r.Context(), req.Code)
+	err := h.service.ConfirmEmail(ctx, req.Code)
 	if err != nil {
 		res.Abort(err)
 		return
@@ -111,11 +114,17 @@ func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
 
 // UserSignUpView renders the static HTML form for user registration.
 func (h *Handler) UserSignUpView(w http.ResponseWriter, r *http.Request) {
-	renderTempl(r.Context(), w, layout.Default(layout.Data{
+	ctx, span := h.tracer.Start(r.Context(), "UserSignUpView")
+	defer span.End()
+
+	if ds.UserFromContext(ctx) != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+
+	renderDefaultLayout(ctx, w, layout.Data{
 		Title: "Sign up",
-		Body:  page.UserSignUpForm(), // Assumes page.UserSignUpForm is the templ component for the form
-		User:  nil,                   // TODO! resolve user (Placeholder for authenticated user object, if required)
-	}))
+		Body:  page.UserSignUpForm(),
+	})
 }
 
 // UserSignOut handles user log-out by clearing the session cookie and deleting the session
@@ -128,15 +137,15 @@ func (h *Handler) UserSignUpView(w http.ResponseWriter, r *http.Request) {
 //	@Success	200		{object}	response.Status
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
-//	@Router		/users/confirm-email/ [post]
+//	@Router		/users/sign-out/ [post]
 //	@Security	ApiKeyAuth
 func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
-	// Removes the session cookie from the client.
+	ctx, span := h.tracer.Start(r.Context(), "UserSignOut")
+	defer span.End()
+
 	clearSessionCookie(w)
 
-	ctx := r.Context()
-
-	session := h.service.UserSessionFromContext(ctx)
+	session := ds.UserSessionFromContext(ctx)
 	if session != nil {
 		err := h.service.DeleteUserSession(ctx, session.ID)
 		if err != nil {
@@ -167,19 +176,22 @@ func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 //	@Router		/users/change-password/ [post]
 //	@Security	ApiKeyAuth
 func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "ChangePassword")
+	defer span.End()
+
 	var req request.ChangePassword
 	res := handleJSON(w, r, &req)
 	if res.Aborted() {
 		return
 	}
 
-	user := h.service.UserFromContext(r.Context())
+	user := ds.UserFromContext(ctx)
 	if user == nil {
 		res.AbortUnauthorized()
 		return
 	}
 
-	err := h.service.ChangeUserPassword(r.Context(), service.ChangeUserPasswordArgs{
+	err := h.service.ChangeUserPassword(ctx, service.ChangeUserPasswordArgs{
 		UserID:      user.ID,
 		OldPassword: req.OldPassword,
 		NewPassword: req.NewPassword,
@@ -195,35 +207,44 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // ConfirmEmailView renders the static HTML form page where a user can enter
 // an email confirmation code.
 func (h *Handler) ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
-	renderTempl(r.Context(), w, layout.Default(layout.Data{
+	ctx, span := h.tracer.Start(r.Context(), "ConfirmEmailView")
+	defer span.End()
+
+	renderDefaultLayout(ctx, w, layout.Data{
 		Title: "Confirm email",
 		Body:  page.ConfirmEmailForm(),
-		User:  nil, // TODO! resolve user
-	}))
+	})
 }
 
 // UserSettingsView renders the static HTML page where a user can manually enter
 // an email confirmation code.
 func (h *Handler) UserSettingsView(w http.ResponseWriter, r *http.Request) {
-	renderTempl(r.Context(), w, layout.Default(layout.Data{
+	ctx, span := h.tracer.Start(r.Context(), "UserSettingsView")
+	defer span.End()
+
+	renderDefaultLayout(ctx, w, layout.Data{
 		Title: "Settings",
 		Body:  page.UserSettings(),
-		User:  nil, // TODO! resolve user
-	}))
+	})
 }
 
 // ChangePasswordView renders the static HTML page where a user can manually enter
 // an email confirmation code.
 func (h *Handler) ChangePasswordView(w http.ResponseWriter, r *http.Request) {
-	renderTempl(r.Context(), w, layout.Default(layout.Data{
+	ctx, span := h.tracer.Start(r.Context(), "ChangePasswordView")
+	defer span.End()
+
+	renderDefaultLayout(ctx, w, layout.Data{
 		Title: "Change password",
 		Body:  page.ChangePasswordForm(),
-		User:  nil, // TODO! resolve user
-	}))
+	})
 }
 
 // UserSignInView renders the static HTML form for user login.
 // It is a wrapper around the RenderUserSignInPage helper.
 func (h *Handler) UserSignInView(w http.ResponseWriter, r *http.Request) {
+	_, span := h.tracer.Start(r.Context(), "UserSignInView")
+	defer span.End()
+
 	RenderUserSignInPage(w, r, "/")
 }

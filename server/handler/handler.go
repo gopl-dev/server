@@ -21,7 +21,9 @@ import (
 	z "github.com/Oudwins/zog"
 	"github.com/a-h/templ"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
+	"github.com/gopl-dev/server/frontend"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/response"
@@ -264,6 +266,14 @@ func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) 
 			log.Println(err)
 		}
 	}
+}
+
+// renderDefaultLayout renders a default layout with provided data.
+func renderDefaultLayout(ctx context.Context, w http.ResponseWriter, data layout.Data) {
+	data.User = frontend.NewUser(ds.UserFromContext(ctx))
+	t := layout.Default(data)
+
+	renderTempl(ctx, w, t)
 }
 
 // RenderUserSignInPage renders the HTML page containing the user sign-in form,

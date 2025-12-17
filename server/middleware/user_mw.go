@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/server/endpoint"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/request"
@@ -22,8 +23,8 @@ func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Hand
 				return
 			}
 
-			ctx := mw.service.UserToContext(r.Context(), user)
-			ctx = mw.service.UserSessionToContext(ctx, session)
+			ctx := user.ToContext(r.Context())
+			ctx = session.ToContext(ctx)
 
 			r = r.WithContext(ctx)
 		}
@@ -37,7 +38,7 @@ func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Hand
 // For all other requests (e.g., web pages), it renders login form.
 func (mw *Middleware) UserAuth(next endpoint.Handler) endpoint.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := mw.service.UserFromContext(r.Context())
+		user := ds.UserFromContext(r.Context())
 		if user == nil {
 			if request.IsJSON(r) {
 				handler.Abort(w, app.ErrUnauthorized())

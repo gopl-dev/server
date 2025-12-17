@@ -10,5 +10,5 @@ func (r *Router) PublicWebEndpoints() {
 	r.GET("/users/sign-in/", r.handler.UserSignInView)
 
 	r.GET("/password-reset/", r.handler.PasswordResetRequestView)
-	r.GET("/confirm-password-reset/", r.handler.PasswordResetConfirmView)
+	r.GET("/password-reset/{token}/", r.handler.PasswordResetConfirmView)
 }

@@ -30,8 +30,11 @@ var (
 	// database session has expired based on its timestamp.
 	ErrSessionExpired = app.ErrForbidden("session expired")
 
-	// ErrTokenExpired err.
+	// ErrTokenExpired ...
 	ErrTokenExpired = app.ErrUnprocessable("token expired")
+
+	// ErrInvalidPasswordResetToken ...
+	ErrInvalidPasswordResetToken = app.ErrUnprocessable("password reset request is either expired or invalid")
 )
 
 var (
@@ -46,11 +49,7 @@ const (
 	// UsernameAlreadyTaken is the specific error message for username validation failure during registration.
 	UsernameAlreadyTaken = "Username already taken"
 
-	sessionTokenLength = 32
-)
-
-const (
-	ctxUserKey contextKey = "user"
+	passwordResetTokenLength = 32
 )
 
 // RegisterUserArgs defines the expected input parameters for the user registration process.
@@ -261,10 +260,30 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, jwt string) (
 	return
 }
 
-// RequestPasswordReset handles the logic for initiating a password reset.
+// FindPasswordResetToken ...
+func (s *Service) FindPasswordResetToken(ctx context.Context, token string) (t *ds.PasswordResetToken, err error) {
+	ctx, span := s.tracer.Start(ctx, "FindPasswordResetToken")
+	defer span.End()
+
+	t, err = s.db.FindPasswordResetToken(ctx, token)
+	if errors.Is(err, repo.ErrPasswordResetTokenNotFound) {
+		return nil, ErrInvalidPasswordResetToken
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if t.Invalid() {
+		return nil, ErrInvalidPasswordResetToken
+	}
+
+	return t, nil
+}
+
+// PasswordResetRequest handles the logic for initiating a password reset.
 // It finds the user by email, generates a unique token, and sends it to the user's email.
-func (s *Service) RequestPasswordReset(ctx context.Context, emailAddr string) error {
-	ctx, span := s.tracer.Start(ctx, "RequestPasswordReset")
+func (s *Service) PasswordResetRequest(ctx context.Context, emailAddr string) error {
+	ctx, span := s.tracer.Start(ctx, "PasswordResetRequest")
 	defer span.End()
 
 	user, err := s.db.FindUserByEmail(ctx, emailAddr)
@@ -273,22 +292,23 @@ func (s *Service) RequestPasswordReset(ctx context.Context, emailAddr string) er
 		if errors.Is(err, repo.ErrUserNotFound) {
 			return nil
 		}
+
 		return err
 	}
 
-	token, err := app.Token(sessionTokenLength)
+	resetToken, err := app.Token(passwordResetTokenLength)
 	if err != nil {
 		return err
 	}
 
-	prt := &ds.PasswordResetToken{
+	token := &ds.PasswordResetToken{
 		UserID:    user.ID,
-		Token:     token,
-		ExpiresAt: time.Now().Add(time.Hour * 1), // Token is valid for 1 hour
+		Token:     resetToken,
+		ExpiresAt: time.Now().Add(time.Hour * 1),
 		CreatedAt: time.Now(),
 	}
 
-	err = s.db.CreatePasswordResetToken(ctx, prt)
+	err = s.db.CreatePasswordResetToken(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -296,7 +316,7 @@ func (s *Service) RequestPasswordReset(ctx context.Context, emailAddr string) er
 	// TODO: Send email asynchronously
 	return email.Send(user.Email, email.PasswordResetRequest{
 		Username: user.Username,
-		Token:    token,
+		Token:    resetToken,
 	})
 }
 
@@ -307,12 +327,14 @@ func (s *Service) ResetPassword(ctx context.Context, token, newPassword string) 
 	defer span.End()
 
 	prt, err := s.db.FindPasswordResetToken(ctx, token)
+	if errors.Is(err, repo.ErrPasswordResetTokenNotFound) {
+		return ErrInvalidPasswordResetToken
+	}
 	if err != nil {
 		return err
 	}
-
-	if time.Now().After(prt.ExpiresAt) {
-		return ErrTokenExpired
+	if prt.Invalid() {
+		return ErrInvalidPasswordResetToken
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), app.DefaultBCryptCost)
@@ -326,22 +348,6 @@ func (s *Service) ResetPassword(ctx context.Context, token, newPassword string) 
 	}
 
 	return s.db.DeletePasswordResetToken(ctx, prt.ID)
-}
-
-// UserToContext adds the given user object to the provided context.
-func (s *Service) UserToContext(ctx context.Context, user *ds.User) context.Context {
-	return context.WithValue(ctx, ctxUserKey, user)
-}
-
-// UserFromContext attempts to retrieve the authenticated user object from the context.
-func (s *Service) UserFromContext(ctx context.Context) *ds.User {
-	if v := ctx.Value(ctxUserKey); v != nil {
-		if user, ok := v.(*ds.User); ok {
-			return user
-		}
-	}
-
-	return nil
 }
 
 // newSignedSessionJWT creates a new, signed JWT token containing the session ID and user ID claims.

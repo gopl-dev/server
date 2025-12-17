@@ -3,3 +3,5 @@
 // Global functions should not be created here.
 // Methods on types are welcome.
 package ds
+
+type ctxKey string

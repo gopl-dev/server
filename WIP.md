@@ -7,11 +7,11 @@ for simplicity, I keep todo list and progress here for now
     - [x] register user
     - [x] confirm email
     - [x] login
-    - [ ] logout
-    - [ ] handle frontend logic for user auth status 
-    - [ ] change password
+    - [x] logout
+    - [x] handle frontend logic for user auth status 
+    - [x] change password
     - [ ] reset password
-    - [ ] change login
+    - [ ] change email
     - [ ] change username
     - [ ] delete account
 
@@ -22,7 +22,7 @@ for simplicity, I keep todo list and progress here for now
   - [ ] view book
   - [ ] delete book
   - [ ] list books
-  - 
+  
 - [ ] Review "TODO!"
 - [ ] enable "unused" linter 
 - [ ] RELEASE

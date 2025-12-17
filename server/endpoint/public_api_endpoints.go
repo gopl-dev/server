@@ -8,8 +8,8 @@ func (r *Router) PublicAPIEndpoints() {
 		POST("sign-up/", r.handler.UserSignUp).
 		POST("sign-in/", r.handler.UserSignIn).
 		POST("confirm-email/", r.handler.ConfirmEmail).
-		POST("password-reset/", r.handler.PasswordResetRequest).
-		POST("password-reset-confirm/", r.handler.PasswordResetConfirm)
+		POST("password-reset-request/", r.handler.PasswordResetRequest).
+		POST("password-reset/", r.handler.PasswordResetConfirm)
 
 	r.Group("books").
 		GET("/", r.handler.FilterBooks).

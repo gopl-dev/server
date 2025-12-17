@@ -81,7 +81,7 @@ func Default(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></head><body class=\"bg-gray-100 font-sans w-full\"><div class=\"navbar bg-neutral text-neutral-content shadow-sm\"><div class=\"flex-1 pl-10\"><a class=\"text-white no-underline \" href=\"/\"><img src=\"/assets/gopl.svg\" width=\"60\"></a></div><div class=\"flex-none\"><ul class=\"menu menu-horizontal px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></head><body class=\"bg-gray-100 font-sans w-full\"><div class=\"navbar bg-neutral text-neutral-content shadow-sm\"><div class=\"flex-1 pl-10\"><a class=\"text-white no-underline \" href=\"/\"><img src=\"/assets/gopl.svg\" alt=\"gopl.dev\" width=\"60\"></a></div><div class=\"flex-none\"><ul class=\"menu menu-horizontal px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

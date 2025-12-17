@@ -6,8 +6,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type contextKey string
-
 // Service holds dependencies required for the application's business logic layer.
 type Service struct {
 	db     *repo.Repo

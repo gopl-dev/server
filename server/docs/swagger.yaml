@@ -26,6 +26,18 @@ definitions:
       code:
         type: string
     type: object
+  request.PasswordReset:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+    type: object
+  request.PasswordResetRequest:
+    properties:
+      email:
+        type: string
+    type: object
   request.UserSignIn:
     properties:
       email:
@@ -97,7 +109,16 @@ paths:
       - users
   /users/confirm-email/:
     post:
-      operationId: UserSignOut
+      consumes:
+      - application/json
+      operationId: ConfirmEmail
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ConfirmEmail'
       produces:
       - application/json
       responses:
@@ -115,7 +136,71 @@ paths:
             $ref: '#/definitions/handler.Error'
       security:
       - ApiKeyAuth: []
-      summary: Logout
+      summary: Confirm email
+      tags:
+      - users
+  /users/password-reset-request/:
+    post:
+      consumes:
+      - application/json
+      operationId: PasswordResetRequest
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.PasswordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Status'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Password reset
+      tags:
+      - users
+  /users/password-reset/:
+    post:
+      consumes:
+      - application/json
+      operationId: PasswordResetConfirm
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.PasswordReset'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Status'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Password reset
       tags:
       - users
   /users/sign-in/:
@@ -148,6 +233,29 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: User auth
+      tags:
+      - users
+  /users/sign-out/:
+    post:
+      operationId: UserSignOut
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Status'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Logout
       tags:
       - users
   /users/sign-up/:
