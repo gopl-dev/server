@@ -5,19 +5,17 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/gopl-dev/server/app"
+	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app/ds"
 )
+
+var createEmailConfirmationInputRules = z.Shape{
+	"UserID": userIDInputRules,
+}
 
 const (
 	emailConfirmationTTL     = time.Hour * 24
 	emailConfirmationCodeLen = 6
-)
-
-const (
-	// InvalidConfirmationCode is the specific error message returned
-	// when an email confirmation code is invalid or expired.
-	InvalidConfirmationCode = "Invalid confirmation code"
 )
 
 // CreateEmailConfirmation generates a unique confirmation code, calculates its expiration time,
@@ -25,6 +23,11 @@ const (
 func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (code string, err error) {
 	ctx, span := s.tracer.Start(ctx, "CreateEmailConfirmation")
 	defer span.End()
+
+	err = ValidateCreateEmailConfirmationInput(userID)
+	if err != nil {
+		return
+	}
 
 	code, err = s.newEmailConfirmationCode(ctx)
 	if err != nil {
@@ -39,38 +42,7 @@ func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (co
 	}
 
 	err = s.db.CreateEmailConfirmation(ctx, ec)
-
 	return
-}
-
-// ConfirmEmail confirms an email address by validating the provided code,
-// setting the email_confirmed flag for the associated user, and then deleting the used confirmation record.
-func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
-	ctx, span := s.tracer.Start(ctx, "ConfirmEmail")
-	defer span.End()
-
-	ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
-	if err != nil {
-		return
-	}
-
-	if ec == nil || ec.Invalid() {
-		err = app.InputError{"code": InvalidConfirmationCode}
-
-		return
-	}
-
-	err = s.SetUserEmailConfirmed(ctx, ec.UserID)
-	if err != nil {
-		return
-	}
-
-	err = s.db.DeleteEmailConfirmation(ctx, ec.ID)
-	if err != nil {
-		return
-	}
-
-	return s.LogEmailConfirmed(ctx, ec.UserID)
 }
 
 func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) {
@@ -100,4 +72,18 @@ func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) 
 
 		length++
 	}
+}
+
+// ValidateCreateEmailConfirmationInput ...
+func ValidateCreateEmailConfirmationInput(userID int64) (err error) {
+	in := &CreateEmailConfirmationInput{
+		UserID: userID,
+	}
+
+	return validateInput(createEmailConfirmationInputRules, in)
+}
+
+// CreateEmailConfirmationInput ...
+type CreateEmailConfirmationInput struct {
+	UserID int64
 }

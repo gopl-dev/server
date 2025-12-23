@@ -25,6 +25,7 @@ for simplicity, I keep todo list and progress here for now
   - [ ] list books
   
 - [ ] Validation and sanitation should be done at service layer
+- [ ] uuid v7
 - [ ] Review "TODO!"
 - [ ] enable "unused" linter 
 - [ ] RELEASE

@@ -28,7 +28,6 @@ func (s *UserSession) ToContext(ctx context.Context) context.Context {
 // UserSessionFromContext attempts to retrieve the user session object from the context.
 func UserSessionFromContext(ctx context.Context) *UserSession {
 	if v := ctx.Value(userSessionCtxKey); v != nil {
-		// Safe type assertion to prevent panics
 		if session, ok := v.(*UserSession); ok {
 			return session
 		}

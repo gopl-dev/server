@@ -15,9 +15,9 @@ import (
 // adds the authenticated user and session objects to the request's context.
 func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
-		jwt := handler.GetSessionFromCookie(r)
-		if jwt != "" {
-			user, session, err := mw.service.GetUserAndSessionFromJWT(r.Context(), jwt)
+		token := handler.GetSessionFromCookie(r)
+		if token != "" {
+			user, session, err := mw.service.GetUserAndSessionFromJWT(r.Context(), token)
 			if err != nil {
 				next(w, r)
 				return
@@ -25,6 +25,12 @@ func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Hand
 
 			ctx := user.ToContext(r.Context())
 			ctx = session.ToContext(ctx)
+
+			err = mw.service.ProlongUserSession(ctx, session.ID)
+			if err != nil {
+				handler.Abort(w, err)
+				return
+			}
 
 			r = r.WithContext(ctx)
 		}

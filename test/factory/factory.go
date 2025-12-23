@@ -3,7 +3,9 @@ package factory
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
+	"time"
 
 	"dario.cat/mergo"
 	"github.com/gopl-dev/server/app/repo"
@@ -20,10 +22,29 @@ func New(r *repo.Repo) *Factory {
 }
 
 func merge(dst, src any) {
-	err := mergo.Merge(dst, src, mergo.WithOverride)
+	err := mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(timeTransformer{}))
 	if err != nil {
 		panic(fmt.Sprintf("Unable to merge %T with %T", dst, src))
 	}
+}
+
+type timeTransformer struct{}
+
+func (t timeTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+	if typ == reflect.TypeFor[time.Time]() {
+		return func(dst, src reflect.Value) error {
+			if src.CanInterface() {
+				timeVal, ok := src.Interface().(time.Time)
+				if ok && !timeVal.IsZero() {
+					if dst.CanSet() {
+						dst.Set(src)
+					}
+				}
+			}
+			return nil
+		}
+	}
+	return nil
 }
 
 // X is a function that repeatedly executes a data creation function ('fn')

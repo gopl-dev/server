@@ -22,7 +22,7 @@ func (r *Repo) CreateUserSession(ctx context.Context, s *ds.UserSession) (err er
 }
 
 // FindUserSessionByID retrieves a user session record from the database using its unique ID.
-func (r *Repo) FindUserSessionByID(ctx context.Context, id string) (sess *ds.UserSession, err error) {
+func (r *Repo) FindUserSessionByID(ctx context.Context, id uuid.UUID) (sess *ds.UserSession, err error) {
 	_, span := r.tracer.Start(ctx, "FindUserSessionByID")
 	defer span.End()
 

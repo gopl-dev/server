@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	z "github.com/Oudwins/zog"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 const (
@@ -29,6 +31,15 @@ const (
 var (
 	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
+
+	jwtSessionParam = "session"
+	jwtUserParam    = "user"
+)
+
+var (
+	// ErrInvalidJWT is returned when an authentication token is malformed,
+	// invalidly signed, or contains unexpected claims.
+	ErrInvalidJWT = ErrForbidden("invalid token")
 )
 
 // CamelCaseToSnakeCase converts a string from CamelCase to snake_case.
@@ -130,4 +141,61 @@ func Token(lengthOpt ...int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+// NewSignedSessionJWT creates a new, signed JWT token containing the session ID and user ID claims.
+// The token is signed using the secret key from the application configuration.
+func NewSignedSessionJWT(sessionID string, userID int64) (token string, err error) {
+	jt := jwt.NewWithClaims(
+		jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			jwtSessionParam: sessionID,
+			jwtUserParam:    userID,
+		})
+
+	return jt.SignedString([]byte(Config().Session.Key))
+}
+
+// UnpackSessionJWT validates and parses a signed JWT string.
+// It extracts the session ID (string) and user ID (int64) from the claims.
+func UnpackSessionJWT(jt string) (sessionID uuid.UUID, userID int64, err error) {
+	token, err := jwt.Parse(jt, func(_ *jwt.Token) (any, error) {
+		return []byte(Config().Session.Key), nil
+	})
+	if err != nil {
+		return
+	}
+
+	if !token.Valid {
+		err = ErrInvalidJWT
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		err = ErrInvalidJWT
+		return
+	}
+
+	sessionIDStr, ok := claims[jwtSessionParam].(string)
+	if !ok {
+		err = ErrInvalidJWT
+		return
+	}
+
+	sessionID, err = uuid.Parse(sessionIDStr)
+	if err != nil {
+		err = ErrInvalidJWT
+		return
+	}
+
+	userIDFloat, ok := claims[jwtUserParam].(float64)
+	if !ok {
+		err = ErrInvalidJWT
+		return
+	}
+
+	userID = int64(userIDFloat)
+
+	return
 }

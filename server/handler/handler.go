@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	z "github.com/Oudwins/zog"
 	"github.com/a-h/templ"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
@@ -107,14 +106,6 @@ func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 		v.Validate(&err)
 
 		if err.Has() {
-			h.Abort(err)
-			return h
-		}
-	}
-
-	if v, ok := body.(ValidateSchemaProvider); ok {
-		err = app.Validate(v.ValidationSchema(), body)
-		if err != nil {
 			h.Abort(err)
 			return h
 		}
@@ -288,11 +279,6 @@ func RenderUserSignInPage(w http.ResponseWriter, r *http.Request, redirectTo str
 // Validator is an interface for structs that can perform custom, multi-field validation.
 type Validator interface {
 	Validate(err *app.InputError)
-}
-
-// ValidateSchemaProvider is an interface for structs that provide a validation schema for structural validation.
-type ValidateSchemaProvider interface {
-	ValidationSchema() z.Shape
 }
 
 // Sanitizer is an interface for structs that can clean or normalize their input data.

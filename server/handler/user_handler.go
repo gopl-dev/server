@@ -27,6 +27,9 @@ import (
 //	@Router		/users/sign-up/ [post]
 //	@Security	ApiKeyAuth
 func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "UserSignUp")
+	defer span.End()
+
 	var req request.UserSignUp
 
 	res := handleJSON(w, r, &req)
@@ -34,7 +37,7 @@ func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := h.service.RegisterUser(r.Context(), req.ToParams())
+	_, err := h.service.RegisterUser(ctx, req.Username, req.Email, req.Password)
 	if err != nil {
 		res.Abort(err)
 		return
@@ -59,6 +62,9 @@ func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
 //
 // TODO either email or username can be used to login.
 func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "UserSignIn")
+	defer span.End()
+
 	var req request.UserSignIn
 
 	res := handleJSON(w, r, &req)
@@ -66,7 +72,7 @@ func (h *Handler) UserSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, token, err := h.service.LoginUser(r.Context(), req.Email, req.Password)
+	user, token, err := h.service.AuthenticateUser(ctx, req.Email, req.Password)
 	if err != nil {
 		res.Abort(err)
 		return
@@ -192,11 +198,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.ChangeUserPassword(ctx, service.ChangeUserPasswordArgs{
-		UserID:      user.ID,
-		OldPassword: req.OldPassword,
-		NewPassword: req.NewPassword,
-	})
+	err := h.service.ChangeUserPassword(ctx, user.ID, req.OldPassword, req.NewPassword)
 	if err != nil {
 		res.Abort(err)
 		return
@@ -282,7 +284,7 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.EmailChangeRequest(ctx, user.ID, req.Email)
+	err := h.service.CreateChangeEmailRequest(ctx, user.ID, req.Email)
 	if err != nil {
 		res.Abort(err)
 		return
@@ -315,7 +317,7 @@ func (h *Handler) ConfirmEmailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.EmailChangeConfirm(ctx, req.Token)
+	err := h.service.ConfirmEmailChange(ctx, req.Token)
 	if err != nil {
 		res.Abort(err)
 		return
@@ -330,7 +332,7 @@ func (h *Handler) ConfirmEmailChangeView(w http.ResponseWriter, r *http.Request)
 	defer span.End()
 
 	token := r.PathValue("token")
-	err := h.service.EmailChangeConfirm(ctx, token)
+	err := h.service.ConfirmEmailChange(ctx, token)
 	if errors.Is(err, service.ErrInvalidChangeEmailToken) {
 		renderDefaultLayout(ctx, w, layout.Data{
 			Title: "Change email",

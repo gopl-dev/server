@@ -3,6 +3,7 @@ package api_test
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
@@ -158,7 +159,7 @@ func TestChangePassword(t *testing.T) {
 
 	user := tt.Factory.CreateUser(t, ds.User{Password: oldPassword})
 
-	_, token, err := tt.Service.LoginUser(context.Background(), user.Email, oldPassword)
+	_, token, err := tt.Service.AuthenticateUser(context.Background(), user.Email, oldPassword)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +237,7 @@ func TestPasswordReset(t *testing.T) {
 	test.AssertInDB(t, tt.DB, "password_reset_tokens", test.Data{"user_id": user.ID})
 
 	emailVars := test.LoadEmailVars(t, user.Email)
-	token := app.String(emailVars["authToken"])
+	token := app.String(emailVars["token"])
 	assert.NotZero(t, token)
 
 	// 2. Successfully reset the password
@@ -253,7 +254,7 @@ func TestPasswordReset(t *testing.T) {
 	})
 
 	// Assert the authToken was deleted
-	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"authToken": token})
+	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"token": token})
 
 	// 3. Verify login with the new password
 	var signInResp response.UserSignIn
@@ -268,12 +269,12 @@ func TestPasswordReset(t *testing.T) {
 	})
 
 	// 4. Test failure cases
-	t.Run("reset with invalid authToken", func(t *testing.T) {
+	t.Run("reset with invalid token", func(t *testing.T) {
 		var errorResp handler.Error
 		POST(t, Request{
 			path: "users/password-reset",
 			body: request.PasswordReset{
-				Token:    "invalid-authToken",
+				Token:    "invalid-token",
 				Password: newPassword,
 			},
 			bindResponse: &errorResp,
@@ -282,12 +283,15 @@ func TestPasswordReset(t *testing.T) {
 	})
 
 	t.Run("reset with password too short", func(t *testing.T) {
+		prt := tt.Factory.CreatePasswordResetToken(t, ds.PasswordResetToken{
+			UserID: user.ID,
+		})
 		var errorResp handler.Error
 		POST(t, Request{
 			path: "users/password-reset",
 			body: request.PasswordReset{
-				Token:    token,
-				Password: "short",
+				Token:    prt.Token,
+				Password: strings.Repeat("a", service.UserPasswordMinLen-1),
 			},
 			bindResponse: &errorResp,
 			assertStatus: http.StatusUnprocessableEntity,

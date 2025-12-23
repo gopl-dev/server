@@ -44,7 +44,7 @@ func (h *Handler) PasswordResetRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.PasswordResetRequest(ctx, req.Email)
+	err := h.service.CreatePasswordResetRequest(ctx, req.Email)
 	if err != nil {
 		res.Abort(err)
 		return
@@ -60,7 +60,7 @@ func (h *Handler) PasswordResetConfirmView(w http.ResponseWriter, r *http.Reques
 
 	token := r.PathValue("token")
 
-	_, err := h.service.FindPasswordResetToken(r.Context(), token)
+	_, err := h.service.FindPasswordResetByToken(ctx, token)
 	if errors.Is(err, service.ErrInvalidPasswordResetToken) {
 		renderDefaultLayout(ctx, w, layout.Data{
 			Title: "Reset Your Password",
