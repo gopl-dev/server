@@ -3,6 +3,14 @@
 ## Overview
 This is a Go-based web server application using a layered architecture. It serves both a JSON API and server-side rendered HTML pages using [templ](https://templ.guide/).
 
+## Interaction Rules
+- Be extremely concise and professional.
+- Avoid conversational filler, politeness, or introductory phrases (e.g., "Certainly!", "I can help with that", "Here is the code").
+- Provide direct answers or code immediately without unnecessary explanations.
+- If a question can be answered with "Yes" or "No", do so.
+- Do not explain obvious logic unless explicitly asked for a breakdown.
+- Focus on "Code first, text second."
+
 ## Tech Stack
 - **Language:** Go (Golang) 1.23+
 - **Database:** PostgreSQL 18+
@@ -65,3 +73,4 @@ This is a Go-based web server application using a layered architecture. It serve
 - **Tracing:** Every method in Repo, Service, and Handler should start with `ctx, span := r.tracer.Start(ctx, "MethodName")` and `defer span.End()`.
 - **Validation:** Each public service method must validate it's input with `err = Normalize(in)`
 - **SQL:** Use `$1`, `$2` placeholders.
+- **Error Handling:** Do not use inline error checks (e.g., `if err := foo(); err != nil`). Always assign the error to a variable on a separate line before checking it.

@@ -12,8 +12,9 @@ for simplicity, I keep todo list and progress here for now
     - [x] change password
     - [x] reset password
     - [x] change email
-    - [ ] change username
+    - [x] change username
     - [ ] delete account
+    - [ ] login/register by google & github
 
 - [x] user activity log
 - [ ] books
@@ -24,9 +25,16 @@ for simplicity, I keep todo list and progress here for now
   - [ ] delete book
   - [ ] list books
   
-- [ ] Validation and sanitation should be done at service layer
-- [ ] uuid v7
+- [x] Validation and sanitation should be done at service layer
+- [ ] uuid v7 for IDs
 - [ ] Review "TODO!"
 - [ ] enable "unused" linter 
 - [ ] RELEASE
 ---
+
+Next:
+- [ ] Jobs
+- [ ] Events
+- [ ] Comments
+- [ ] Likes
+- [ ] Offline mode

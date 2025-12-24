@@ -21,15 +21,17 @@ var UsernameBasicRegex = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 // UsernameSpecialCharsRegex enforces a limit on the maximum number of special characters (dot, underscore, dash).
 var UsernameSpecialCharsRegex = regexp.MustCompile(`^[^._-]*([._-][^._-]*){0,2}$`)
 
+var usernameInputRules = z.String().Required().
+	Min(UsernameMinLen, z.Message("Username must be at least 2 characters")).
+	Max(UsernameMaxLen, z.Message("Username must be at most 30 characters")).
+	Required(z.Message("Username is required")).
+	Match(UsernameBasicRegex,
+		z.Message("Username can only contain letters, numbers, dots, underscores, and dashes")).
+	Match(UsernameSpecialCharsRegex,
+		z.Message("Username cannot contain more than two dots, underscores, or dashes"))
+
 var registerUserInputRules = z.Shape{
-	"Username": z.String().Required().
-		Min(UsernameMinLen, z.Message("Username must be at least 2 characters")).
-		Max(UsernameMaxLen, z.Message("Username must be at most 30 characters")).
-		Required(z.Message("Username is required")).
-		Match(UsernameBasicRegex,
-			z.Message("Username can only contain letters, numbers, dots, underscores, and dashes")).
-		Match(UsernameSpecialCharsRegex,
-			z.Message("Username cannot contain more than two dots, underscores, or dashes")),
+	"Username": usernameInputRules,
 	"Email":    emailInputRules,
 	"Password": newPasswordInputRules,
 }

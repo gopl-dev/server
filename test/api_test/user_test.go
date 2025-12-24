@@ -170,8 +170,8 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	var resp response.Status
-	POST(t, Request{
-		path:         "/users/change-password/",
+	PUT(t, Request{
+		path:         "/users/password/",
 		body:         req,
 		authToken:    token,
 		bindResponse: &resp,
@@ -210,8 +210,8 @@ func TestChangePassword(t *testing.T) {
 		}
 
 		var resp handler.Error
-		POST(t, Request{
-			path:         "/users/change-password/",
+		PUT(t, Request{
+			path:         "/users/password/",
 			body:         req,
 			authToken:    token,
 			bindResponse: &resp,
@@ -358,4 +358,69 @@ func TestChangeEmail(t *testing.T) {
 	})
 
 	assert.Equal(t, service.ErrInvalidChangeEmailToken.Error(), errorResp.Error)
+}
+
+func TestChangeUsername(t *testing.T) {
+	password := random.String(10)
+	user := tt.Factory.CreateUser(t, ds.User{Password: password})
+	token := loginAs(t, user)
+	newUsername := random.String(10)
+
+	t.Run("successful username change", func(t *testing.T) {
+		req := request.ChangeUsername{
+			Username: newUsername,
+			Password: password,
+		}
+
+		var resp response.Status
+		PUT(t, Request{
+			path:         "/users/username/",
+			body:         req,
+			authToken:    token,
+			bindResponse: &resp,
+			assertStatus: http.StatusOK,
+		})
+
+		test.AssertInDB(t, tt.DB, "users", test.Data{
+			"id":       user.ID,
+			"username": newUsername,
+		})
+	})
+
+	t.Run("incorrect password", func(t *testing.T) {
+		req := request.ChangeUsername{
+			Username: random.String(10),
+			Password: "wrong-password",
+		}
+
+		var resp handler.Error
+		PUT(t, Request{
+			path:         "/users/username/",
+			body:         req,
+			authToken:    token,
+			bindResponse: &resp,
+			assertStatus: http.StatusUnprocessableEntity,
+		})
+
+		assert.Equal(t, resp.InputErrors["password"], "Incorrect password")
+	})
+
+	t.Run("username already taken", func(t *testing.T) {
+		otherUser := tt.Factory.CreateUser(t)
+		req := request.ChangeUsername{
+			Username: otherUser.Username,
+			Password: password,
+		}
+
+		var resp handler.Error
+		PUT(t, Request{
+			path:         "/users/username/",
+			body:         req,
+			authToken:    token,
+			bindResponse: &resp,
+			assertStatus: http.StatusUnprocessableEntity,
+		})
+
+		assert.Equal(t, resp.InputErrors["username"], service.UsernameAlreadyTaken)
+	})
 }

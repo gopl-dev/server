@@ -114,6 +114,24 @@ func handleJSON(w http.ResponseWriter, r *http.Request, body any) *Request {
 	return h
 }
 
+// handleAuthorizedJSON wraps handleJSON to include user authentication.
+// It retrieves the user from the request context and aborts the request
+// with a 401 Unauthorized status if no user is found.
+func handleAuthorizedJSON(w http.ResponseWriter, r *http.Request, body any) (user *ds.User, req *Request) {
+	req = handleJSON(w, r, body)
+	if req.Aborted() {
+		return
+	}
+
+	user = ds.UserFromContext(r.Context())
+	if user == nil {
+		req.AbortUnauthorized()
+		return
+	}
+
+	return
+}
+
 // MapHeaders parses request headers and maps values to fields in the 'to' struct
 // based on the struct's 'h' tags.
 func (h *Request) MapHeaders(to any) {
@@ -151,7 +169,7 @@ func (h *Request) MapHeaders(to any) {
 
 // AbortUnauthorized wraps Abort with 401 Unauthorized.
 func (h *Request) AbortUnauthorized() {
-	Abort(h.Response, app.ErrUnauthorized())
+	h.Abort(app.ErrUnauthorized())
 }
 
 // Abort flags the request as aborted and writes the provided error to the response.

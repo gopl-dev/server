@@ -180,21 +180,15 @@ func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 //	@Failure	401		{object}	Error "Unauthorized"
 //	@Failure	422		{object}	Error "Validation error or incorrect old password"
 //	@Failure	500		{object}	Error
-//	@Router		/users/change-password/ [post]
+//	@Router		/users/password/ [post]
 //	@Security	ApiKeyAuth
 func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "ChangePassword")
 	defer span.End()
 
 	var req request.ChangePassword
-	res := handleJSON(w, r, &req)
+	user, res := handleAuthorizedJSON(w, r, &req)
 	if res.Aborted() {
-		return
-	}
-
-	user := ds.UserFromContext(ctx)
-	if user == nil {
-		res.AbortUnauthorized()
 		return
 	}
 
@@ -273,14 +267,8 @@ func (h *Handler) RequestEmailChange(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	var req request.EmailChangeRequest
-	res := handleJSON(w, r, &req)
+	user, res := handleAuthorizedJSON(w, r, &req)
 	if res.Aborted() {
-		return
-	}
-
-	user := ds.UserFromContext(ctx)
-	if user == nil {
-		res.AbortUnauthorized()
 		return
 	}
 
@@ -361,4 +349,52 @@ func (h *Handler) UserSignInView(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	RenderUserSignInPage(w, r, "/")
+}
+
+// ChangeUsernameView renders the page with the form to change username.
+func (h *Handler) ChangeUsernameView(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "ChangeUsernameView")
+	defer span.End()
+
+	renderDefaultLayout(ctx, w, layout.Data{
+		Title: "Change Username",
+		Body:  page.ChangeUsernameForm(),
+	})
+}
+
+// ChangeUsername handles the API request for an authenticated user to change their username.
+//
+//	@ID			ChangeUsername
+//	@Summary	Change username
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.ChangeUsername	true	"New username and password"
+//	@Success	200		{object}	response.Status
+//	@Failure	401		{object}	Error "Unauthorized"
+//	@Failure	422		{object}	Error "Validation error or incorrect password"
+//	@Failure	500		{object}	Error
+//	@Router		/users/username/ [post]
+//	@Security	ApiKeyAuth
+func (h *Handler) ChangeUsername(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "ChangeUsername")
+	defer span.End()
+
+	var req request.ChangeUsername
+	user, res := handleAuthorizedJSON(w, r, &req)
+	if res.Aborted() {
+		return
+	}
+
+	err := h.service.ChangeUsername(ctx, service.ChangeUsernameInput{
+		UserID:      user.ID,
+		NewUsername: req.Username,
+		Password:    req.Password,
+	})
+	if err != nil {
+		res.Abort(err)
+		return
+	}
+
+	res.jsonSuccess()
 }
