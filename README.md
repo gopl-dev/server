@@ -11,6 +11,7 @@ A humble server that serves gopl.dev
 https://golangci-lint.run/docs/welcome/install/local/
 
 `golangci-lint run`
+`go run ./cmd/service_call_guard ./app/service`
 
 
 # openapi & swagger

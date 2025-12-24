@@ -24,7 +24,8 @@ func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (co
 	ctx, span := s.tracer.Start(ctx, "CreateEmailConfirmation")
 	defer span.End()
 
-	err = ValidateCreateEmailConfirmationInput(userID)
+	in := &CreateEmailConfirmationInput{UserID: userID}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
@@ -35,7 +36,7 @@ func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (co
 	}
 
 	ec := &ds.EmailConfirmation{
-		UserID:    userID,
+		UserID:    in.UserID,
 		Code:      code,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(emailConfirmationTTL),
@@ -74,16 +75,16 @@ func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) 
 	}
 }
 
-// ValidateCreateEmailConfirmationInput ...
-func ValidateCreateEmailConfirmationInput(userID int64) (err error) {
-	in := &CreateEmailConfirmationInput{
-		UserID: userID,
-	}
-
-	return validateInput(createEmailConfirmationInputRules, in)
-}
-
 // CreateEmailConfirmationInput ...
 type CreateEmailConfirmationInput struct {
 	UserID int64
+}
+
+// Sanitize ...
+func (in *CreateEmailConfirmationInput) Sanitize() {
+}
+
+// Validate ...
+func (in *CreateEmailConfirmationInput) Validate() error {
+	return validateInput(createEmailConfirmationInputRules, in)
 }

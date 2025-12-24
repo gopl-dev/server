@@ -44,38 +44,45 @@ const (
 
 // RegisterUser handles the complete user registration process.
 func (s *Service) RegisterUser(ctx context.Context, username, emailAddr, password string) (user *ds.User, err error) {
-	ctx, span := s.tracer.Start(ctx, "RegisterUserArgs")
+	ctx, span := s.tracer.Start(ctx, "RegisterUser")
 	defer span.End()
 
-	err = ValidateRegisterUserInput(&username, &emailAddr, &password)
+	in := &RegisterUserInput{
+		Username: username,
+		Email:    emailAddr,
+		Password: password,
+	}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	_, err = s.db.FindUserByEmail(ctx, emailAddr)
+	_, err = s.db.FindUserByEmail(ctx, in.Email)
 	if err == nil {
-		return nil, app.InputError{"email": UserWithThisEmailAlreadyExists}
+		err = app.InputError{"email": UserWithThisEmailAlreadyExists}
+		return
 	}
 	if !errors.Is(err, repo.ErrUserNotFound) {
-		return nil, err
+		return
 	}
 
-	_, err = s.db.FindUserByUsername(ctx, username)
+	_, err = s.db.FindUserByUsername(ctx, in.Username)
 	if err == nil {
-		return nil, app.InputError{"username": UsernameAlreadyTaken}
+		err = app.InputError{"username": UsernameAlreadyTaken}
+		return
 	}
 	if !errors.Is(err, repo.ErrUserNotFound) {
-		return nil, err
+		return
 	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), app.DefaultBCryptCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), app.DefaultBCryptCost)
 	if err != nil {
 		return
 	}
 
 	user = &ds.User{
-		Username:       username,
-		Email:          emailAddr,
+		Username:       in.Username,
+		Email:          in.Email,
 		Password:       string(passwordHash),
 		EmailConfirmed: false,
 		CreatedAt:      time.Now(),
@@ -94,38 +101,15 @@ func (s *Service) RegisterUser(ctx context.Context, username, emailAddr, passwor
 	// todo send email async
 	err = email.Send(user.Email, email.ConfirmEmail{
 		Username: user.Username,
-		Email:    emailAddr,
+		Email:    in.Email,
 		Code:     emailConfirmCode,
 	})
 	if err != nil {
 		return
 	}
 
-	err = s.LogUserRegistered(ctx, user.ID)
+	err = s.logUserRegistered(ctx, user.ID)
 	return
-}
-
-// ValidateRegisterUserInput ...
-func ValidateRegisterUserInput(username, email, password *string) (err error) {
-	in := &RegisterUserInput{
-		Username: *username,
-		Email:    *email,
-		Password: *password,
-	}
-
-	in.Username = strings.TrimSpace(in.Username)
-	in.Email = strings.TrimSpace(in.Email)
-	in.Password = strings.TrimSpace(in.Password)
-
-	err = validateInput(registerUserInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*username = in.Username
-	*email = in.Email
-	*password = in.Password
-	return nil
 }
 
 // RegisterUserInput defines the expected input parameters for the user registration process.
@@ -133,4 +117,16 @@ type RegisterUserInput struct {
 	Username string
 	Email    string
 	Password string
+}
+
+// Sanitize ...
+func (in *RegisterUserInput) Sanitize() {
+	in.Username = strings.TrimSpace(in.Username)
+	in.Email = strings.TrimSpace(in.Email)
+	in.Password = strings.TrimSpace(in.Password)
+}
+
+// Validate ...
+func (in *RegisterUserInput) Validate() error {
+	return validateInput(registerUserInputRules, in)
 }

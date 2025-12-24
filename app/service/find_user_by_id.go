@@ -16,24 +16,24 @@ func (s *Service) FindUserByID(ctx context.Context, id int64) (user *ds.User, er
 	ctx, span := s.tracer.Start(ctx, "FindUserByID")
 	defer span.End()
 
-	err = ValidateFindUserByIDInput(id)
+	in := &FindUserByIDInput{ID: id}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	return s.db.FindUserByID(ctx, id)
+	return s.db.FindUserByID(ctx, in.ID)
 }
 
-// ValidateFindUserByIDInput ...
-func ValidateFindUserByIDInput(id int64) (err error) {
-	in := &FindUserByIDInput{
-		ID: id,
-	}
-
-	return validateInput(findUserByIDInputRules, in)
-}
-
-// FindUserByIDInput defines the input for changing a user's password.
+// FindUserByIDInput ...
 type FindUserByIDInput struct {
 	ID int64
+}
+
+// Sanitize ...
+func (in *FindUserByIDInput) Sanitize() {}
+
+// Validate ...
+func (in *FindUserByIDInput) Validate() error {
+	return validateInput(findUserByIDInputRules, in)
 }

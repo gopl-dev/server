@@ -47,7 +47,7 @@ func TestValidateResetPasswordInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateResetPasswordInput(&c.data.Token, &c.data.Password)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

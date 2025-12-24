@@ -45,6 +45,18 @@ func New(db *pgxpool.Pool, t trace.Tracer) *Service {
 	}
 }
 
+// Validatable indicates that the struct can be validated.
+type Validatable interface {
+	Sanitize()
+	Validate() error
+}
+
+// Normalize prepares the input by sanitizing and validating it.
+func Normalize(v Validatable) error {
+	v.Sanitize()
+	return v.Validate()
+}
+
 func validateInput(rules z.Shape, data any) (err error) {
 	// Zod panics if struct is missing rules key
 	// we don't want that

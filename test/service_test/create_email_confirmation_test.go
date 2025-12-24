@@ -14,18 +14,13 @@ func TestValidateCreateEmailConfirmationInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		data      int64
+		data      service.CreateEmailConfirmationInput
 	}{
 		{
 			name:      "missing userID",
 			expectErr: "userID is required",
 			argName:   "user_id",
-			data:      0,
-		},
-		{
-			valid: true,
-			name:  "valid input",
-			data:  1,
+			data:      service.CreateEmailConfirmationInput{0},
 		},
 	}
 
@@ -33,7 +28,7 @@ func TestValidateCreateEmailConfirmationInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateCreateEmailConfirmationInput(c.data)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

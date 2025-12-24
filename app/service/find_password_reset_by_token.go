@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 
 	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app/ds"
@@ -10,44 +11,48 @@ import (
 )
 
 var findPasswordResetByTokenInputRules = z.Shape{
-	"token": z.String().Required(z.Message("Token is required")),
+	"Token": z.String().Required(z.Message("Token is required")),
 }
 
 // FindPasswordResetByToken ...
-func (s *Service) FindPasswordResetByToken(ctx context.Context, token string) (t *ds.PasswordResetToken, err error) {
+func (s *Service) FindPasswordResetByToken(ctx context.Context, token string) (prt *ds.PasswordResetToken, err error) {
 	ctx, span := s.tracer.Start(ctx, "FindPasswordResetByToken")
 	defer span.End()
 
-	err = ValidateFindPasswordResetByTokenInput(token)
+	in := &FindPasswordResetByTokenInput{Token: token}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	t, err = s.db.FindPasswordResetToken(ctx, token)
+	prt, err = s.db.FindPasswordResetToken(ctx, in.Token)
 	if errors.Is(err, repo.ErrPasswordResetTokenNotFound) {
-		return nil, ErrInvalidPasswordResetToken
+		err = ErrInvalidPasswordResetToken
+		return
 	}
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	if t.Invalid() {
-		return nil, ErrInvalidPasswordResetToken
+	if prt.Invalid() {
+		err = ErrInvalidPasswordResetToken
+		return
 	}
 
-	return t, nil
-}
-
-// ValidateFindPasswordResetByTokenInput ...
-func ValidateFindPasswordResetByTokenInput(token string) (err error) {
-	in := &FindPasswordResetByTokenInput{
-		Token: token,
-	}
-
-	return validateInput(findPasswordResetByTokenInputRules, in)
+	return
 }
 
 // FindPasswordResetByTokenInput ...
 type FindPasswordResetByTokenInput struct {
 	Token string
+}
+
+// Sanitize ...
+func (in *FindPasswordResetByTokenInput) Sanitize() {
+	in.Token = strings.TrimSpace(in.Token)
+}
+
+// Validate ...
+func (in *FindPasswordResetByTokenInput) Validate() error {
+	return validateInput(findPasswordResetByTokenInputRules, in)
 }

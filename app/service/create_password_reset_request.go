@@ -14,7 +14,7 @@ import (
 )
 
 var createPasswordResetRequestInputRules = z.Shape{
-	"email": emailInputRules,
+	"Email": emailInputRules,
 }
 
 var (
@@ -27,24 +27,25 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, emailAddr stri
 	ctx, span := s.tracer.Start(ctx, "CreatePasswordResetRequest")
 	defer span.End()
 
-	err = ValidateCreatePasswordResetRequestInput(&emailAddr)
+	in := &CreatePasswordResetRequestInput{Email: emailAddr}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	user, err := s.db.FindUserByEmail(ctx, emailAddr)
+	user, err := s.db.FindUserByEmail(ctx, in.Email)
 	if err != nil {
 		// If the user is not found, we don't return an error to prevent email enumeration attacks.
 		if errors.Is(err, repo.ErrUserNotFound) {
-			return nil
+			err = nil
 		}
 
-		return err
+		return
 	}
 
 	resetToken, err := app.Token(passwordResetTokenLength)
 	if err != nil {
-		return err
+		return
 	}
 
 	token := &ds.PasswordResetToken{
@@ -56,7 +57,7 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, emailAddr stri
 
 	err = s.db.CreatePasswordResetToken(ctx, token)
 	if err != nil {
-		return err
+		return
 	}
 
 	// TODO: Send email asynchronously
@@ -66,24 +67,17 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, emailAddr stri
 	})
 }
 
-// ValidateCreatePasswordResetRequestInput ...
-func ValidateCreatePasswordResetRequestInput(email *string) (err error) {
-	in := &CreatePasswordResetRequestInput{
-		Email: *email,
-	}
-
-	in.Email = strings.TrimSpace(in.Email)
-
-	err = validateInput(createPasswordResetRequestInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*email = in.Email
-	return nil
-}
-
 // CreatePasswordResetRequestInput ...
 type CreatePasswordResetRequestInput struct {
 	Email string
+}
+
+// Sanitize ...
+func (in *CreatePasswordResetRequestInput) Sanitize() {
+	in.Email = strings.TrimSpace(in.Email)
+}
+
+// Validate ...
+func (in *CreatePasswordResetRequestInput) Validate() error {
+	return validateInput(createPasswordResetRequestInputRules, in)
 }

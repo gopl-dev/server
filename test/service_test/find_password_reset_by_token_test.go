@@ -14,18 +14,18 @@ func TestValidateFindPasswordResetByTokenInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		token     string
+		data      service.FindPasswordResetByTokenInput
 	}{
 		{
 			name:      "empty token",
 			expectErr: "Token is required",
 			argName:   "token",
-			token:     "",
+			data:      service.FindPasswordResetByTokenInput{""},
 		},
 		{
-			name:  "valid input",
 			valid: true,
-			token: "some-valid-token",
+			name:  "valid token",
+			data:  service.FindPasswordResetByTokenInput{"valid-token"},
 		},
 	}
 
@@ -33,7 +33,7 @@ func TestValidateFindPasswordResetByTokenInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateFindPasswordResetByTokenInput(c.token)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

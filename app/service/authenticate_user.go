@@ -29,12 +29,16 @@ func (s *Service) AuthenticateUser(ctx context.Context, email, password string) 
 	ctx, span := s.tracer.Start(ctx, "AuthenticateUser")
 	defer span.End()
 
-	err = ValidateAuthenticateUserInput(&email, &password)
+	in := &AuthenticateUserInput{
+		Email:    email,
+		Password: password,
+	}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	user, err = s.db.FindUserByEmail(ctx, email)
+	user, err  = s.db.FindUserByEmail(ctx, in.Email)
 	if err != nil {
 		if errors.Is(err, repo.ErrUserNotFound) {
 			err = ErrInvalidEmailOrPassword
@@ -42,7 +46,7 @@ func (s *Service) AuthenticateUser(ctx context.Context, email, password string) 
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password))
 	if err != nil {
 		err = ErrInvalidEmailOrPassword
 		return
@@ -62,21 +66,13 @@ type AuthenticateUserInput struct {
 	Email, Password string
 }
 
-// ValidateAuthenticateUserInput ...
-func ValidateAuthenticateUserInput(email, password *string) (err error) {
-	in := &AuthenticateUserInput{
-		Email:    *email,
-		Password: *password,
-	}
-
+// Sanitize ...
+func (in *AuthenticateUserInput) Sanitize() {
 	in.Email = strings.TrimSpace(in.Email)
 	in.Password = strings.TrimSpace(in.Password)
+}
 
-	err = validateInput(authenticateUserInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*email, *password = in.Email, in.Password
-	return nil
+// Validate ...
+func (in *AuthenticateUserInput) Validate() error {
+	return validateInput(authenticateUserInputRules, in)
 }

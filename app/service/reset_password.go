@@ -13,8 +13,8 @@ import (
 
 // PasswordResetValidationRules ...
 var resetPasswordInputRules = z.Shape{
-	"token":    z.String().Required(z.Message("Token is required")),
-	"password": newPasswordInputRules,
+	"Token":    z.String().Required(z.Message("Token is required")),
+	"Password": newPasswordInputRules,
 }
 
 var (
@@ -24,27 +24,33 @@ var (
 
 // ResetPassword handles the logic for resetting a user's password using a token.
 // It validates the token, checks for expiration, updates the user's password, and deletes the token.
-func (s *Service) ResetPassword(ctx context.Context, token, password string) error {
+func (s *Service) ResetPassword(ctx context.Context, token, password string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ResetPassword")
 	defer span.End()
 
-	err := ValidateResetPasswordInput(&token, &password)
+	in := &ResetPasswordInput{
+		Token:    token,
+		Password: password,
+	}
+	err = Normalize(in)
 	if err != nil {
-		return err
+		return
 	}
 
-	prt, err := s.db.FindPasswordResetToken(ctx, token)
+	prt, err := s.db.FindPasswordResetToken(ctx, in.Token)
 	if errors.Is(err, repo.ErrPasswordResetTokenNotFound) {
-		return ErrInvalidPasswordResetToken
+		err = ErrInvalidPasswordResetToken
+		return
 	}
 	if err != nil {
-		return err
+		return
 	}
 	if prt.Invalid() {
-		return ErrInvalidPasswordResetToken
+		err = ErrInvalidPasswordResetToken
+		return
 	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), app.DefaultBCryptCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), app.DefaultBCryptCost)
 	if err != nil {
 		return err
 	}
@@ -57,28 +63,19 @@ func (s *Service) ResetPassword(ctx context.Context, token, password string) err
 	return s.db.DeletePasswordResetToken(ctx, prt.ID)
 }
 
-// ValidateResetPasswordInput ...
-func ValidateResetPasswordInput(token, password *string) (err error) {
-	in := &ResetPasswordInput{
-		Token:    *token,
-		Password: *password,
-	}
-
-	in.Token = strings.TrimSpace(in.Token)
-	in.Password = strings.TrimSpace(in.Password)
-
-	err = validateInput(resetPasswordInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*token = in.Token
-	*password = in.Password
-	return nil
-}
-
 // ResetPasswordInput ...
 type ResetPasswordInput struct {
 	Token    string
 	Password string
+}
+
+// Sanitize ...
+func (in *ResetPasswordInput) Sanitize() {
+	in.Token = strings.TrimSpace(in.Token)
+	in.Password = strings.TrimSpace(in.Password)
+}
+
+// Validate ...
+func (in *ResetPasswordInput) Validate() error {
+	return validateInput(resetPasswordInputRules, in)
 }

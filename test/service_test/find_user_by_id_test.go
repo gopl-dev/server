@@ -14,18 +14,18 @@ func TestValidateFindUserByIDInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		id        int64
+		data      service.FindUserByIDInput
 	}{
 		{
-			name:      "ID missing",
+			name:      "missing ID",
 			expectErr: "ID is required",
 			argName:   "id",
-			id:        0,
+			data:      service.FindUserByIDInput{0},
 		},
 		{
 			valid: true,
 			name:  "valid input",
-			id:    1,
+			data:  service.FindUserByIDInput{1},
 		},
 	}
 
@@ -33,7 +33,7 @@ func TestValidateFindUserByIDInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateFindUserByIDInput(c.id)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

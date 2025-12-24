@@ -32,27 +32,31 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID int64, ne
 	ctx, span := s.tracer.Start(ctx, "CreateChangeEmailRequest")
 	defer span.End()
 
-	err = ValidateCreateChangeEmailRequestInput(userID, &newEmail)
+	in := &CreateChangeEmailRequestInput{
+		UserID:   userID,
+		NewEmail: newEmail,
+	}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	user, err := s.db.FindUserByID(ctx, userID)
+	user, err := s.db.FindUserByID(ctx, in.UserID)
 	if err != nil {
-		return err
+		return
 	}
 
-	if user.Email == newEmail {
+	if user.Email == in.NewEmail {
 		return ErrChangeEmailToSameEmail
 	}
 
 	// Check if the new email is already taken by another user.
-	existingUser, err := s.db.FindUserByEmail(ctx, newEmail)
+	existingUser, err := s.db.FindUserByEmail(ctx, in.NewEmail)
 	if errors.Is(err, repo.ErrUserNotFound) {
 		err = nil
 	}
 	if err != nil {
-		return err
+		return
 	}
 	if existingUser != nil && existingUser.ID != user.ID {
 		return app.InputError{"email": UserWithThisEmailAlreadyExists}
@@ -60,12 +64,12 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID int64, ne
 
 	token, err := app.Token(emailChangeTokenLength)
 	if err != nil {
-		return err
+		return
 	}
 
 	req := &ds.ChangeEmailRequest{
 		UserID:    user.ID,
-		NewEmail:  newEmail,
+		NewEmail:  in.NewEmail,
 		Token:     token,
 		ExpiresAt: time.Now().Add(time.Hour * 1),
 		CreatedAt: time.Now(),
@@ -73,36 +77,28 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID int64, ne
 
 	err = s.db.CreateChangeEmailRequest(ctx, req)
 	if err != nil {
-		return err
-	}
-
-	// TODO: Send email asynchronously
-	return email.Send(newEmail, email.ConfirmEmailChange{
-		Username: user.Username,
-		Token:    token,
-	})
-}
-
-// ValidateCreateChangeEmailRequestInput ...
-func ValidateCreateChangeEmailRequestInput(userID int64, newEmail *string) (err error) {
-	in := &CreateChangeEmailRequestInput{
-		UserID:   userID,
-		NewEmail: *newEmail,
-	}
-
-	in.NewEmail = strings.TrimSpace(in.NewEmail)
-
-	err = validateInput(createChangeEmailRequestInputRules, in)
-	if err != nil {
 		return
 	}
 
-	*newEmail = in.NewEmail
-	return nil
+	// TODO: Send email asynchronously
+	return email.Send(in.NewEmail, email.ConfirmEmailChange{
+		Username: user.Username,
+		Token:    token,
+	})
 }
 
 // CreateChangeEmailRequestInput ...
 type CreateChangeEmailRequestInput struct {
 	UserID   int64
 	NewEmail string
+}
+
+// Sanitize ...
+func (in *CreateChangeEmailRequestInput) Sanitize() {
+	in.NewEmail = strings.TrimSpace(in.NewEmail)
+}
+
+// Validate ...
+func (in *CreateChangeEmailRequestInput) Validate() error {
+	return validateInput(createChangeEmailRequestInputRules, in)
 }

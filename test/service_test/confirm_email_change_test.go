@@ -7,29 +7,33 @@ import (
 )
 
 func TestValidateConfirmEmailChangeInput(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name      string
 		valid     bool
 		expectErr string
 		argName   string
-		token     string
+		data      service.ConfirmEmailChangeInput
 	}{
 		{
 			name:      "empty token",
 			expectErr: "Token is required",
 			argName:   "token",
-			token:     "",
+			data:      service.ConfirmEmailChangeInput{""},
 		},
 		{
-			name:  "valid input",
 			valid: true,
-			token: "some-valid-token",
+			name:  "valid token",
+			data:  service.ConfirmEmailChangeInput{"valid-token"},
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := service.ValidateConfirmEmailChangeInput(&c.token)
+			t.Parallel()
+
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

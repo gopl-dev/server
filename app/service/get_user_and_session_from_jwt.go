@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	z "github.com/Oudwins/zog"
@@ -10,7 +11,7 @@ import (
 )
 
 var getUserAndSessionFromJWTInputRules = z.Shape{
-	"token": z.String().Required(z.Message("Token is required")),
+	"Token": z.String().Required(z.Message("Token is required")),
 }
 
 var (
@@ -30,24 +31,27 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
 	ctx, span := s.tracer.Start(ctx, "GetUserAndSessionFromJWT")
 	defer span.End()
 
-	err = ValidateGetUserAndSessionFromJWTInput(token)
+	in := &GetUserAndSessionFromJWTInput{Token: token}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	sessionID, userID, err := app.UnpackSessionJWT(token)
+	sessionID, userID, err := app.UnpackSessionJWT(in.Token)
 	if err != nil {
 		return
 	}
 
 	session, err = s.FindUserSessionByID(ctx, sessionID)
-	if err != nil || session == nil {
+	if err != nil {
+		return
+	}
+	if session == nil {
 		return
 	}
 
 	if session.UserID != userID {
-		err = ErrInvalidJWT
-		return
+		return nil, nil, ErrInvalidJWT
 	}
 
 	if session.ExpiresAt.Before(time.Now()) {
@@ -64,16 +68,17 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
 	return
 }
 
-// ValidateGetUserAndSessionFromJWTInput ...
-func ValidateGetUserAndSessionFromJWTInput(token string) (err error) {
-	in := &GetUserAndSessionFromJWTInput{
-		Token: token,
-	}
-
-	return validateInput(getUserAndSessionFromJWTInputRules, in)
-}
-
 // GetUserAndSessionFromJWTInput ...
 type GetUserAndSessionFromJWTInput struct {
 	Token string
+}
+
+// Sanitize ...
+func (in *GetUserAndSessionFromJWTInput) Sanitize() {
+	in.Token = strings.TrimSpace(in.Token)
+}
+
+// Validate ...
+func (in *GetUserAndSessionFromJWTInput) Validate() error {
+	return validateInput(getUserAndSessionFromJWTInputRules, in)
 }

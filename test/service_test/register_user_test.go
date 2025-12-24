@@ -91,7 +91,7 @@ func TestValidateRegisterUserInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateRegisterUserInput(&c.data.Username, &c.data.Email, &c.data.Password)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

@@ -20,7 +20,7 @@ func TestValidateCreatePasswordResetRequestInput(t *testing.T) {
 			name:      "invalid email",
 			expectErr: "must be a valid email",
 			argName:   "email",
-			data:      service.CreatePasswordResetRequestInput{"aaa"},
+			data:      service.CreatePasswordResetRequestInput{"invalid"},
 		},
 		{
 			name:      "empty email",
@@ -39,7 +39,7 @@ func TestValidateCreatePasswordResetRequestInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateCreatePasswordResetRequestInput(&c.data.Email)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

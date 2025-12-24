@@ -24,20 +24,19 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ConfirmEmail")
 	defer span.End()
 
-	err = ValidateConfirmEmailInput(&code)
-	if err != nil {
+	in := &ConfirmEmailInput{Code: code}
+	err = Normalize(in); if
+	err != nil {
 		return
 	}
 
-	ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
+	ec, err := s.db.FindEmailConfirmationByCode(ctx, in.Code)
 	if err != nil {
 		return
 	}
 
 	if ec == nil || ec.Invalid() {
-		err = app.InputError{"code": InvalidConfirmationCode}
-
-		return
+		return app.InputError{"code": InvalidConfirmationCode}
 	}
 
 	err = s.db.SetUserEmailConfirmed(ctx, ec.UserID)
@@ -50,27 +49,20 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 		return
 	}
 
-	return s.LogEmailConfirmed(ctx, ec.UserID)
-}
-
-// ValidateConfirmEmailInput ...
-func ValidateConfirmEmailInput(code *string) (err error) {
-	in := &ConfirmEmailInput{
-		Code: *code,
-	}
-
-	in.Code = strings.TrimSpace(in.Code)
-
-	err = validateInput(confirmEmailInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*code = in.Code
-	return nil
+	return s.logEmailConfirmed(ctx, ec.UserID)
 }
 
 // ConfirmEmailInput ...
 type ConfirmEmailInput struct {
 	Code string
+}
+
+// Sanitize ...
+func (in *ConfirmEmailInput) Sanitize() {
+	in.Code = strings.TrimSpace(in.Code)
+}
+
+// Validate ...
+func (in *ConfirmEmailInput) Validate() error {
+	return validateInput(confirmEmailInputRules, in)
 }

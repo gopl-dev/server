@@ -9,7 +9,7 @@ import (
 )
 
 var findUserByEmailInputRules = z.Shape{
-	"email": emailInputRules,
+	"Email": emailInputRules,
 }
 
 // FindUserByEmail retrieves a user record from the database by their email address.
@@ -17,32 +17,26 @@ func (s *Service) FindUserByEmail(ctx context.Context, email string) (user *ds.U
 	ctx, span := s.tracer.Start(ctx, "FindUserByEmail")
 	defer span.End()
 
-	err = ValidateFindUserByEmailInput(&email)
+	in := &FindUserByEmailInput{Email: email}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	return s.db.FindUserByEmail(ctx, email)
-}
-
-// ValidateFindUserByEmailInput ...
-func ValidateFindUserByEmailInput(email *string) (err error) {
-	in := &FindUserByEmailInput{
-		Email: *email,
-	}
-
-	in.Email = strings.TrimSpace(in.Email)
-
-	err = validateInput(findUserByEmailInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*email = in.Email
-	return nil
+	return s.db.FindUserByEmail(ctx, in.Email)
 }
 
 // FindUserByEmailInput ...
 type FindUserByEmailInput struct {
 	Email string
+}
+
+// Sanitize ...
+func (in *FindUserByEmailInput) Sanitize() {
+	in.Email = strings.TrimSpace(in.Email)
+}
+
+// Validate ...
+func (in *FindUserByEmailInput) Validate() error {
+	return validateInput(findUserByEmailInputRules, in)
 }

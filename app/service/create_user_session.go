@@ -19,32 +19,36 @@ func (s *Service) CreateUserSession(ctx context.Context, userID int64) (sess *ds
 	ctx, span := s.tracer.Start(ctx, "CreateUserSession")
 	defer span.End()
 
-	err = ValidateCreateUserSessionInput(userID)
+	in := &CreateUserSessionInput{UserID: userID}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
 	sess = &ds.UserSession{
 		ID:        uuid.New(),
-		UserID:    userID,
+		UserID:    in.UserID,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Hour * time.Duration(app.Config().Session.DurationHours)),
 	}
 
 	err = s.db.CreateUserSession(ctx, sess)
-	return
-}
-
-// ValidateCreateUserSessionInput ...
-func ValidateCreateUserSessionInput(userID int64) (err error) {
-	in := &CreateUserSessionInput{
-		UserID: userID,
+	if err != nil {
+		return
 	}
 
-	return validateInput(createUserSessionInputRules, in)
+	return
 }
 
 // CreateUserSessionInput ...
 type CreateUserSessionInput struct {
 	UserID int64
+}
+
+// Sanitize ...
+func (in *CreateUserSessionInput) Sanitize() {}
+
+// Validate ...
+func (in *CreateUserSessionInput) Validate() error {
+	return validateInput(createUserSessionInputRules, in)
 }

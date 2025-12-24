@@ -51,7 +51,7 @@ func TestValidateChangeUserPasswordInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateChangeUserPasswordInput(c.data.UserID, &c.data.OldPassword, &c.data.NewPassword)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

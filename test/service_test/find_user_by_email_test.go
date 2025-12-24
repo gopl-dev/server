@@ -14,24 +14,24 @@ func TestValidateFindUserByEmailInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		data      string
+		data      service.FindUserByEmailInput
 	}{
 		{
 			name:      "invalid email",
 			expectErr: "must be a valid email",
 			argName:   "email",
-			data:      "aaa",
+			data:      service.FindUserByEmailInput{"invalid"},
 		},
 		{
 			name:      "empty email",
 			expectErr: "Email is required",
 			argName:   "email",
-			data:      "",
+			data:      service.FindUserByEmailInput{""},
 		},
 		{
 			valid: true,
 			name:  "valid input",
-			data:  "mail@ognev.dev",
+			data:  service.FindUserByEmailInput{"mail@ognev.dev"},
 		},
 	}
 
@@ -39,7 +39,7 @@ func TestValidateFindUserByEmailInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateFindUserByEmailInput(&c.data)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

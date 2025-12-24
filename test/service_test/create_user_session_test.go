@@ -14,18 +14,13 @@ func TestValidateCreateUserSessionInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		userID    int64
+		data      service.CreateUserSessionInput
 	}{
 		{
-			name:      "missing ID",
+			name:      "missing userID",
 			expectErr: "userID is required",
 			argName:   "user_id",
-			userID:    0,
-		},
-		{
-			valid:  true,
-			name:   "valid input",
-			userID: 1,
+			data:      service.CreateUserSessionInput{0},
 		},
 	}
 
@@ -33,7 +28,7 @@ func TestValidateCreateUserSessionInput(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := service.ValidateCreateUserSessionInput(c.userID)
+			err := service.Normalize(&c.data)
 			checkValidatedInput(t, c.valid, err, c.argName, c.expectErr)
 		})
 	}

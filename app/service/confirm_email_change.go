@@ -24,17 +24,18 @@ func (s *Service) ConfirmEmailChange(ctx context.Context, token string) (err err
 	ctx, span := s.tracer.Start(ctx, "ConfirmEmailChange")
 	defer span.End()
 
-	err = ValidateConfirmEmailChangeInput(&token)
+	in := &ConfirmEmailChangeInput{Token: token}
+	err = Normalize(in)
 	if err != nil {
 		return
 	}
 
-	req, err := s.db.FindChangeEmailRequestByToken(ctx, token)
+	req, err := s.db.FindChangeEmailRequestByToken(ctx, in.Token)
 	if errors.Is(err, repo.ErrChangeEmailRequestNotFound) {
 		return ErrInvalidChangeEmailToken
 	}
 	if err != nil {
-		return err
+		return
 	}
 
 	if req.Invalid() {
@@ -43,30 +44,23 @@ func (s *Service) ConfirmEmailChange(ctx context.Context, token string) (err err
 
 	err = s.db.UpdateUserEmail(ctx, req.UserID, req.NewEmail)
 	if err != nil {
-		return err
+		return
 	}
 
 	return s.db.DeleteChangeEmailRequest(ctx, req.ID)
 }
 
-// ValidateConfirmEmailChangeInput ...
-func ValidateConfirmEmailChangeInput(token *string) (err error) {
-	in := &ConfirmEmailChangeInput{
-		Token: *token,
-	}
-
-	in.Token = strings.TrimSpace(in.Token)
-
-	err = validateInput(confirmEmailChangeInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*token = in.Token
-	return nil
-}
-
 // ConfirmEmailChangeInput ...
 type ConfirmEmailChangeInput struct {
 	Token string
+}
+
+// Sanitize ...
+func (in *ConfirmEmailChangeInput) Sanitize() {
+	in.Token = strings.TrimSpace(in.Token)
+}
+
+// Validate ...
+func (in *ConfirmEmailChangeInput) Validate() error {
+	return validateInput(confirmEmailChangeInputRules, in)
 }

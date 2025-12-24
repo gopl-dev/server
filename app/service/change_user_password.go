@@ -26,22 +26,27 @@ func (s *Service) ChangeUserPassword(ctx context.Context, userID int64, oldPassw
 	ctx, span := s.tracer.Start(ctx, "ChangeUserPassword")
 	defer span.End()
 
-	err = ValidateChangeUserPasswordInput(userID, &oldPassword, &newPassword)
+	in := &ChangeUserPasswordInput{
+		UserID:      userID,
+		OldPassword: oldPassword,
+		NewPassword: newPassword,
+	}
+	err = Normalize(in)
 	if err != nil {
-		return
+		return err
 	}
 
-	user, err := s.FindUserByID(ctx, userID)
+	user, err := s.FindUserByID(ctx, in.UserID)
 	if user == nil {
 		return err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(oldPassword))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.OldPassword))
 	if err != nil {
 		return app.InputError{"old_password": ErrInvalidPassword.Error()}
 	}
 
-	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), app.DefaultBCryptCost)
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(in.NewPassword), app.DefaultBCryptCost)
 	if err != nil {
 		return err
 	}
@@ -49,29 +54,20 @@ func (s *Service) ChangeUserPassword(ctx context.Context, userID int64, oldPassw
 	return s.db.UpdateUserPassword(ctx, user.ID, string(newPasswordHash))
 }
 
-// ValidateChangeUserPasswordInput ...
-func ValidateChangeUserPasswordInput(userID int64, oldP, newP *string) (err error) {
-	in := &ChangeUserPasswordInput{
-		UserID:      userID,
-		OldPassword: *oldP,
-		NewPassword: *newP,
-	}
-
-	in.OldPassword = strings.TrimSpace(in.OldPassword)
-	in.NewPassword = strings.TrimSpace(in.NewPassword)
-
-	err = validateInput(changePasswordInputRules, in)
-	if err != nil {
-		return
-	}
-
-	*oldP, *newP = in.OldPassword, in.NewPassword
-	return nil
-}
-
 // ChangeUserPasswordInput defines the input for changing a user's password.
 type ChangeUserPasswordInput struct {
 	UserID      int64
 	OldPassword string
 	NewPassword string
+}
+
+// Sanitize ...
+func (in *ChangeUserPasswordInput) Sanitize() {
+	in.OldPassword = strings.TrimSpace(in.OldPassword)
+	in.NewPassword = strings.TrimSpace(in.NewPassword)
+}
+
+// Validate ...
+func (in *ChangeUserPasswordInput) Validate() error {
+	return validateInput(changePasswordInputRules, in)
 }
