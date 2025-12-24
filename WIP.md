@@ -24,6 +24,12 @@ for simplicity, I keep todo list and progress here for now
   - [ ] view book
   - [ ] delete book
   - [ ] list books
+
+- [ ] workers boilerplate
+  - [ ] cleanup expired password change requests
+  - [ ] cleanup email change requests
+  - [ ] cleanup users with unconfirmed emails
+  - [ ] cleanup expired user session
   
 - [x] Validation and sanitation should be done at service layer
 - [ ] uuid v7 for IDs
