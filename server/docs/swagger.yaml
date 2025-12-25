@@ -33,6 +33,11 @@ definitions:
       code:
         type: string
     type: object
+  request.DeleteUser:
+    properties:
+      password:
+        type: string
+    type: object
   request.EmailChangeRequest:
     properties:
       email:
@@ -83,6 +88,42 @@ definitions:
 info:
   contact: {}
 paths:
+  /users/:
+    delete:
+      consumes:
+      - application/json
+      operationId: DeleteUser
+      parameters:
+      - description: Password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.DeleteUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Validation error or incorrect password
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete user account
+      tags:
+      - users
   /users/confirm-email/:
     post:
       consumes:

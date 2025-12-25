@@ -398,3 +398,48 @@ func (h *Handler) ChangeUsername(w http.ResponseWriter, r *http.Request) {
 
 	res.jsonSuccess()
 }
+
+// DeleteUserView renders the page with the form to delete user account.
+func (h *Handler) DeleteUserView(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "DeleteUserView")
+	defer span.End()
+
+	renderDefaultLayout(ctx, w, layout.Data{
+		Title: "Delete Account",
+		Body:  page.DeleteUserForm(),
+	})
+}
+
+// DeleteUser handles the API request for an authenticated user to delete their account.
+//
+//	@ID			DeleteUser
+//	@Summary	Delete user account
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.DeleteUser	true	"Password"
+//	@Success	200		{object}	response.Status
+//	@Failure	401		{object}	Error "Unauthorized"
+//	@Failure	422		{object}	Error "Validation error or incorrect password"
+//	@Failure	500		{object}	Error
+//	@Router		/users/ [delete]
+//	@Security	ApiKeyAuth
+func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "DeleteUser")
+	defer span.End()
+
+	var req request.DeleteUser
+	user, res := handleAuthorizedJSON(w, r, &req)
+	if res.Aborted() {
+		return
+	}
+
+	err := h.service.DeleteUser(ctx, user.ID, req.Password)
+	if err != nil {
+		res.Abort(err)
+		return
+	}
+
+	clearSessionCookie(w)
+	res.jsonSuccess()
+}

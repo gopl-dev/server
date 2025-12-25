@@ -21,6 +21,11 @@ type User struct {
 	DeletedAt      *time.Time `json:"-"`
 }
 
+// Deleted ...
+func (u *User) Deleted() bool {
+	return u.DeletedAt != nil
+}
+
 // ToContext adds the given user object to the provided context.
 func (u *User) ToContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, userCtxKey, u)

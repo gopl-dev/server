@@ -55,3 +55,12 @@ func (r *Repo) DeleteUserSession(ctx context.Context, id uuid.UUID) (err error) 
 	_, err = r.db.Exec(ctx, `DELETE FROM user_sessions WHERE id = $1`, id)
 	return
 }
+
+// DeleteSessionsByUserID removes all session records for a specific user from the database.
+func (r *Repo) DeleteSessionsByUserID(ctx context.Context, userID int64) (err error) {
+	_, span := r.tracer.Start(ctx, "DeleteSessionsByUserID")
+	defer span.End()
+
+	_, err = r.db.Exec(ctx, `DELETE FROM user_sessions WHERE user_id = $1`, userID)
+	return
+}

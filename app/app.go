@@ -145,7 +145,7 @@ func Token(lengthOpt ...int) (string, error) {
 
 // NewSignedSessionJWT creates a new, signed JWT token containing the session ID and user ID claims.
 // The token is signed using the secret key from the application configuration.
-func NewSignedSessionJWT(sessionID string, userID int64) (token string, err error) {
+func NewSignedSessionJWT(sessionID uuid.UUID, userID int64) (token string, err error) {
 	jt := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		jwt.MapClaims{

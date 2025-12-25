@@ -8,4 +8,5 @@ func (r *Router) ProtectedWebEndpoints() {
 	r.GET("/change-email/", r.handler.RequestEmailChangeView)
 	r.GET("/change-email/{token}/", r.handler.ConfirmEmailChangeView)
 	r.GET("/change-username/", r.handler.ChangeUsernameView)
+	r.GET("/delete-account/", r.handler.DeleteUserView)
 }

@@ -6,4 +6,5 @@ func (r *Router) ProtectedAPIEndpoints() {
 	r.POST("/users/email/", r.handler.RequestEmailChange)
 	r.PUT("/users/email/", r.handler.ConfirmEmailChange)
 	r.PUT("/users/username/", r.handler.ChangeUsername)
+	r.DELETE("/users/", r.handler.DeleteUser)
 }

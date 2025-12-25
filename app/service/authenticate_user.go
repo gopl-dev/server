@@ -45,6 +45,10 @@ func (s *Service) AuthenticateUser(ctx context.Context, email, password string) 
 		}
 		return
 	}
+	if user.Deleted() {
+		err = ErrInvalidEmailOrPassword
+		return
+	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password))
 	if err != nil {
@@ -52,12 +56,12 @@ func (s *Service) AuthenticateUser(ctx context.Context, email, password string) 
 		return
 	}
 
-	sess, err := s.CreateUserSession(ctx, user.ID)
+	session, err := s.CreateUserSession(ctx, user.ID)
 	if err != nil {
 		return
 	}
 
-	token, err = app.NewSignedSessionJWT(sess.ID.String(), user.ID)
+	token, err = app.NewSignedSessionJWT(session.ID, user.ID)
 	return
 }
 

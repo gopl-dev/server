@@ -24,3 +24,8 @@ type ChangeUsername struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
+
+// DeleteUser ...
+type DeleteUser struct {
+	Password string `json:"password"`
+}

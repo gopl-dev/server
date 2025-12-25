@@ -111,3 +111,12 @@ func (r *Repo) UpdateUsername(ctx context.Context, userID int64, username string
 	_, err = r.db.Exec(ctx, "UPDATE users SET username = $1, updated_at = NOW() WHERE id = $2", username, userID)
 	return
 }
+
+// DeleteUser performs a soft delete on a user record by setting the deleted_at timestamp.
+func (r *Repo) DeleteUser(ctx context.Context, userID int64) (err error) {
+	_, span := r.tracer.Start(ctx, "DeleteUser")
+	defer span.End()
+
+	_, err = r.db.Exec(ctx, "UPDATE users SET deleted_at = NOW() WHERE id = $1", userID)
+	return
+}

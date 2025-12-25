@@ -424,3 +424,43 @@ func TestChangeUsername(t *testing.T) {
 		assert.Equal(t, resp.InputErrors["username"], service.UsernameAlreadyTaken)
 	})
 }
+
+func TestDeleteUser(t *testing.T) {
+	password := random.String(10)
+	user := tt.Factory.CreateUser(t, ds.User{Password: password})
+	token := loginAs(t, user)
+
+	req := request.DeleteUser{
+		Password: password,
+	}
+
+	var resp response.Status
+	DELETE(t, Request{
+		path:         "/users/",
+		body:         req,
+		authToken:    token,
+		bindResponse: &resp,
+		assertStatus: http.StatusOK,
+	})
+
+	test.AssertInDB(t, tt.DB, "users", test.Data{
+		"id":         user.ID,
+		"deleted_at": test.NotNull,
+	})
+
+	test.AssertNotInDB(t, tt.DB, "user_sessions", test.Data{
+		"user_id": user.ID,
+	})
+
+	// try to login
+	var signInResp handler.Error
+	POST(t, Request{
+		path: "/users/sign-in/",
+		body: request.UserSignIn{
+			Email:    user.Email,
+			Password: password,
+		},
+		bindResponse: &signInResp,
+		assertStatus: http.StatusUnprocessableEntity,
+	})
+}

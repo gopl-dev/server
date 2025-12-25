@@ -1,0 +1,94 @@
+package page
+
+import . "github.com/gopl-dev/server/frontend/component"
+
+templ DeleteUserForm() {
+<script>
+    function deleteUserForm() {
+        return {
+            form: {
+                password: '',
+            },
+
+            success: false,
+            error: '',
+            errors: {
+                password: '',
+            },
+
+            submitForm() {
+                this.error = ''
+                this.errors = {
+                    password: '',
+                }
+
+                if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+                    return;
+                }
+
+                fetch('/api/users/', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(this.form)
+                })
+                    .then(resp => resp.json())
+                    .then(resp => {
+                        if ("success" in resp && resp.success === true) {
+                            this.success = true
+                            // Redirect to home page after successful deletion
+                            setTimeout(() => {
+                                window.location.href = "/";
+                            }, 2000);
+                        }
+                        if (resp.status !== 200 && "error" in resp) {
+                            this.error = resp.error
+                        }
+                        if (resp.status !== 200 && resp.input_errors !== null) {
+                            let ie = resp.input_errors
+                            if ("password" in ie) {
+                                this.errors.password = ie.password
+                            }
+                        }
+                    })
+                    .catch(response => {
+                    })
+            }
+        }
+    }
+</script>
+<div class="flex flex-row justify-center">
+    <div class="w-full lg:w-1/2">
+        <h1 class="text-3xl pb-4 text-red-600">Delete Account</h1>
+        <div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl border-red-200 border-2">
+            <div class="card-body">
+                @Form("deleteUserForm") {
+                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+                <div role="alert" class="alert alert-success" x-show="success">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Your account has been deleted. Redirecting...</span>
+                </div>
+                <div x-show="!success">
+                    <p class="mb-4 text-gray-600">Please enter your password to confirm account deletion.</p>
+                    <fieldset class="fieldset">
+                        @Input(InputParams{
+                            ID: "password",
+                            Label: "Password",
+                            Model: "form.password",
+                            ErrorModel: "errors.password",
+                            Type: "password",
+                        })
+                        <div class="p-2">
+                            <button type="submit" class="btn btn-error w-full text-white">Delete account</button>
+                        </div>
+                    </fieldset>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}

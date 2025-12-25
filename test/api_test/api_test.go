@@ -351,7 +351,7 @@ func loginAs(t *testing.T, u *ds.User) (token string) {
 		t.Fatal(err)
 	}
 
-	token, err = app.NewSignedSessionJWT(s.ID.String(), u.ID)
+	token, err = app.NewSignedSessionJWT(s.ID, u.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

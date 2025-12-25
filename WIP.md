@@ -30,6 +30,7 @@ for simplicity, I keep todo list and progress here for now
   - [ ] cleanup email change requests
   - [ ] cleanup users with unconfirmed emails
   - [ ] cleanup expired user session
+  - [ ] cleanup deleted user accounts
   
 - [x] Validation and sanitation should be done at service layer
 - [ ] uuid v7 for IDs
