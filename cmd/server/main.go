@@ -12,8 +12,8 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/service"
-	"github.com/gopl-dev/server/pkg/trace"
 	"github.com/gopl-dev/server/server"
+	"github.com/gopl-dev/server/trace"
 	"github.com/gopl-dev/server/worker"
 )
 

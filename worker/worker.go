@@ -8,7 +8,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/service"
-	"github.com/gopl-dev/server/pkg/trace"
+	"github.com/gopl-dev/server/trace"
 	"github.com/gopl-dev/server/worker/cleanup_change_email_requests"
 	cleanupdeletedusers "github.com/gopl-dev/server/worker/cleanup_deleted_users"
 	"github.com/gopl-dev/server/worker/cleanup_expired_password_change_requests"
