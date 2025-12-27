@@ -1,0 +1,90 @@
+package ds
+
+import (
+	"database/sql/driver"
+	"errors"
+	"fmt"
+
+	"github.com/google/uuid"
+)
+
+// ErrInvalidIDFormat ...
+var ErrInvalidIDFormat = errors.New("invalid UUID format")
+
+// ID is a domain-specific type for UUID v7.
+type ID uuid.UUID //nolint:recvcheck
+
+// NilID is an empty UUID, all zeros.
+var NilID = ID(uuid.Nil)
+
+// NewID generates a new UUID v7.
+// It panics if the system clock is severely misconfigured.
+func NewID() ID {
+	return ID(uuid.Must(uuid.NewV7()))
+}
+
+// ParseID converts a string into a ds.ID.
+// It supports standard UUID formats.
+func ParseID(s string) (ID, error) {
+	uid, err := uuid.Parse(s)
+	if err != nil {
+		return ID{}, fmt.Errorf("invalid UUID string: %w", err)
+	}
+	return ID(uid), nil
+}
+
+// IsNil ...
+func (id ID) IsNil() bool {
+	return uuid.UUID(id) == uuid.Nil
+}
+
+// String returns the standard UUID string representation.
+func (id ID) String() string {
+	return uuid.UUID(id).String()
+}
+
+// Value implements driver.Valuer to allow ID to be used in SQL queries.
+func (id ID) Value() (driver.Value, error) {
+	return uuid.UUID(id).Value()
+}
+
+// Scan implements sql.Scanner to allow reading UUID from the database into ID.
+func (id *ID) Scan(src any) error {
+	var u uuid.UUID
+	err := u.Scan(src)
+	if err != nil {
+		return fmt.Errorf("ds.ID: scan failed: %w", err)
+	}
+	*id = ID(u)
+	return nil
+}
+
+// MarshalJSON uses the built-in MarshalText from google/uuid.
+func (id ID) MarshalJSON() ([]byte, error) {
+	text, err := uuid.UUID(id).MarshalText()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]byte, 0, len(text)+2) //nolint:mnd
+	res = append(res, '"')
+	res = append(res, text...)
+	res = append(res, '"')
+	return res, nil
+}
+
+// UnmarshalJSON uses the built-in UnmarshalText.
+func (id *ID) UnmarshalJSON(data []byte) error {
+	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
+		return ErrInvalidIDFormat
+	}
+
+	var u uuid.UUID
+	err := u.UnmarshalText(data[1 : len(data)-1])
+	if err != nil {
+		return fmt.Errorf("ds.ID: unmarshal failed: %w", err)
+	}
+
+	*id = ID(u)
+	return nil
+}

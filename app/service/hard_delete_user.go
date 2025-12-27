@@ -4,14 +4,15 @@ import (
 	"context"
 
 	z "github.com/Oudwins/zog"
+	"github.com/gopl-dev/server/app/ds"
 )
 
 var hardDeleteUserInputRules = z.Shape{
-	"UserID": userIDInputRules,
+	"UserID": idInputRules,
 }
 
 // HardDeleteUser handles the logic for deleting a user account and relations.
-func (s *Service) HardDeleteUser(ctx context.Context, userID int64) (err error) {
+func (s *Service) HardDeleteUser(ctx context.Context, userID ds.ID) (err error) {
 	ctx, span := s.tracer.Start(ctx, "DeleteUser")
 	defer span.End()
 

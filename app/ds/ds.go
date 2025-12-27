@@ -4,7 +4,9 @@
 // Methods on types are welcome.
 package ds
 
-import "time"
+import (
+	"time"
+)
 
 type ctxKey string
 

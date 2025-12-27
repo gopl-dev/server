@@ -12,8 +12,8 @@ import (
 // NewPasswordResetToken ...
 func (f *Factory) NewPasswordResetToken(overrideOpt ...ds.PasswordResetToken) (m *ds.PasswordResetToken) {
 	m = &ds.PasswordResetToken{
-		ID:        0,
-		UserID:    0,
+		ID:        ds.NilID,
+		UserID:    ds.NilID,
 		Token:     random.String(),
 		ExpiresAt: time.Now().Add(time.Hour),
 		CreatedAt: time.Now(),
@@ -33,7 +33,7 @@ func (f *Factory) CreatePasswordResetToken(t *testing.T, overrideOpt ...ds.Passw
 
 	m = f.NewPasswordResetToken(overrideOpt...)
 
-	if m.UserID == 0 {
+	if m.UserID.IsNil() {
 		m.UserID = f.CreateUser(t).ID
 	}
 

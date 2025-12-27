@@ -7,12 +7,13 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var changeUsernameInputRules = z.Shape{
-	"UserID":      userIDInputRules,
+	"UserID":      idInputRules,
 	"NewUsername": usernameInputRules,
 	"Password":    z.String().Required(),
 }
@@ -53,7 +54,7 @@ func (s *Service) ChangeUsername(ctx context.Context, in ChangeUsernameInput) (e
 
 // ChangeUsernameInput ...
 type ChangeUsernameInput struct {
-	UserID      int64
+	UserID      ds.ID
 	NewUsername string
 	Password    string
 }

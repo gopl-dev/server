@@ -3,6 +3,7 @@ package validation_test
 import (
 	"testing"
 
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 )
 
@@ -17,15 +18,15 @@ func TestValidateFindUserByIDInput(t *testing.T) {
 		data      service.FindUserByIDInput
 	}{
 		{
-			name:      "missing ID",
-			expectErr: "ID is required",
+			name:      "invalid ID",
+			expectErr: "Invalid UUID",
 			argName:   "id",
-			data:      service.FindUserByIDInput{0},
+			data:      service.FindUserByIDInput{ds.NilID},
 		},
 		{
 			valid: true,
 			name:  "valid input",
-			data:  service.FindUserByIDInput{1},
+			data:  service.FindUserByIDInput{ds.NewID()},
 		},
 	}
 

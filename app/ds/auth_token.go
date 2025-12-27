@@ -7,7 +7,7 @@ import (
 // AuthToken represents container for authentication-related
 // data.
 type AuthToken struct {
-	ID         int64
+	ID         ID
 	UserID     int64
 	User       *User
 	ClientName string

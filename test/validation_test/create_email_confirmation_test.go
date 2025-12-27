@@ -3,6 +3,7 @@ package validation_test
 import (
 	"testing"
 
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 )
 
@@ -17,10 +18,10 @@ func TestValidateCreateEmailConfirmationInput(t *testing.T) {
 		data      service.CreateEmailConfirmationInput
 	}{
 		{
-			name:      "missing userID",
-			expectErr: "userID is required",
+			name:      "invalid ID",
+			expectErr: "Invalid UUID",
 			argName:   "user_id",
-			data:      service.CreateEmailConfirmationInput{0},
+			data:      service.CreateEmailConfirmationInput{ds.NilID},
 		},
 	}
 

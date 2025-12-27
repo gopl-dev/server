@@ -15,7 +15,7 @@ var AssetsFs embed.FS
 
 // User is representation of a user.
 type User struct {
-	ID       int64
+	ID       ds.ID
 	Username string
 }
 

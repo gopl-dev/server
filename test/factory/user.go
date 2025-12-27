@@ -14,7 +14,7 @@ import (
 // NewUser ...
 func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 	m = &ds.User{
-		ID:             0,
+		ID:             ds.NilID,
 		Username:       random.String(),
 		Email:          random.Email(),
 		EmailConfirmed: false,

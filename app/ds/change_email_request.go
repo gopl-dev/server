@@ -1,12 +1,14 @@
 package ds
 
-import "time"
+import (
+	"time"
+)
 
 // ChangeEmailRequest represents a record in the change_email_requests table.
 // It stores a single-use token for a user to confirm a change to their email address.
 type ChangeEmailRequest struct {
-	ID        int64     `json:"-"`
-	UserID    int64     `json:"-"`
+	ID        ID        `json:"-"`
+	UserID    ID        `json:"-"`
 	NewEmail  string    `json:"-"`
 	Token     string    `json:"-"`
 	ExpiresAt time.Time `json:"-"`

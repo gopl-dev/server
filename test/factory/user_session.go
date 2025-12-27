@@ -5,15 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gopl-dev/server/app/ds"
 )
 
 // NewUserSession ...
 func (f *Factory) NewUserSession(overrideOpt ...ds.UserSession) (m *ds.UserSession) {
 	m = &ds.UserSession{
-		ID:        uuid.Nil,
-		UserID:    0,
+		ID:        ds.NilID,
+		UserID:    ds.NilID,
 		CreatedAt: time.Now(),
 		UpdatedAt: nil,
 		ExpiresAt: time.Now().Add(time.Hour),
@@ -31,12 +30,8 @@ func (f *Factory) CreateUserSession(t *testing.T, overrideOpt ...ds.UserSession)
 	t.Helper()
 
 	m = f.NewUserSession(overrideOpt...)
-	if m.UserID == 0 {
+	if m.UserID.IsNil() {
 		m.UserID = f.CreateUser(t).ID
-	}
-
-	if m.ID == uuid.Nil {
-		m.ID = uuid.New()
 	}
 
 	err := f.repo.CreateUserSession(context.Background(), m)

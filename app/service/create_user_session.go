@@ -5,17 +5,16 @@ import (
 	"time"
 
 	z "github.com/Oudwins/zog"
-	"github.com/google/uuid"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
 
 var createUserSessionInputRules = z.Shape{
-	"UserID": userIDInputRules,
+	"UserID": idInputRules,
 }
 
 // CreateUserSession creates a new user session object.
-func (s *Service) CreateUserSession(ctx context.Context, userID int64) (sess *ds.UserSession, err error) {
+func (s *Service) CreateUserSession(ctx context.Context, userID ds.ID) (sess *ds.UserSession, err error) {
 	ctx, span := s.tracer.Start(ctx, "CreateUserSession")
 	defer span.End()
 
@@ -26,7 +25,7 @@ func (s *Service) CreateUserSession(ctx context.Context, userID int64) (sess *ds
 	}
 
 	sess = &ds.UserSession{
-		ID:        uuid.New(),
+		ID:        ds.NewID(),
 		UserID:    in.UserID,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(time.Hour * time.Duration(app.Config().Session.DurationHours)),
@@ -42,7 +41,7 @@ func (s *Service) CreateUserSession(ctx context.Context, userID int64) (sess *ds
 
 // CreateUserSessionInput ...
 type CreateUserSessionInput struct {
-	UserID int64
+	UserID ds.ID
 }
 
 // Sanitize ...

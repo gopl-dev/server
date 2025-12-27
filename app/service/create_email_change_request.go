@@ -14,7 +14,7 @@ import (
 )
 
 var createChangeEmailRequestInputRules = z.Shape{
-	"UserID":   userIDInputRules,
+	"UserID":   idInputRules,
 	"NewEmail": emailInputRules,
 }
 
@@ -28,7 +28,7 @@ var (
 )
 
 // CreateChangeEmailRequest handles the business logic for a user initiating an email change.
-func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID int64, newEmail string) (err error) {
+func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID ds.ID, newEmail string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "CreateChangeEmailRequest")
 	defer span.End()
 
@@ -41,7 +41,7 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID int64, ne
 		return
 	}
 
-	user, err := s.db.FindUserByID(ctx, in.UserID)
+	user, err := s.db.FindUserByID(ctx, userID)
 	if err != nil {
 		return
 	}
@@ -89,7 +89,7 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID int64, ne
 
 // CreateChangeEmailRequestInput ...
 type CreateChangeEmailRequestInput struct {
-	UserID   int64
+	UserID   ds.ID
 	NewEmail string
 }
 

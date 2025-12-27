@@ -1,10 +1,12 @@
 package ds
 
-import "time"
+import (
+	"time"
+)
 
 // Book represents a book.
 type Book struct {
-	ID          int64      `json:"id"`
+	ID          ID         `json:"id"`
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	CreatedAt   time.Time  `json:"created_at"`

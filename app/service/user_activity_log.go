@@ -20,7 +20,7 @@ func (s *Service) createUserActivityLog(ctx context.Context, log *ds.UserActivit
 
 // LogUserRegistered creates a private activity log to record when a new user signs up.
 // The log is initially private and is made public only after email confirmation.
-func (s *Service) logUserRegistered(ctx context.Context, userID int64) error {
+func (s *Service) logUserRegistered(ctx context.Context, userID ds.ID) error {
 	ctx, span := s.tracer.Start(ctx, "logUserRegistered")
 	defer span.End()
 
@@ -33,7 +33,7 @@ func (s *Service) logUserRegistered(ctx context.Context, userID int64) error {
 }
 
 // LogEmailConfirmed marks the original user registration event as complete by making it public.
-func (s *Service) logEmailConfirmed(ctx context.Context, userID int64) error {
+func (s *Service) logEmailConfirmed(ctx context.Context, userID ds.ID) error {
 	ctx, span := s.tracer.Start(ctx, "logEmailConfirmed")
 	defer span.End()
 

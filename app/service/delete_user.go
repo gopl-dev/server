@@ -5,16 +5,17 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var deleteUserInputRules = z.Shape{
-	"UserID":   userIDInputRules,
+	"UserID":   idInputRules,
 	"Password": z.String().Required(),
 }
 
 // DeleteUser handles the logic for soft-deleting a user account.
-func (s *Service) DeleteUser(ctx context.Context, userID int64, password string) (err error) {
+func (s *Service) DeleteUser(ctx context.Context, userID ds.ID, password string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "DeleteUser")
 	defer span.End()
 
@@ -52,7 +53,7 @@ func (s *Service) DeleteUser(ctx context.Context, userID int64, password string)
 
 // DeleteUserInput ...
 type DeleteUserInput struct {
-	UserID   int64
+	UserID   ds.ID
 	Password string
 }
 

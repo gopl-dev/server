@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/gopl-dev/server/app/ds"
 )
 
 // DeleteUserSession removes a user session record from the database using its ID.
-func (s *Service) DeleteUserSession(ctx context.Context, id uuid.UUID) (err error) {
+func (s *Service) DeleteUserSession(ctx context.Context, id ds.ID) (err error) {
 	ctx, span := s.tracer.Start(ctx, "DeleteUserSession")
 	defer span.End()
 
@@ -22,7 +22,7 @@ func (s *Service) DeleteUserSession(ctx context.Context, id uuid.UUID) (err erro
 
 // DeleteUserSessionInput ...
 type DeleteUserSessionInput struct {
-	ID uuid.UUID
+	ID ds.ID
 }
 
 // Sanitize ...

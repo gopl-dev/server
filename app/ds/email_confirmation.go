@@ -7,8 +7,8 @@ import (
 // EmailConfirmation represents a record used to verify a user's email address
 // after registration or a change request.
 type EmailConfirmation struct {
-	ID          int64
-	UserID      int64
+	ID          ID
+	UserID      ID
 	Code        string
 	CreatedAt   time.Time
 	ExpiresAt   time.Time

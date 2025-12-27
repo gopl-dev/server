@@ -43,7 +43,7 @@ func (r *Repo) CreateEmailConfirmation(ctx context.Context, ec *ds.EmailConfirma
 
 // DeleteEmailConfirmation deletes an email confirmation record from the database
 // using its ID.
-func (r *Repo) DeleteEmailConfirmation(ctx context.Context, id int64) (err error) {
+func (r *Repo) DeleteEmailConfirmation(ctx context.Context, id ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteEmailConfirmation")
 	defer span.End()
 
@@ -52,7 +52,7 @@ func (r *Repo) DeleteEmailConfirmation(ctx context.Context, id int64) (err error
 }
 
 // DeleteEmailConfirmationByUser deletes an email confirmations that belong to specific user.
-func (r *Repo) DeleteEmailConfirmationByUser(ctx context.Context, userID int64) (err error) {
+func (r *Repo) DeleteEmailConfirmationByUser(ctx context.Context, userID ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteEmailConfirmationByUser")
 	defer span.End()
 

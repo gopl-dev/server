@@ -48,7 +48,7 @@ func (r *Repo) FindUserByUsername(ctx context.Context, username string) (*ds.Use
 }
 
 // FindUserByID retrieves a user from the database by their ID.
-func (r *Repo) FindUserByID(ctx context.Context, id int64) (*ds.User, error) {
+func (r *Repo) FindUserByID(ctx context.Context, id ds.ID) (*ds.User, error) {
 	_, span := r.tracer.Start(ctx, "FindUserByID")
 	defer span.End()
 
@@ -84,7 +84,7 @@ func (r *Repo) CreateUser(ctx context.Context, u *ds.User) (err error) {
 
 // SetUserEmailConfirmed updates a user's record to set the email_confirmed flag to true
 // and updates the updated_at timestamp.
-func (r *Repo) SetUserEmailConfirmed(ctx context.Context, userID int64) (err error) {
+func (r *Repo) SetUserEmailConfirmed(ctx context.Context, userID ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "SetUserEmailConfirmed")
 	defer span.End()
 
@@ -93,7 +93,7 @@ func (r *Repo) SetUserEmailConfirmed(ctx context.Context, userID int64) (err err
 }
 
 // UpdateUserPassword updates the password hash for a specific user.
-func (r *Repo) UpdateUserPassword(ctx context.Context, userID int64, password string) (err error) {
+func (r *Repo) UpdateUserPassword(ctx context.Context, userID ds.ID, password string) (err error) {
 	_, span := r.tracer.Start(ctx, "UpdateUserPassword")
 	defer span.End()
 
@@ -102,7 +102,7 @@ func (r *Repo) UpdateUserPassword(ctx context.Context, userID int64, password st
 }
 
 // UpdateUserEmail updates the email for a specific user.
-func (r *Repo) UpdateUserEmail(ctx context.Context, userID int64, email string) (err error) {
+func (r *Repo) UpdateUserEmail(ctx context.Context, userID ds.ID, email string) (err error) {
 	_, span := r.tracer.Start(ctx, "UpdateUserEmail")
 	defer span.End()
 
@@ -111,7 +111,7 @@ func (r *Repo) UpdateUserEmail(ctx context.Context, userID int64, email string) 
 }
 
 // UpdateUsername updates the username for a specific user.
-func (r *Repo) UpdateUsername(ctx context.Context, userID int64, username string) (err error) {
+func (r *Repo) UpdateUsername(ctx context.Context, userID ds.ID, username string) (err error) {
 	_, span := r.tracer.Start(ctx, "UpdateUsername")
 	defer span.End()
 
@@ -120,7 +120,7 @@ func (r *Repo) UpdateUsername(ctx context.Context, userID int64, username string
 }
 
 // DeleteUser performs a soft delete on a user record by setting the deleted_at timestamp.
-func (r *Repo) DeleteUser(ctx context.Context, userID int64) (err error) {
+func (r *Repo) DeleteUser(ctx context.Context, userID ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteUser")
 	defer span.End()
 
@@ -130,7 +130,7 @@ func (r *Repo) DeleteUser(ctx context.Context, userID int64) (err error) {
 
 // HardDeleteUser deletes a user record permanently from the database.
 // F.
-func (r *Repo) HardDeleteUser(ctx context.Context, userID int64) (err error) {
+func (r *Repo) HardDeleteUser(ctx context.Context, userID ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteUser")
 	defer span.End()
 

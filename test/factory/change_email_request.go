@@ -12,8 +12,8 @@ import (
 // NewChangeEmailRequest ...
 func (f *Factory) NewChangeEmailRequest(overrideOpt ...ds.ChangeEmailRequest) (m *ds.ChangeEmailRequest) {
 	m = &ds.ChangeEmailRequest{
-		ID:        0,
-		UserID:    0,
+		ID:        ds.NilID,
+		UserID:    ds.NilID,
 		NewEmail:  random.Email(),
 		Token:     random.String(),
 		ExpiresAt: time.Now().Add(time.Hour),
@@ -34,7 +34,7 @@ func (f *Factory) CreateChangeEmailRequest(t *testing.T, overrideOpt ...ds.Chang
 
 	m = f.NewChangeEmailRequest(overrideOpt...)
 
-	if m.UserID == 0 {
+	if m.UserID.IsNil() {
 		m.UserID = f.CreateUser(t).ID
 	}
 

@@ -3,11 +3,14 @@ package validation_test
 import (
 	"testing"
 
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 )
 
 func TestValidateChangeUserPasswordInput(t *testing.T) {
 	t.Parallel()
+
+	id := ds.NewID()
 
 	cases := []struct {
 		name      string
@@ -17,33 +20,33 @@ func TestValidateChangeUserPasswordInput(t *testing.T) {
 		data      service.ChangeUserPasswordInput
 	}{
 		{
-			name:      "missing ID",
-			expectErr: "userID is required",
+			name:      "invalid ID",
+			expectErr: "Invalid UUID",
 			argName:   "user_id",
-			data:      service.ChangeUserPasswordInput{0, "aaa", "bbb"},
+			data:      service.ChangeUserPasswordInput{ds.NilID, "aaa", "bbb"},
 		},
 		{
 			name:      "empty old password",
 			expectErr: "Password is required",
 			argName:   "old_password",
-			data:      service.ChangeUserPasswordInput{1, "", "bbb"},
+			data:      service.ChangeUserPasswordInput{id, "", "bbb"},
 		},
 		{
 			name:      "empty new password",
 			expectErr: "Password is required",
 			argName:   "new_password",
-			data:      service.ChangeUserPasswordInput{1, "aaa", ""},
+			data:      service.ChangeUserPasswordInput{id, "aaa", ""},
 		},
 		{
 			name:      "new password too short",
 			expectErr: "Password must be at least 6 characters",
 			argName:   "new_password",
-			data:      service.ChangeUserPasswordInput{1, "aaa", "bbb"},
+			data:      service.ChangeUserPasswordInput{id, "aaa", "bbb"},
 		},
 		{
 			valid: true,
 			name:  "valid input",
-			data:  service.ChangeUserPasswordInput{1, "aaa", "new-password"},
+			data:  service.ChangeUserPasswordInput{id, "aaa", "new-password"},
 		},
 	}
 

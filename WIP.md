@@ -33,7 +33,7 @@ for simplicity, I keep todo list and progress here for now
   - [x] cleanup deleted user accounts
   
 - [x] Validation and sanitation should be done at service layer
-- [ ] uuid v7 for IDs
+- [x] uuid v7 for IDs
 - [ ] Review "TODO!"
 - [ ] enable "unused" linter 
 - [ ] RELEASE

@@ -3,11 +3,13 @@ package validation_test
 import (
 	"testing"
 
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 )
 
 func TestValidateCreateChangeEmailRequestInput(t *testing.T) {
 	t.Parallel()
+	id := ds.NewID()
 
 	cases := []struct {
 		name      string
@@ -17,27 +19,27 @@ func TestValidateCreateChangeEmailRequestInput(t *testing.T) {
 		data      service.CreateChangeEmailRequestInput
 	}{
 		{
-			name:      "missing userID",
-			expectErr: "userID is required",
+			name:      "invalid ID",
+			expectErr: "Invalid UUID",
 			argName:   "user_id",
-			data:      service.CreateChangeEmailRequestInput{0, "mail@ognev.dev"},
+			data:      service.CreateChangeEmailRequestInput{ds.NilID, "mail@ognev.dev"},
 		},
 		{
 			name:      "empty email",
 			expectErr: "Email is required",
 			argName:   "new_email",
-			data:      service.CreateChangeEmailRequestInput{1, ""},
+			data:      service.CreateChangeEmailRequestInput{id, ""},
 		},
 		{
 			name:      "invalid email",
 			expectErr: "must be a valid email",
 			argName:   "new_email",
-			data:      service.CreateChangeEmailRequestInput{1, "aaa"},
+			data:      service.CreateChangeEmailRequestInput{id, "aaa"},
 		},
 		{
 			valid: true,
 			name:  "valid input",
-			data:  service.CreateChangeEmailRequestInput{1, "mail@ognev.dev"},
+			data:  service.CreateChangeEmailRequestInput{id, "mail@ognev.dev"},
 		},
 	}
 

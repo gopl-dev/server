@@ -12,8 +12,8 @@ import (
 // NewEmailConfirmation ...
 func (f *Factory) NewEmailConfirmation(overrideOpt ...ds.EmailConfirmation) (m *ds.EmailConfirmation) {
 	m = &ds.EmailConfirmation{
-		ID:          0,
-		UserID:      0,
+		ID:          ds.NilID,
+		UserID:      ds.NilID,
 		Code:        random.String(16), //nolint:mnd
 		CreatedAt:   time.Now(),
 		ExpiresAt:   time.Now().Add(time.Hour),
@@ -33,7 +33,7 @@ func (f *Factory) CreateEmailConfirmation(t *testing.T, overrideOpt ...ds.EmailC
 
 	m = f.NewEmailConfirmation(overrideOpt...)
 
-	if m.UserID == 0 {
+	if m.UserID.IsNil() {
 		m.UserID = f.CreateUser(t).ID
 	}
 

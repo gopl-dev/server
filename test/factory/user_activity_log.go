@@ -12,8 +12,8 @@ import (
 // NewUserActivityLog ...
 func (f *Factory) NewUserActivityLog(overrideOpt ...ds.UserActivityLog) (m *ds.UserActivityLog) {
 	m = &ds.UserActivityLog{
-		ID:         0,
-		UserID:     0,
+		ID:         ds.NilID,
+		UserID:     ds.NilID,
 		ActionType: useractivity.UserRegistered,
 		IsPublic:   false,
 		CreatedAt:  time.Now(),

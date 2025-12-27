@@ -35,7 +35,7 @@ func (r *Repo) FindPasswordResetToken(ctx context.Context, token string) (*ds.Pa
 }
 
 // DeletePasswordResetToken removes a password reset token from the database by its ID.
-func (r *Repo) DeletePasswordResetToken(ctx context.Context, id int64) error {
+func (r *Repo) DeletePasswordResetToken(ctx context.Context, id ds.ID) error {
 	_, span := r.tracer.Start(ctx, "DeletePasswordResetToken")
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (r *Repo) DeletePasswordResetToken(ctx context.Context, id int64) error {
 }
 
 // DeletePasswordResetTokensByUser removes a password reset tokens that belongs to specific user.
-func (r *Repo) DeletePasswordResetTokensByUser(ctx context.Context, userID int64) error {
+func (r *Repo) DeletePasswordResetTokensByUser(ctx context.Context, userID ds.ID) error {
 	_, span := r.tracer.Start(ctx, "DeletePasswordResetToken")
 	defer span.End()
 

@@ -6,11 +6,12 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var changePasswordInputRules = z.Shape{
-	"UserID":      userIDInputRules,
+	"UserID":      idInputRules,
 	"OldPassword": z.String().Required(z.Message("Password is required")),
 	"NewPassword": newPasswordInputRules,
 }
@@ -22,7 +23,7 @@ var (
 )
 
 // ChangeUserPassword handles the logic for an authenticated user to change their own password.
-func (s *Service) ChangeUserPassword(ctx context.Context, userID int64, oldPassword, newPassword string) (err error) {
+func (s *Service) ChangeUserPassword(ctx context.Context, userID ds.ID, oldPassword, newPassword string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ChangeUserPassword")
 	defer span.End()
 
@@ -56,7 +57,7 @@ func (s *Service) ChangeUserPassword(ctx context.Context, userID int64, oldPassw
 
 // ChangeUserPasswordInput defines the input for changing a user's password.
 type ChangeUserPasswordInput struct {
-	UserID      int64
+	UserID      ds.ID
 	OldPassword string
 	NewPassword string
 }

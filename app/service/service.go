@@ -7,6 +7,7 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -23,11 +24,17 @@ const (
 )
 
 var (
+	idInputRules = z.CustomFunc(func(val *ds.ID, _ z.Ctx) bool {
+		if val == nil || *val == ds.NilID {
+			return false
+		}
+
+		return true
+	}, z.Message("Invalid UUID"))
 	newPasswordInputRules = z.String().Min(UserPasswordMinLen,
 		z.Message("Password must be at least 6 characters")).
 		Required(z.Message("Password is required"))
-	userIDInputRules = z.Int64().Required(z.Message("userID is required"))
-	emailInputRules  = z.String().Email().Required(z.Message("Email is required"))
+	emailInputRules = z.String().Email().Required(z.Message("Email is required"))
 )
 
 // Service holds dependencies required for the application's business logic layer.

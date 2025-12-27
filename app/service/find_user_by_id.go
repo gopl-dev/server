@@ -8,11 +8,11 @@ import (
 )
 
 var findUserByIDInputRules = z.Shape{
-	"ID": z.Int64().Required(z.Message("ID is required")),
+	"ID": idInputRules,
 }
 
 // FindUserByID retrieves a user record from the database by their ID.
-func (s *Service) FindUserByID(ctx context.Context, id int64) (user *ds.User, err error) {
+func (s *Service) FindUserByID(ctx context.Context, id ds.ID) (user *ds.User, err error) {
 	ctx, span := s.tracer.Start(ctx, "FindUserByID")
 	defer span.End()
 
@@ -27,7 +27,7 @@ func (s *Service) FindUserByID(ctx context.Context, id int64) (user *ds.User, er
 
 // FindUserByIDInput ...
 type FindUserByIDInput struct {
-	ID int64
+	ID ds.ID
 }
 
 // Sanitize ...

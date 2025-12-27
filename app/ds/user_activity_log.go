@@ -10,8 +10,8 @@ import (
 
 // UserActivityLog represents a single entry in the user_activity_logs table.
 type UserActivityLog struct {
-	ID         int64             `json:"id"`
-	UserID     int64             `json:"user_id"`
+	ID         ID                `json:"id"`
+	UserID     ID                `json:"user_id"`
 	ActionType useractivity.Type `json:"action_type"`
 	IsPublic   bool              `json:"is_public"`
 	EntityType sql.NullString    `json:"entity_type"`

@@ -35,7 +35,7 @@ func (r *Repo) FindChangeEmailRequestByToken(ctx context.Context, token string) 
 }
 
 // DeleteChangeEmailRequest removes a change email request from the database by its ID.
-func (r *Repo) DeleteChangeEmailRequest(ctx context.Context, id int64) error {
+func (r *Repo) DeleteChangeEmailRequest(ctx context.Context, id ds.ID) error {
 	_, span := r.tracer.Start(ctx, "DeleteChangeEmailRequest")
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (r *Repo) DeleteChangeEmailRequest(ctx context.Context, id int64) error {
 }
 
 // DeleteChangeEmailRequestsByUser removes a change email request for specific user.
-func (r *Repo) DeleteChangeEmailRequestsByUser(ctx context.Context, userID int64) error {
+func (r *Repo) DeleteChangeEmailRequestsByUser(ctx context.Context, userID ds.ID) error {
 	_, span := r.tracer.Start(ctx, "DeleteChangeEmailRequest")
 	defer span.End()
 

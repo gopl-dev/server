@@ -3,12 +3,11 @@ package service
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/gopl-dev/server/app/ds"
 )
 
 // FindUserSessionByID retrieves a user session from the database using its ID.
-func (s *Service) FindUserSessionByID(ctx context.Context, id uuid.UUID) (sess *ds.UserSession, err error) {
+func (s *Service) FindUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.UserSession, err error) {
 	ctx, span := s.tracer.Start(ctx, "FindUserSessionByID")
 	defer span.End()
 
@@ -23,7 +22,7 @@ func (s *Service) FindUserSessionByID(ctx context.Context, id uuid.UUID) (sess *
 
 // FindUserSessionByIDInput ...
 type FindUserSessionByIDInput struct {
-	ID uuid.UUID
+	ID ds.ID
 }
 
 // Sanitize ...

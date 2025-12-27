@@ -10,7 +10,7 @@ import (
 )
 
 var createEmailConfirmationInputRules = z.Shape{
-	"UserID": userIDInputRules,
+	"UserID": idInputRules,
 }
 
 const (
@@ -20,7 +20,7 @@ const (
 
 // CreateEmailConfirmation generates a unique confirmation code, calculates its expiration time,
 // and saves the email confirmation record to the database for the given user ID.
-func (s *Service) CreateEmailConfirmation(ctx context.Context, userID int64) (code string, err error) {
+func (s *Service) CreateEmailConfirmation(ctx context.Context, userID ds.ID) (code string, err error) {
 	ctx, span := s.tracer.Start(ctx, "CreateEmailConfirmation")
 	defer span.End()
 
@@ -77,7 +77,7 @@ func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) 
 
 // CreateEmailConfirmationInput ...
 type CreateEmailConfirmationInput struct {
-	UserID int64
+	UserID ds.ID
 }
 
 // Sanitize ...

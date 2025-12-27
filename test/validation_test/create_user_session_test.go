@@ -3,6 +3,7 @@ package validation_test
 import (
 	"testing"
 
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 )
 
@@ -17,10 +18,10 @@ func TestValidateCreateUserSessionInput(t *testing.T) {
 		data      service.CreateUserSessionInput
 	}{
 		{
-			name:      "missing userID",
-			expectErr: "userID is required",
+			name:      "invalid userID",
+			expectErr: "Invalid UUID",
 			argName:   "user_id",
-			data:      service.CreateUserSessionInput{0},
+			data:      service.CreateUserSessionInput{ds.NilID},
 		},
 	}
 

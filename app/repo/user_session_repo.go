@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
-	"github.com/google/uuid"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
@@ -15,6 +14,10 @@ func (r *Repo) CreateUserSession(ctx context.Context, s *ds.UserSession) (err er
 	_, span := r.tracer.Start(ctx, "CreateUserSession")
 	defer span.End()
 
+	if s.ID.IsNil() {
+		s.ID = ds.NewID()
+	}
+
 	_, err = r.db.Exec(ctx, `INSERT INTO user_sessions (id, user_id, created_at, expires_at) VALUES ($1, $2, $3, $4)`,
 		s.ID, s.UserID, s.CreatedAt, s.ExpiresAt)
 
@@ -22,7 +25,7 @@ func (r *Repo) CreateUserSession(ctx context.Context, s *ds.UserSession) (err er
 }
 
 // FindUserSessionByID retrieves a user session record from the database using its unique ID.
-func (r *Repo) FindUserSessionByID(ctx context.Context, id uuid.UUID) (sess *ds.UserSession, err error) {
+func (r *Repo) FindUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.UserSession, err error) {
 	_, span := r.tracer.Start(ctx, "FindUserSessionByID")
 	defer span.End()
 
@@ -37,7 +40,7 @@ func (r *Repo) FindUserSessionByID(ctx context.Context, id uuid.UUID) (sess *ds.
 }
 
 // ProlongUserSession updates the expiration timestamp of an existing user session.
-func (r *Repo) ProlongUserSession(ctx context.Context, id uuid.UUID) (err error) {
+func (r *Repo) ProlongUserSession(ctx context.Context, id ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "ProlongUserSession")
 	defer span.End()
 
@@ -48,7 +51,7 @@ func (r *Repo) ProlongUserSession(ctx context.Context, id uuid.UUID) (err error)
 }
 
 // DeleteUserSession removes a user session record from the database using its unique ID.
-func (r *Repo) DeleteUserSession(ctx context.Context, id uuid.UUID) (err error) {
+func (r *Repo) DeleteUserSession(ctx context.Context, id ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteUserSession")
 	defer span.End()
 
@@ -57,7 +60,7 @@ func (r *Repo) DeleteUserSession(ctx context.Context, id uuid.UUID) (err error) 
 }
 
 // DeleteSessionsByUserID removes all session records for a specific user from the database.
-func (r *Repo) DeleteSessionsByUserID(ctx context.Context, userID int64) (err error) {
+func (r *Repo) DeleteSessionsByUserID(ctx context.Context, userID ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteSessionsByUserID")
 	defer span.End()
 

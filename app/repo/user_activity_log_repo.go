@@ -39,7 +39,7 @@ func (r *Repo) CreateUserActivityLog(ctx context.Context, log *ds.UserActivityLo
 
 // FindUserActivityLogByUserAndType finds the latest user activity log for a given user and action type.
 func (r *Repo) FindUserActivityLogByUserAndType(
-	ctx context.Context, userID int64, t useractivity.Type) (*ds.UserActivityLog, error) {
+	ctx context.Context, userID ds.ID, t useractivity.Type) (*ds.UserActivityLog, error) {
 	_, span := r.tracer.Start(ctx, "FindUserActivityLogByUserAndType")
 	defer span.End()
 
@@ -60,7 +60,7 @@ func (r *Repo) FindUserActivityLogByUserAndType(
 }
 
 // UpdateUserActivityLogPublic updates a user activity log by its ID, setting it to public.
-func (r *Repo) UpdateUserActivityLogPublic(ctx context.Context, id int64) (err error) {
+func (r *Repo) UpdateUserActivityLogPublic(ctx context.Context, id ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "UpdateUserActivityLogPublic")
 	defer span.End()
 

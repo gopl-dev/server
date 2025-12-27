@@ -14,7 +14,7 @@ const (
 
 // User ...
 type User struct {
-	ID             int64      `json:"id"`
+	ID             ID         `json:"id"`
 	Username       string     `json:"username"`
 	Email          string     `json:"email"`
 	EmailConfirmed bool       `json:"-"`
