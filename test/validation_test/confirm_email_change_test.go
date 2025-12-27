@@ -1,4 +1,4 @@
-package service_test
+package validation_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/gopl-dev/server/app/service"
 )
 
-func TestValidateGetUserAndSessionFromJWTInput(t *testing.T) {
+func TestValidateConfirmEmailChangeInput(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -14,18 +14,18 @@ func TestValidateGetUserAndSessionFromJWTInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		data      service.GetUserAndSessionFromJWTInput
+		data      service.ConfirmEmailChangeInput
 	}{
 		{
 			name:      "empty token",
 			expectErr: "Token is required",
 			argName:   "token",
-			data:      service.GetUserAndSessionFromJWTInput{""},
+			data:      service.ConfirmEmailChangeInput{""},
 		},
 		{
 			valid: true,
 			name:  "valid token",
-			data:  service.GetUserAndSessionFromJWTInput{"valid-token"},
+			data:  service.ConfirmEmailChangeInput{"valid-token"},
 		},
 	}
 

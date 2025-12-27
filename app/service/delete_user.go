@@ -13,7 +13,7 @@ var deleteUserInputRules = z.Shape{
 	"Password": z.String().Required(),
 }
 
-// DeleteUser handles the logic for deleting a user account.
+// DeleteUser handles the logic for soft-deleting a user account.
 func (s *Service) DeleteUser(ctx context.Context, userID int64, password string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "DeleteUser")
 	defer span.End()

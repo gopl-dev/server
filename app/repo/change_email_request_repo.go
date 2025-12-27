@@ -42,3 +42,12 @@ func (r *Repo) DeleteChangeEmailRequest(ctx context.Context, id int64) error {
 	_, err := r.db.Exec(ctx, `DELETE FROM change_email_requests WHERE id = $1`, id)
 	return err
 }
+
+// DeleteChangeEmailRequestsByUser removes a change email request for specific user.
+func (r *Repo) DeleteChangeEmailRequestsByUser(ctx context.Context, userID int64) error {
+	_, span := r.tracer.Start(ctx, "DeleteChangeEmailRequest")
+	defer span.End()
+
+	_, err := r.db.Exec(ctx, `DELETE FROM change_email_requests WHERE user_id = $1`, userID)
+	return err
+}

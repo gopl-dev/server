@@ -5,16 +5,64 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/repo"
+	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/pkg/email"
+	"github.com/gopl-dev/server/pkg/trace"
+	"github.com/gopl-dev/server/test/factory"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/logrusorgru/aurora"
+	otelTrace "go.opentelemetry.io/otel/trace"
 )
+
+// App holds common dependencies for tests among different test namespaces.
+type App struct {
+	Conf    *app.ConfigT
+	Tracer  otelTrace.Tracer
+	DB      *app.DB
+	Service *service.Service
+	Factory *factory.Factory
+}
+
+// NewApp ...
+func NewApp() *App {
+	ctx := context.Background()
+	tracer, err := trace.New(ctx)
+	if err != nil {
+		panic("[TEST] New app: " + err.Error())
+	}
+
+	db, err := app.NewPool(ctx)
+	if err != nil {
+		panic("[TEST] New app: " + err.Error())
+	}
+
+	err = app.MigrateDB(ctx, db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &App{
+		Conf:    app.Config(),
+		Tracer:  tracer,
+		DB:      db,
+		Service: service.New(db, tracer),
+		Factory: factory.New(repo.New(db, tracer)),
+	}
+}
+
+// Shutdown ...
+// Initiator of NewApp must care to call Shutdown().
+func (a *App) Shutdown() {
+	a.DB.Close()
+}
 
 // Data is a type alias representing a map of database columns and their expected values,
 // used for assertions against the database.
@@ -86,7 +134,7 @@ func dbIdent(i string) string {
 	return pgx.Identifier{i}.Sanitize()
 }
 
-func countDatabaseRows(t *testing.T, db *pgxpool.Pool, table string, data Data) int {
+func countDatabaseRows(t *testing.T, db *app.DB, table string, data Data) int {
 	t.Helper()
 
 	args := make([]any, 0)
@@ -132,7 +180,7 @@ func countDatabaseRows(t *testing.T, db *pgxpool.Pool, table string, data Data) 
 }
 
 // AssertInDB asserts that at least one row exists in the given table that matches the criteria in 'data'.
-func AssertInDB(t *testing.T, db *pgxpool.Pool, table string, data Data) {
+func AssertInDB(t *testing.T, db *app.DB, table string, data Data) {
 	t.Helper()
 
 	count := countDatabaseRows(t, db, table, data)
@@ -147,7 +195,7 @@ func AssertInDB(t *testing.T, db *pgxpool.Pool, table string, data Data) {
 }
 
 // AssertNotInDB asserts that no rows exist in the given table that match the criteria in 'data'.
-func AssertNotInDB(t *testing.T, db *pgxpool.Pool, table string, data Data) {
+func AssertNotInDB(t *testing.T, db *app.DB, table string, data Data) {
 	t.Helper()
 
 	count := countDatabaseRows(t, db, table, data)

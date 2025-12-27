@@ -14,6 +14,7 @@ import (
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/pkg/trace"
 	"github.com/gopl-dev/server/server"
+	"github.com/gopl-dev/server/worker"
 )
 
 func main() {
@@ -22,6 +23,12 @@ func main() {
 	tracer, err := trace.New(ctx)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	err = worker.Start(ctx)
+	if err != nil {
+		println(err)
+		return
 	}
 
 	quit := make(chan os.Signal, 1)

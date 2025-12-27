@@ -27,8 +27,13 @@ var (
 	ErrMultipleSameVersion = errors.New("multiple migrations of same version found")
 )
 
+// DB ...
+type DB struct {
+	*pgxpool.Pool
+}
+
 // NewPool creates a new PostgreSQL connection pool.
-func NewPool(ctx context.Context) (db *pgxpool.Pool, err error) {
+func NewPool(ctx context.Context) (db *DB, err error) {
 	c := Config().DB
 
 	conf, err := pgxpool.ParseConfig(
@@ -41,19 +46,21 @@ func NewPool(ctx context.Context) (db *pgxpool.Pool, err error) {
 	// TODO: make proper logging
 	conf.ConnConfig.Tracer = NewLoggingQueryTracer()
 
-	db, err = pgxpool.NewWithConfig(ctx, conf)
+	pool, err := pgxpool.NewWithConfig(ctx, conf)
 	if err != nil {
 		err = fmt.Errorf("create db connection pool: %w", err)
 
 		return
 	}
 
+	db = &DB{pool}
+
 	_, err = db.Exec(ctx, "SELECT 1")
 	if err != nil {
 		err = fmt.Errorf("db.exec: %w", err)
 	}
 
-	return
+	return db, err
 }
 
 //go:embed db_migrations/*.sql
@@ -74,7 +81,7 @@ type migration struct {
 // MigrateDB runs SQL scripts from the './migrations' directory that haven't been committed yet.
 // It reads migration files, compares them with the migrations already applied to the database,
 // and executes the new migrations in a transaction.
-func MigrateDB(ctx context.Context, db *pgxpool.Pool) (err error) {
+func MigrateDB(ctx context.Context, db *DB) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("[ERROR] [MIGRATE]: %w", err)
@@ -210,7 +217,7 @@ iterate:
 }
 
 // RunInTx executes a function within transaction.
-func RunInTx(ctx context.Context, db *pgxpool.Pool,
+func RunInTx(ctx context.Context, db *DB,
 	f func(ctx context.Context, tx pgx.Tx) error) (err error) {
 	tx, err := db.Begin(ctx)
 	if err != nil {

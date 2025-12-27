@@ -42,3 +42,12 @@ func (r *Repo) DeletePasswordResetToken(ctx context.Context, id int64) error {
 	_, err := r.db.Exec(ctx, `DELETE FROM password_reset_tokens WHERE id = $1`, id)
 	return err
 }
+
+// DeletePasswordResetTokensByUser removes a password reset tokens that belongs to specific user.
+func (r *Repo) DeletePasswordResetTokensByUser(ctx context.Context, userID int64) error {
+	_, span := r.tracer.Start(ctx, "DeletePasswordResetToken")
+	defer span.End()
+
+	_, err := r.db.Exec(ctx, `DELETE FROM password_reset_tokens WHERE user_id = $1`, userID)
+	return err
+}

@@ -63,15 +63,22 @@ func (r *Repo) FindUserByID(ctx context.Context, id int64) (*ds.User, error) {
 }
 
 // CreateUser inserts a new user record into the database.
-func (r *Repo) CreateUser(ctx context.Context, user *ds.User) (err error) {
+func (r *Repo) CreateUser(ctx context.Context, u *ds.User) (err error) {
 	_, span := r.tracer.Start(ctx, "CreateUser")
 	defer span.End()
 
-	row := r.db.QueryRow(ctx,
-		"INSERT INTO users (username, email, email_confirmed, password, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-		user.Username, user.Email, user.EmailConfirmed, user.Password, user.CreatedAt)
-	err = row.Scan(&user.ID)
-
+	row, err := r.insert(ctx, "users", map[string]any{
+		"username":        u.Username,
+		"email":           u.Email,
+		"email_confirmed": u.EmailConfirmed,
+		"password":        u.Password,
+		"created_at":      u.CreatedAt,
+		"deleted_at":      u.DeletedAt,
+	})
+	if err != nil {
+		return
+	}
+	err = row.Scan(&u.ID)
 	return
 }
 
@@ -118,5 +125,32 @@ func (r *Repo) DeleteUser(ctx context.Context, userID int64) (err error) {
 	defer span.End()
 
 	_, err = r.db.Exec(ctx, "UPDATE users SET deleted_at = NOW() WHERE id = $1", userID)
+	return
+}
+
+// HardDeleteUser deletes a user record permanently from the database.
+// F.
+func (r *Repo) HardDeleteUser(ctx context.Context, userID int64) (err error) {
+	_, span := r.tracer.Start(ctx, "DeleteUser")
+	defer span.End()
+
+	_, err = r.db.Exec(ctx, "DELETE FROM users WHERE id = $1", userID)
+	return
+}
+
+// FilterUsers ...
+func (r *Repo) FilterUsers(ctx context.Context, f ds.UsersFilter) (users []ds.User, count int, err error) {
+	_, span := r.tracer.Start(ctx, "FilterUsers")
+	defer span.End()
+
+	count, err = r.filter("users").
+		paginate(f.Page, f.PerPage).
+		createdAt(f.CreatedAt).
+		deletedAt(f.DeletedAt).
+		deleted(f.Deleted).
+		order(f.OrderBy, f.OrderDirection).
+		withCount(f.WithCount).
+		scan(ctx, &users)
+
 	return
 }

@@ -1,4 +1,4 @@
-package service_test
+package validation_test
 
 import (
 	"strings"
@@ -9,7 +9,7 @@ import (
 
 func TestValidateRegisterUserInput(t *testing.T) {
 	t.Parallel()
-	
+
 	validUsername := strings.Repeat("a", service.UsernameMinLen)
 	validEmail := "mail@ognev.dev"
 	validPassword := strings.Repeat("a", service.UserPasswordMinLen)

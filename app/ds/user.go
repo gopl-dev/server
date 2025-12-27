@@ -7,6 +7,9 @@ import (
 
 const (
 	userCtxKey ctxKey = "user"
+
+	// CleanupDeletedUserAfter ...
+	CleanupDeletedUserAfter = 30 * 24 * time.Hour
 )
 
 // User ...
@@ -19,6 +22,18 @@ type User struct {
 	CreatedAt      time.Time  `json:"-"`
 	UpdatedAt      *time.Time `json:"-"`
 	DeletedAt      *time.Time `json:"-"`
+}
+
+// UsersFilter is used to filter and paginate user queries.
+type UsersFilter struct {
+	Page           int
+	PerPage        int
+	WithCount      bool
+	CreatedAt      *FilterDT
+	DeletedAt      *FilterDT
+	Deleted        bool
+	OrderBy        string
+	OrderDirection string
 }
 
 // Deleted ...

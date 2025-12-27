@@ -7,7 +7,6 @@ import (
 
 	"github.com/gopl-dev/server/app/ds"
 	useractivity "github.com/gopl-dev/server/app/ds/user_activity"
-	"github.com/gopl-dev/server/test"
 )
 
 // NewUserActivityLog ...
@@ -34,7 +33,7 @@ func (f *Factory) CreateUserActivityLog(t *testing.T, overrideOpt ...ds.UserActi
 	m = f.NewUserActivityLog(overrideOpt...)
 
 	err := f.repo.CreateUserActivityLog(context.Background(), m)
-	test.CheckErr(t, err)
+	checkErr(t, err)
 
 	return
 }

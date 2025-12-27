@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory/random"
 )
 
@@ -39,7 +38,7 @@ func (f *Factory) CreatePasswordResetToken(t *testing.T, overrideOpt ...ds.Passw
 	}
 
 	err := f.repo.CreatePasswordResetToken(context.Background(), m)
-	test.CheckErr(t, err)
+	checkErr(t, err)
 
 	return
 }

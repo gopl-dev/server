@@ -50,3 +50,12 @@ func (r *Repo) DeleteEmailConfirmation(ctx context.Context, id int64) (err error
 	_, err = r.db.Exec(ctx, "DELETE FROM email_confirmations WHERE id = $1", id)
 	return
 }
+
+// DeleteEmailConfirmationByUser deletes an email confirmations that belong to specific user.
+func (r *Repo) DeleteEmailConfirmationByUser(ctx context.Context, userID int64) (err error) {
+	_, span := r.tracer.Start(ctx, "DeleteEmailConfirmationByUser")
+	defer span.End()
+
+	_, err = r.db.Exec(ctx, "DELETE FROM email_confirmations WHERE user_id = $1", userID)
+	return
+}

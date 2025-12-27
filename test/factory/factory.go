@@ -87,3 +87,12 @@ func Ten[T any](t *testing.T, fn func(t *testing.T, m ...T) *T, override ...T) [
 
 	return X(t, 10, fn, override...) //nolint:mnd
 }
+
+// checkErr is a test helper function that fails the test immediately if the provided error is not nil.
+func checkErr(t *testing.T, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+}

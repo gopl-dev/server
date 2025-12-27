@@ -1,4 +1,4 @@
-package service_test
+package validation_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/gopl-dev/server/app/service"
 )
 
-func TestValidateCreateEmailConfirmationInput(t *testing.T) {
+func TestValidateFindUserByIDInput(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -14,13 +14,18 @@ func TestValidateCreateEmailConfirmationInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		data      service.CreateEmailConfirmationInput
+		data      service.FindUserByIDInput
 	}{
 		{
-			name:      "missing userID",
-			expectErr: "userID is required",
-			argName:   "user_id",
-			data:      service.CreateEmailConfirmationInput{0},
+			name:      "missing ID",
+			expectErr: "ID is required",
+			argName:   "id",
+			data:      service.FindUserByIDInput{0},
+		},
+		{
+			valid: true,
+			name:  "valid input",
+			data:  service.FindUserByIDInput{1},
 		},
 	}
 

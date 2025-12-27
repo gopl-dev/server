@@ -13,7 +13,7 @@ for simplicity, I keep todo list and progress here for now
     - [x] reset password
     - [x] change email
     - [x] change username
-    - [ ] delete account
+    - [x] delete account
     - [ ] login/register by google & github
 
 - [x] user activity log
@@ -25,12 +25,12 @@ for simplicity, I keep todo list and progress here for now
   - [ ] delete book
   - [ ] list books
 
-- [ ] workers boilerplate
-  - [ ] cleanup expired password change requests
-  - [ ] cleanup email change requests
-  - [ ] cleanup users with unconfirmed emails
-  - [ ] cleanup expired user session
-  - [ ] cleanup deleted user accounts
+- [x] workers boilerplate
+  - [x] cleanup expired password change requests
+  - [x] cleanup email change requests
+  - [x] delete users with unconfirmed emails
+  - [x] cleanup expired user session
+  - [x] cleanup deleted user accounts
   
 - [x] Validation and sanitation should be done at service layer
 - [ ] uuid v7 for IDs

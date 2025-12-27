@@ -1,4 +1,4 @@
-package service_test
+package validation_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/gopl-dev/server/app/service"
 )
 
-func TestValidateConfirmEmailChangeInput(t *testing.T) {
+func TestValidateFindPasswordResetByTokenInput(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -14,18 +14,18 @@ func TestValidateConfirmEmailChangeInput(t *testing.T) {
 		valid     bool
 		expectErr string
 		argName   string
-		data      service.ConfirmEmailChangeInput
+		data      service.FindPasswordResetByTokenInput
 	}{
 		{
 			name:      "empty token",
 			expectErr: "Token is required",
 			argName:   "token",
-			data:      service.ConfirmEmailChangeInput{""},
+			data:      service.FindPasswordResetByTokenInput{""},
 		},
 		{
 			valid: true,
 			name:  "valid token",
-			data:  service.ConfirmEmailChangeInput{"valid-token"},
+			data:  service.FindPasswordResetByTokenInput{"valid-token"},
 		},
 	}
 

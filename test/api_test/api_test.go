@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,27 +15,11 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/app/repo"
-	"github.com/gopl-dev/server/app/service"
-	"github.com/gopl-dev/server/pkg/trace"
 	"github.com/gopl-dev/server/server"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/test"
-	"github.com/gopl-dev/server/test/factory"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/logrusorgru/aurora"
 )
-
-func init() {
-
-}
-
-type Test struct {
-	Conf    *app.ConfigT
-	DB      *pgxpool.Pool
-	Service *service.Service
-	Factory *factory.Factory
-}
 
 type Headers map[string]string
 
@@ -55,48 +38,18 @@ var (
 	authUser  *ds.User
 	authToken string
 	router    http.Handler
-	tt        *Test
+	tt        *test.App
 )
 
 const ContentTypeJSON = "application/json"
 
 func TestMain(m *testing.M) {
-	tt = new(Test)
-	ctx := context.Background()
-	tt.Conf = app.Config()
-	tracer, err := trace.New(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
+	tt = test.NewApp()
 
-	tt.DB, err = app.NewPool(ctx)
-	if err != nil {
-		panic("TEST MAIN: " + err.Error())
-	}
-
-	err = app.MigrateDB(ctx, tt.DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = tt.DB.Exec(ctx, "BEGIN")
-	if err != nil {
-		println("[BEGIN TRANSACTION]:", err.Error())
-		return
-	}
-
-	tt.Service = service.New(tt.DB, tracer)
-	tt.Factory = factory.New(repo.New(tt.DB, tracer))
-	router = server.New(tt.Service, tracer).Handler
+	router = server.New(tt.Service, tt.Tracer).Handler
 	code := m.Run()
 
-	// shutdown
-	_, err = tt.DB.Exec(ctx, "ROLLBACK")
-	if err != nil {
-		println("[SHUTDOWN] [ROLLBACK]:", err.Error())
-	}
-
-	tt.DB.Close()
+	tt.Shutdown()
 	os.Exit(code)
 }
 
