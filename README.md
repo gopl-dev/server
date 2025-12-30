@@ -1,5 +1,4 @@
-# server
-A humble server that serves gopl.dev
+# 🚀 Serving gopl.dev
 
 # templ live watch & reload
 `go tool templ generate --watch --proxy="http://localhost:8080" --cmd="go run ./cmd/server/main.go"`

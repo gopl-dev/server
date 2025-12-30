@@ -39,6 +39,9 @@ linters:
         linters:
           - govet
         text: "composites:"
+      - path: '(.+)_test\.go'
+        linters:
+          - contextcheck
 
 run:
   timeout: 5m

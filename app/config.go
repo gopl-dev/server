@@ -60,6 +60,16 @@ type ConfigT struct {
 		Enabled   bool   `yaml:"enabled"`
 		ServePath string `yaml:"serve_path"`
 	} `yaml:"openapi"`
+
+	GoogleOAuth struct {
+		ClientID     string `yaml:"client_id"`
+		ClientSecret string `yaml:"client_secret"`
+	} `yaml:"google_oauth"`
+
+	GithubOAuth struct {
+		ClientID     string `yaml:"client_id"`
+		ClientSecret string `yaml:"client_secret"`
+	} `yaml:"github_oauth"`
 }
 
 // IsDevEnv ...

@@ -11,6 +11,7 @@ import (
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
+	"github.com/markbates/goth/gothic"
 )
 
 // UserSignUp is the API handler for user registration.
@@ -408,6 +409,50 @@ func (h *Handler) DeleteUserView(w http.ResponseWriter, r *http.Request) {
 		Title: "Delete Account",
 		Body:  page.DeleteUserForm(),
 	})
+}
+
+// OAuthStart ...
+func (h *Handler) OAuthStart(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "OAuthStart")
+	defer span.End()
+
+	oauthUser, err := gothic.CompleteUserAuth(w, r)
+	if err == nil {
+		token, err := h.service.AuthenticateOAuthUser(ctx, oauthUser)
+		if err != nil {
+			Abort(w, err)
+			return
+		}
+
+		setSessionCookie(w, token)
+
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
+	gothic.BeginAuthHandler(w, r)
+}
+
+// OAuthComplete ...
+func (h *Handler) OAuthComplete(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "OAuthComplete")
+	defer span.End()
+
+	oauthUser, err := gothic.CompleteUserAuth(w, r)
+	if err != nil {
+		Abort(w, err)
+		return
+	}
+
+	token, err := h.service.AuthenticateOAuthUser(ctx, oauthUser)
+	if err != nil {
+		Abort(w, err)
+		return
+	}
+
+	setSessionCookie(w, token)
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 // DeleteUser handles the API request for an authenticated user to delete their account.

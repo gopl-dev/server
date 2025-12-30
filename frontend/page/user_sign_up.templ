@@ -66,6 +66,15 @@ templ UserSignUpForm() {
 			<h1 class="text-3xl pb-4">Sign Up</h1>
 			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
 				<div class="card-body">
+                    <div class="p-5 columns-2">
+                        <div>
+                            <a href="/auth/google/" class="link">Join using Google</a>
+                        </div>
+                        <div class="float-right">
+                            <a href="/auth/github/"  class="link">Join using GitHub</a>
+                        </div>
+                    </div>
+
 					@Form("userSignUpForm") {
 						<p class="text-red-500" x-text="error" x-show="error !== ''"></p>
 						<fieldset class="fieldset">

@@ -56,13 +56,19 @@ func (s *Service) AuthenticateUser(ctx context.Context, email, password string) 
 		return
 	}
 
-	session, err := s.CreateUserSession(ctx, user.ID)
+	token, err = s.newSignedSessionToken(ctx, user.ID)
+	return
+}
+
+// newSignedSessionToken creates a new persistent session record in the database for the
+// given userID and returns a signed JWT string for client-side authentication.
+func (s *Service) newSignedSessionToken(ctx context.Context, userID ds.ID) (token string, err error) {
+	session, err := s.CreateUserSession(ctx, userID)
 	if err != nil {
 		return
 	}
 
-	token, err = app.NewSignedSessionJWT(session.ID, user.ID)
-	return
+	return app.NewSignedSessionJWT(session.ID, userID)
 }
 
 // AuthenticateUserInput ...

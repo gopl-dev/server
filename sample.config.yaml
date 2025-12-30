@@ -65,3 +65,11 @@ tracing:
 openapi:
   enabled: true
   serve_path: openapi
+
+google_oauth:
+  client_id: "hello"
+  client_secret:  "here"
+
+github_oauth:
+  client_id: "hello"
+  client_secret:  "here"

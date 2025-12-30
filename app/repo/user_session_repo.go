@@ -9,6 +9,9 @@ import (
 	"github.com/gopl-dev/server/app/ds"
 )
 
+// ErrSessionNotFound ...
+var ErrSessionNotFound = app.ErrUnauthorized()
+
 // CreateUserSession inserts a new user session record into the database.
 func (r *Repo) CreateUserSession(ctx context.Context, s *ds.UserSession) (err error) {
 	_, span := r.tracer.Start(ctx, "CreateUserSession")
@@ -33,7 +36,7 @@ func (r *Repo) FindUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.User
 	err = pgxscan.Get(ctx, r.db, sess, `SELECT * FROM user_sessions WHERE id = $1`, id)
 	if noRows(err) {
 		sess = nil
-		err = nil
+		err = ErrSessionNotFound
 	}
 
 	return

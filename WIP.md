@@ -14,7 +14,7 @@ for simplicity, I keep todo list and progress here for now
     - [x] change email
     - [x] change username
     - [x] delete account
-    - [ ] login/register by google & github
+    - [x] login/register by google & github
 
 - [x] user activity log
 - [ ] books
@@ -32,6 +32,7 @@ for simplicity, I keep todo list and progress here for now
   - [x] cleanup expired user session
   - [x] cleanup deleted user accounts
   
+- [ ] Separate "web" handlers from "api" and rename to "view" endpoints
 - [x] Validation and sanitation should be done at service layer
 - [x] uuid v7 for IDs
 - [ ] Review "TODO!"
@@ -39,9 +40,16 @@ for simplicity, I keep todo list and progress here for now
 - [ ] RELEASE
 ---
 
-Next:
+Next features:
 - [ ] Jobs
 - [ ] Events
 - [ ] Comments
 - [ ] Likes
 - [ ] Offline mode
+
+
+Must to have
+- [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
+
+Nice to have:
+- [ ] If user could see his connected AOuth accounts, connect other accounts and disconnect them

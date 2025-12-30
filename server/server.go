@@ -2,6 +2,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -13,6 +14,9 @@ import (
 	"github.com/gopl-dev/server/server/endpoint"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/middleware"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/github"
+	"github.com/markbates/goth/providers/google"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -22,6 +26,8 @@ const RWTimeout = 10 * time.Second
 // New creates new server.
 func New(s *service.Service, t trace.Tracer) *http.Server {
 	conf := app.Config().Server
+
+	registerOAuthProviders()
 
 	h := handler.New(s, t)
 	mw := middleware.New(s, t)
@@ -78,4 +84,17 @@ func corsConfig() gin.HandlerFunc { // TODO review
 	}
 
 	return cors.New(conf)
+}
+
+func registerOAuthProviders() {
+	c := app.Config()
+
+	callbackURL := func(prov string) string {
+		return fmt.Sprintf("%sauth/%s/callback/", c.Server.Addr, prov)
+	}
+
+	goth.UseProviders(
+		google.New(c.GoogleOAuth.ClientID, c.GoogleOAuth.ClientSecret, callbackURL("google")),
+		github.New(c.GithubOAuth.ClientID, c.GithubOAuth.ClientSecret, callbackURL("github")),
+	)
 }

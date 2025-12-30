@@ -32,6 +32,9 @@ func New(db *app.DB, t trace.Tracer) *Repo {
 	}
 }
 
+// insert inserts a data map into the DB.
+// (If another method like insertSomething is needed later, rename this to insertMap;
+// until then, it remains simply insert).
 func (r *Repo) insert(ctx context.Context, table string, data map[string]any) (row pgx.Row, err error) {
 	sql, args, err := sq.Insert(table).
 		SetMap(data).

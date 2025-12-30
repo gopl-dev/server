@@ -3,7 +3,7 @@ package random
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 )
 
@@ -25,7 +25,7 @@ func String(lengthOpt ...int) string {
 
 	s := make([]byte, length)
 	for i := range length {
-		s[i] = alphanum[rand.Intn(len(alphanum))] //nolint:gosec
+		s[i] = alphanum[rand.IntN(len(alphanum))] //nolint:gosec
 	}
 
 	return string(s)
@@ -62,14 +62,14 @@ func Digits(length int) string {
 
 // Digit returns a single random numeric character (0-9) as a string.
 func Digit() string {
-	d := digits[rand.Intn(len(digits))] //nolint:gosec
+	d := digits[rand.IntN(len(digits))] //nolint:gosec
 
 	return string(d)
 }
 
 // Letter returns a single random alphabetic character (a-z, A-Z) as a string.
 func Letter() string {
-	l := letters[rand.Intn(len(letters))] //nolint:gosec
+	l := letters[rand.IntN(len(letters))] //nolint:gosec
 
 	return string(l)
 }
@@ -81,5 +81,16 @@ func Int(from, to int) int {
 		from, to = to, from
 	}
 
-	return rand.Intn(to-from+1) + from //nolint:gosec
+	return rand.IntN(to-from+1) + from //nolint:gosec
+}
+
+// Element returns a random element from the provided slice.
+// If the slice is empty, it returns the zero value for type T.
+func Element[T any](slice []T) T {
+	if len(slice) == 0 {
+		var zero T
+		return zero
+	}
+
+	return slice[rand.IntN(len(slice))] //nolint:gosec
 }

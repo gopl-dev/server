@@ -37,16 +37,13 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
 		return
 	}
 
-	sessionID, userID, err := app.UnpackSessionJWT(in.Token)
+	sessionID, userID, err := app.UnpackSessionFromJWT(in.Token)
 	if err != nil {
 		return
 	}
 
 	session, err = s.FindUserSessionByID(ctx, sessionID)
 	if err != nil {
-		return
-	}
-	if session == nil {
 		return
 	}
 

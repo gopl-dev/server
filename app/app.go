@@ -156,9 +156,9 @@ func NewSignedSessionJWT(sessionID, userID ds.ID) (token string, err error) {
 	return jt.SignedString([]byte(Config().Session.Key))
 }
 
-// UnpackSessionJWT validates and parses a signed JWT string.
+// UnpackSessionFromJWT validates and parses a signed JWT string.
 // It extracts the session ID (string) and user ID (int64) from the claims.
-func UnpackSessionJWT(jt string) (sessionID, userID ds.ID, err error) {
+func UnpackSessionFromJWT(jt string) (sessionID, userID ds.ID, err error) {
 	token, err := jwt.Parse(jt, func(_ *jwt.Token) (any, error) {
 		return []byte(Config().Session.Key), nil
 	})

@@ -64,3 +64,14 @@ CREATE TABLE change_email_requests
     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE oauth_user_accounts
+(
+    id               uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+    user_id          uuid NOT NULL REFERENCES users (id),
+    -- see /oauth/provider.go for providers enum
+    provider         INT NOT NULL,
+    provider_user_id text NOT NULL,
+    created_at       timestamp        DEFAULT now(),
+
+    UNIQUE (provider, provider_user_id)
+);
