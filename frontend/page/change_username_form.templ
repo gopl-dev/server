@@ -57,7 +57,7 @@ templ ChangeUsernameForm() {
 <div class="flex flex-row justify-center">
     <div class="w-full lg:w-1/2">
         <h1 class="text-3xl pb-4">Change username</h1>
-        <div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+        <div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
             <div class="card-body">
                 @Form("changeUsernameForm") {
                 <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
@@ -76,6 +76,7 @@ templ ChangeUsernameForm() {
                             Label: "New username",
                             Model: "form.username",
                             ErrorModel: "errors.username",
+                            NoAutoFill: true,
                         })
                         @Input(InputParams{
                             ID: "password",
@@ -83,6 +84,7 @@ templ ChangeUsernameForm() {
                             Model: "form.password",
                             ErrorModel: "errors.password",
                             Type: "password",
+                            NoAutoFill: true,
                         })
                         <div class="p-2">
                             @SubmitButton("Change username")

@@ -7,7 +7,6 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app"
-	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -24,13 +23,6 @@ const (
 )
 
 var (
-	idInputRules = z.CustomFunc(func(val *ds.ID, _ z.Ctx) bool {
-		if val == nil || *val == ds.NilID {
-			return false
-		}
-
-		return true
-	}, z.Message("Invalid UUID"))
 	newPasswordInputRules = z.String().Min(UserPasswordMinLen,
 		z.Message("Password must be at least 6 characters")).
 		Required(z.Message("Password is required"))
@@ -55,6 +47,30 @@ func New(db *app.DB, t trace.Tracer) *Service {
 type Validatable interface {
 	Sanitize()
 	Validate() error
+}
+
+// CreateRuler defines an interface for entities that provide
+// validation rules for creation operations.
+type CreateRuler interface {
+	CreateRules() z.Shape
+}
+
+// UpdateRuler defines an interface for entities that provide
+// validation rules for update operations.
+type UpdateRuler interface {
+	UpdateRules() z.Shape
+}
+
+// ValidateCreate validates the given entity using its specific
+// creation rules.
+func ValidateCreate(v CreateRuler) error {
+	return validateInput(v.CreateRules(), v)
+}
+
+// ValidateUpdate validates the given entity using its specific
+// update rules.
+func ValidateUpdate(v UpdateRuler) error {
+	return validateInput(v.UpdateRules(), v)
 }
 
 // Normalize prepares the input by sanitizing and validating it.

@@ -9,7 +9,6 @@ import (
 
 // FindEmailConfirmationByCode retrieves an email confirmation record from the database
 // using its unique confirmation code.
-//
 // If a record is not found, it returns (nil, nil).
 func (r *Repo) FindEmailConfirmationByCode(ctx context.Context, code string) (ec *ds.EmailConfirmation, err error) {
 	_, span := r.tracer.Start(ctx, "FindEmailConfirmationByCode")

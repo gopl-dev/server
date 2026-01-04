@@ -13,7 +13,7 @@ import (
 )
 
 var changeUsernameInputRules = z.Shape{
-	"UserID":      idInputRules,
+	"UserID":      ds.IDInputRules,
 	"NewUsername": usernameInputRules,
 	"Password":    z.String().Required(),
 }

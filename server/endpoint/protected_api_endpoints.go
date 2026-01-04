@@ -2,9 +2,16 @@ package endpoint
 
 // ProtectedAPIEndpoints is endpoints that require user auth.
 func (r *Router) ProtectedAPIEndpoints() {
+	// users
 	r.PUT("/users/password/", r.handler.ChangePassword)
 	r.POST("/users/email/", r.handler.RequestEmailChange)
 	r.PUT("/users/email/", r.handler.ConfirmEmailChange)
 	r.PUT("/users/username/", r.handler.ChangeUsername)
 	r.DELETE("/users/", r.handler.DeleteUser)
+
+	// books
+	r.POST("/books/", r.handler.CreateBook)
+	//r.GET("/books/:url_name/", r.handler.GetBook)
+	//r.PUT("/books/:url_name/", r.handler.UpdateBook)
+	//r.DELETE("/books/:url_name/", r.handler.DeleteBook)
 }

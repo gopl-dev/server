@@ -8,6 +8,7 @@ import (
 	z "github.com/Oudwins/zog"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/app/session"
 )
 
 var getUserAndSessionFromJWTInputRules = z.Shape{
@@ -27,7 +28,7 @@ var (
 // GetUserAndSessionFromJWT parses a JWT, validates it, checks the associated session's validity
 // against the database, and retrieves the corresponding user record.
 func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
-	user *ds.User, session *ds.UserSession, err error) {
+	user *ds.User, sess *ds.UserSession, err error) {
 	ctx, span := s.tracer.Start(ctx, "GetUserAndSessionFromJWT")
 	defer span.End()
 
@@ -37,22 +38,22 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
 		return
 	}
 
-	sessionID, userID, err := app.UnpackSessionFromJWT(in.Token)
+	sessionID, userID, err := session.UnpackFromJWT(in.Token)
 	if err != nil {
 		return
 	}
 
-	session, err = s.FindUserSessionByID(ctx, sessionID)
+	sess, err = s.FindUserSessionByID(ctx, sessionID)
 	if err != nil {
 		return
 	}
 
-	if session.UserID != userID {
+	if sess.UserID != userID {
 		return nil, nil, ErrInvalidJWT
 	}
 
-	if session.ExpiresAt.Before(time.Now()) {
-		err = s.DeleteUserSession(ctx, session.ID)
+	if sess.ExpiresAt.Before(time.Now()) {
+		err = s.DeleteUserSession(ctx, sess.ID)
 		if err != nil {
 			return
 		}
@@ -61,7 +62,7 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
 		return
 	}
 
-	user, err = s.FindUserByID(ctx, session.UserID)
+	user, err = s.FindUserByID(ctx, sess.UserID)
 	return
 }
 

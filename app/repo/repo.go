@@ -13,9 +13,23 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
+
+type data map[string]any
+
+// dbKey is a private type to avoid collisions in context.WithValue.
+type dbKey struct{}
+
+// DBI matches the common methods between pgxpool.Pool and pgx.Tx.
+// This allows repository methods to work whether they are in a transaction or not.
+type DBI interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
 
 // Repo is the primary struct for database access operations
 // All repository methods are attached to this type.
@@ -32,12 +46,30 @@ func New(db *app.DB, t trace.Tracer) *Repo {
 	}
 }
 
+// WithTx wraps app.RunInTx and puts the transaction into the context.
+func (r *Repo) WithTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	return app.RunInTx(ctx, r.db, func(ctx context.Context, tx pgx.Tx) error {
+		// We store the transaction in the context
+		ctx = context.WithValue(ctx, dbKey{}, tx)
+		return fn(ctx)
+	})
+}
+
+// getDB returns the transaction from context if it exists, otherwise returns the pool.
+func (r *Repo) getDB(ctx context.Context) DBI {
+	if tx, ok := ctx.Value(dbKey{}).(pgx.Tx); ok {
+		return tx
+	}
+
+	return r.db
+}
+
 // insert inserts a data map into the DB.
 // (If another method like insertSomething is needed later, rename this to insertMap;
 // until then, it remains simply insert).
-func (r *Repo) insert(ctx context.Context, table string, data map[string]any) (row pgx.Row, err error) {
+func (r *Repo) insert(ctx context.Context, table string, values data) (err error) {
 	sql, args, err := sq.Insert(table).
-		SetMap(data).
+		SetMap(values).
 		Suffix("RETURNING id").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
@@ -45,7 +77,23 @@ func (r *Repo) insert(ctx context.Context, table string, data map[string]any) (r
 		return
 	}
 
-	row = r.db.QueryRow(ctx, sql, args...)
+	_, err = r.getDB(ctx).Exec(ctx, sql, args...)
+	return
+}
+
+// insert inserts a data map into the DB.
+// (If another method like insertSomething is needed later, rename this to insertMap;
+// until then, it remains simply insert).
+func (r *Repo) delete(ctx context.Context, table string, id ds.ID) (err error) {
+	_, err = r.getDB(ctx).Exec(ctx, `UPDATE $1 SET deleted_at = NOW() WHERE id = $2`, table, id)
+	return
+}
+
+// insert inserts a data map into the DB.
+// (If another method like insertSomething is needed later, rename this to insertMap;
+// until then, it remains simply insert).
+func (r *Repo) exec(ctx context.Context, query string, args ...any) (err error) {
+	_, err = r.getDB(ctx).Exec(ctx, query, args...)
 	return
 }
 

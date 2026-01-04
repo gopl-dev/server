@@ -14,7 +14,7 @@ import (
 )
 
 var createChangeEmailRequestInputRules = z.Shape{
-	"UserID":   idInputRules,
+	"UserID":   ds.IDInputRules,
 	"NewEmail": emailInputRules,
 }
 

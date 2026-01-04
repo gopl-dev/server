@@ -10,7 +10,7 @@ import (
 )
 
 var createOAuthUserAccountInputRules = z.Shape{
-	"UserID":         idInputRules,
+	"UserID":         ds.IDInputRules,
 	"Provider":       provider.TypeInputRules,
 	"ProviderUserID": z.String().Required(z.Message("provider_user_id is required")),
 }

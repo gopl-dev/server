@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/app/session"
 	"github.com/gopl-dev/server/server"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/test"
@@ -304,7 +304,7 @@ func loginAs(t *testing.T, u *ds.User) (token string) {
 		t.Fatal(err)
 	}
 
-	token, err = app.NewSignedSessionJWT(s.ID, u.ID)
+	token, err = session.NewSignedJWT(s.ID, u.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

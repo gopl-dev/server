@@ -24,16 +24,16 @@ func (r *Repo) CreateOAuthUserAccount(ctx context.Context, acc *ds.OAuthUserAcco
 		acc.CreatedAt = time.Now()
 	}
 
-	row, err := r.insert(ctx, "oauth_user_accounts", map[string]any{
+	if acc.ID.IsNil() {
+		acc.ID = ds.NewID()
+	}
+
+	err = r.insert(ctx, "oauth_user_accounts", data{
 		"user_id":          acc.UserID,
 		"provider":         acc.Provider,
 		"provider_user_id": acc.ProviderUserID,
 		"created_at":       acc.CreatedAt,
 	})
-	if err != nil {
-		return
-	}
-	err = row.Scan(&acc.ID)
 	return
 }
 

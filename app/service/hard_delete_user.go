@@ -8,7 +8,7 @@ import (
 )
 
 var hardDeleteUserInputRules = z.Shape{
-	"UserID": idInputRules,
+	"UserID": ds.IDInputRules,
 }
 
 // HardDeleteUser handles the logic for deleting a user account and relations.

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var (
@@ -29,6 +32,29 @@ func String(lengthOpt ...int) string {
 	}
 
 	return string(s)
+}
+
+// Title generates a random string formatted in title case.
+// It accepts an optional numWordsOpt to specify the number of words;
+// otherwise, it defaults to a random count between 3 and 5.
+func Title(numWordsOpt ...int) string {
+	var numWords int
+	if len(numWordsOpt) == 1 {
+		numWords = numWordsOpt[0]
+	} else {
+		numWords = rand.IntN(3) + 3 //nolint:gosec,mnd
+	}
+
+	words := make([]string, numWords)
+	for i := range words {
+		wordLen := rand.IntN(8) + 3 //nolint:gosec,mnd
+		words[i] = strings.ToLower(String(wordLen))
+	}
+
+	title := strings.Join(words, " ")
+	caser := cases.Title(language.English)
+
+	return caser.String(title)
 }
 
 // Email generates randomly constructed email address.
@@ -93,4 +119,10 @@ func Element[T any](slice []T) T {
 	}
 
 	return slice[rand.IntN(len(slice))] //nolint:gosec
+}
+
+// URL generates a random mocked HTTPS URL string.
+// It constructs a URL in the format: https://{10 chars}.{2 chars}/{10 chars}/.
+func URL() string {
+	return "https://" + String(10) + "." + String(2) + "/" + String(10) + "/" //nolint:mnd
 }

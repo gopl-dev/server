@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/app/session"
 	"github.com/gopl-dev/server/oauth/provider"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory/random"
@@ -44,7 +44,7 @@ func TestAuthenticateOAuthUser(t *testing.T) {
 		token, err := tt.Service.AuthenticateOAuthUser(ctx, user)
 		test.CheckErr(t, err)
 
-		newSessionID, newUserID, err := app.UnpackSessionFromJWT(token)
+		newSessionID, newUserID, err := session.UnpackFromJWT(token)
 		test.CheckErr(t, err)
 
 		// check that new user created
@@ -83,7 +83,7 @@ func TestAuthenticateOAuthUser(t *testing.T) {
 		token, err := tt.Service.AuthenticateOAuthUser(ctx, oauthUser)
 		test.CheckErr(t, err)
 
-		newSessionID, newUserID, err := app.UnpackSessionFromJWT(token)
+		newSessionID, newUserID, err := session.UnpackFromJWT(token)
 		test.CheckErr(t, err)
 
 		// check that new oauth account created
@@ -113,7 +113,7 @@ func TestAuthenticateOAuthUser(t *testing.T) {
 		token, err := tt.Service.AuthenticateOAuthUser(ctx, oauthUser)
 		test.CheckErr(t, err)
 
-		newSessionID, newUserID, err := app.UnpackSessionFromJWT(token)
+		newSessionID, newUserID, err := session.UnpackFromJWT(token)
 		test.CheckErr(t, err)
 
 		//  check that new session created

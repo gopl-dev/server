@@ -69,9 +69,46 @@ CREATE TABLE oauth_user_accounts
     id               uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
     user_id          uuid NOT NULL REFERENCES users (id),
     -- see /oauth/provider.go for providers enum
-    provider         INT NOT NULL,
+    provider         TEXT NOT NULL,
     provider_user_id text NOT NULL,
     created_at       timestamp        DEFAULT now(),
 
     UNIQUE (provider, provider_user_id)
 );
+
+
+CREATE TABLE entities
+(
+    id         uuid PRIMARY KEY                  DEFAULT uuidv7() NOT NULL,
+    owner_id   UUID                     NOT NULL,
+    title      TEXT,
+    type       SMALLINT                 NOT NULL DEFAULT 0, -- see ds.EntityType (0 = Draft)
+    visibility SMALLINT                 NOT NULL DEFAULT 0, -- Maps to ds.Visibility (0 = Public)
+    status     SMALLINT                 NOT NULL DEFAULT 0, -- Maps to ds.Status (0 = UnderReview)
+    url_name   TEXT                     NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE,
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE entity_change_logs
+(
+    id         uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+    entity_id  UUID                     NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    user_id    UUID                     NOT NULL,
+    action     TEXT                     NOT NULL,
+    metadata   JSONB,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE books
+(
+    id           uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL REFERENCES entities (id),
+    description  TEXT                              NOT NULL,
+    author_name  TEXT                              NOT NULL,
+    author_link  TEXT,
+    homepage     TEXT,
+    release_date TEXT                              NOT NULL,
+    cover_image  TEXT                              NOT NULL
+);
+

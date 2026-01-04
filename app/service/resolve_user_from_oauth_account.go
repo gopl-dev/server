@@ -25,7 +25,7 @@ var resolveUserFromOAuthAccount = z.Shape{
 // 2. If the OAuth account is missing but the email exists, it links the OAuth account to that user.
 // 3. If neither exists, it creates a new user (with a unique username) and links the OAuth account.
 func (s *Service) ResolveUserFromOAuthAccount(ctx context.Context, authAcc goth.User) (user *ds.User, err error) {
-	ctx, span := s.tracer.Start(ctx, "CreateOAuthUserAccount")
+	ctx, span := s.tracer.Start(ctx, "ResolveUserFromOAuthAccount")
 	defer span.End()
 
 	in := &AuthenticateOAuthUserInput{&authAcc}

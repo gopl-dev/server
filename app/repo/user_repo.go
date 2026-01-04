@@ -67,7 +67,12 @@ func (r *Repo) CreateUser(ctx context.Context, u *ds.User) (err error) {
 	_, span := r.tracer.Start(ctx, "CreateUser")
 	defer span.End()
 
-	row, err := r.insert(ctx, "users", map[string]any{
+	if u.ID.IsNil() {
+		u.ID = ds.NewID()
+	}
+
+	err = r.insert(ctx, "users", map[string]any{
+		"id":              u.ID,
 		"username":        u.Username,
 		"email":           u.Email,
 		"email_confirmed": u.EmailConfirmed,
@@ -75,10 +80,7 @@ func (r *Repo) CreateUser(ctx context.Context, u *ds.User) (err error) {
 		"created_at":      u.CreatedAt,
 		"deleted_at":      u.DeletedAt,
 	})
-	if err != nil {
-		return
-	}
-	err = row.Scan(&u.ID)
+
 	return
 }
 

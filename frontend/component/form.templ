@@ -6,7 +6,7 @@ const (
 
 const (
 	LabelClass        = "mb-2 text-sm font-medium text-gray-900"
-	InputClassDefault = "input input-xl"
+	InputClassDefault = "input input-xl w-full"
 	InputClassError   = "input-error"
 )
 
@@ -54,6 +54,41 @@ templ Input(p InputParams) {
 					autocomplete="off"
 				}
 			/>
+			if p.ErrorModel != "" {
+				{{ xShow := p.ErrorModel + "!== ''" }}
+				<div x-text={ p.ErrorModel } x-show={ xShow } class="text-red-500 text-sm pl-5"></div>
+			}
+			if p.Description != "" {
+				<div class="label pl-2">{ p.Description }</div>
+			}
+		</label>
+	</div>
+}
+
+templ Textarea(p InputParams) {
+	if p.Type == "" {
+		{{ p.Type = InputTypeText }}
+	}
+	if p.Class == "" {
+		{{ p.Class = InputClassDefault }}
+	}
+	<div class="p-2">
+		<label class="floating-label">
+			<span>{ p.Label }</span>
+			<textarea
+				id={ p.ID }
+				class={ p.Class }
+				x-model={ p.Model }
+				required?={ p.Required }
+				autofocus?={ p.Autofocus }
+				if p.ErrorModel != "" {
+					:class={ p.ErrorModel + " !== '' ? '" + InputClassError + "' : ''" }
+					x-on:focus={ p.ErrorModel + "=''" }
+				}
+				if p.NoAutoFill {
+					autocomplete="off"
+				}
+			></textarea>
 			if p.ErrorModel != "" {
 				{{ xShow := p.ErrorModel + "!== ''" }}
 				<div x-text={ p.ErrorModel } x-show={ xShow } class="text-red-500 text-sm pl-5"></div>

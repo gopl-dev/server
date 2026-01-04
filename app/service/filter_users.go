@@ -8,7 +8,7 @@ import (
 )
 
 var filterUsersInputRules = z.Shape{
-	"UserID": idInputRules,
+	"UserID": ds.IDInputRules,
 }
 
 // FilterUsers ...

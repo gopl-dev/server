@@ -11,7 +11,7 @@ import (
 )
 
 var changePasswordInputRules = z.Shape{
-	"UserID":      idInputRules,
+	"UserID":      ds.IDInputRules,
 	"OldPassword": z.String().Required(z.Message("Password is required")),
 	"NewPassword": newPasswordInputRules,
 }

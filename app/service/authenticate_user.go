@@ -9,6 +9,7 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
+	"github.com/gopl-dev/server/app/session"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -63,12 +64,12 @@ func (s *Service) AuthenticateUser(ctx context.Context, email, password string) 
 // newSignedSessionToken creates a new persistent session record in the database for the
 // given userID and returns a signed JWT string for client-side authentication.
 func (s *Service) newSignedSessionToken(ctx context.Context, userID ds.ID) (token string, err error) {
-	session, err := s.CreateUserSession(ctx, userID)
+	sess, err := s.CreateUserSession(ctx, userID)
 	if err != nil {
 		return
 	}
 
-	return app.NewSignedSessionJWT(session.ID, userID)
+	return session.NewSignedJWT(sess.ID, userID)
 }
 
 // AuthenticateUserInput ...

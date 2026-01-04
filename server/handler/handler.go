@@ -188,6 +188,11 @@ func (h *Request) jsonOK(body any) {
 	jsonOK(h.Response, body)
 }
 
+// jsonCreated writes a standard HTTP 201 Created JSON response with the provided body.
+func (h *Request) jsonCreated(body any) {
+	jsonCreated(h.Response, body)
+}
+
 // jsonSuccess writes a standard HTTP 200 OK JSON response using the predefined
 // success struct.
 func (h *Request) jsonSuccess() {
@@ -255,6 +260,14 @@ func writeJSON(w http.ResponseWriter, body any, status int) (err error) {
 // jsonOK writes a standard HTTP 200 OK JSON response with the provided body.
 func jsonOK(w http.ResponseWriter, body any) {
 	err := writeJSON(w, body, http.StatusOK)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+// jsonCreated writes a standard HTTP 201 Created JSON response with the provided body.
+func jsonCreated(w http.ResponseWriter, body any) {
+	err := writeJSON(w, body, http.StatusCreated)
 	if err != nil {
 		log.Println(err)
 	}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	z "github.com/Oudwins/zog"
 	"github.com/google/uuid"
 )
 
@@ -88,3 +89,12 @@ func (id *ID) UnmarshalJSON(data []byte) error {
 	*id = ID(u)
 	return nil
 }
+
+// IDInputRules ...
+var IDInputRules = z.CustomFunc(func(val *ID, _ z.Ctx) bool {
+	if val == nil || *val == NilID {
+		return false
+	}
+
+	return true
+}, z.Message("Invalid UUID"))

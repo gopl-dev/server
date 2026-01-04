@@ -8,7 +8,7 @@ import (
 )
 
 var findUserByIDInputRules = z.Shape{
-	"ID": idInputRules,
+	"ID": ds.IDInputRules,
 }
 
 // FindUserByID retrieves a user record from the database by their ID.

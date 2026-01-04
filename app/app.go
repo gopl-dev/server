@@ -10,8 +10,7 @@ import (
 	"strings"
 
 	z "github.com/Oudwins/zog"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/gopl-dev/server/app/ds"
+	"github.com/gosimple/slug"
 )
 
 const (
@@ -143,63 +142,7 @@ func Token(lengthOpt ...int) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-// NewSignedSessionJWT creates a new, signed JWT token containing the session ID and user ID claims.
-// The token is signed using the secret key from the application configuration.
-func NewSignedSessionJWT(sessionID, userID ds.ID) (token string, err error) {
-	jt := jwt.NewWithClaims(
-		jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			jwtSessionParam: sessionID,
-			jwtUserParam:    userID,
-		})
-
-	return jt.SignedString([]byte(Config().Session.Key))
-}
-
-// UnpackSessionFromJWT validates and parses a signed JWT string.
-// It extracts the session ID (string) and user ID (int64) from the claims.
-func UnpackSessionFromJWT(jt string) (sessionID, userID ds.ID, err error) {
-	token, err := jwt.Parse(jt, func(_ *jwt.Token) (any, error) {
-		return []byte(Config().Session.Key), nil
-	})
-	if err != nil {
-		return
-	}
-
-	if !token.Valid {
-		err = ErrInvalidJWT
-		return
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		err = ErrInvalidJWT
-		return
-	}
-
-	sessionIDStr, ok := claims[jwtSessionParam].(string)
-	if !ok {
-		err = ErrInvalidJWT
-		return
-	}
-
-	sessionID, err = ds.ParseID(sessionIDStr)
-	if err != nil {
-		err = ErrInvalidJWT
-		return
-	}
-
-	userIDStr, ok := claims[jwtUserParam].(string)
-	if !ok {
-		err = ErrInvalidJWT
-		return
-	}
-
-	userID, err = ds.ParseID(userIDStr)
-	if err != nil {
-		err = ErrInvalidJWT
-		return
-	}
-
-	return
+// Slug converts any string into a URL-friendly format.
+func Slug(s string) string {
+	return slug.Make(s)
 }

@@ -10,7 +10,7 @@ import (
 )
 
 var createUserSessionInputRules = z.Shape{
-	"UserID": idInputRules,
+	"UserID": ds.IDInputRules,
 }
 
 // CreateUserSession creates a new user session object.

@@ -10,7 +10,7 @@ import (
 )
 
 var deleteUserInputRules = z.Shape{
-	"UserID":   idInputRules,
+	"UserID":   ds.IDInputRules,
 	"Password": z.String().Required(),
 }
 

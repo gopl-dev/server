@@ -10,7 +10,7 @@ import (
 )
 
 var createEmailConfirmationInputRules = z.Shape{
-	"UserID": idInputRules,
+	"UserID": ds.IDInputRules,
 }
 
 const (

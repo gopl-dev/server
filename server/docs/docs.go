@@ -15,6 +15,63 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/books/": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Create a new book",
+                "operationId": "CreateBook",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateBook"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ds.Book"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/users/": {
             "delete": {
                 "security": [
@@ -537,6 +594,84 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "ds.Book": {
+            "type": "object",
+            "properties": {
+                "author_link": {
+                    "type": "string"
+                },
+                "author_name": {
+                    "type": "string"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "string"
+                },
+                "published_at": {
+                    "type": "string"
+                },
+                "release_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/ds.EntityStatus"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url_name": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/ds.EntityVisibility"
+                }
+            }
+        },
+        "ds.EntityStatus": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-varnames": [
+                "EntityStatusUnderReview",
+                "EntityStatusPublished",
+                "EntityStatusRejected"
+            ]
+        },
+        "ds.EntityVisibility": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "EntityVisibilityDraft",
+                "EntityVisibilityPublic",
+                "EntityVisibilityPrivate",
+                "EntityVisibilityUnlisted"
+            ]
+        },
         "handler.Error": {
             "type": "object",
             "properties": {
@@ -586,6 +721,32 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateBook": {
+            "type": "object",
+            "properties": {
+                "author_link": {
+                    "type": "string"
+                },
+                "author_name": {
+                    "type": "string"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "release_date": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }
@@ -662,7 +823,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "token": {
                     "type": "string"

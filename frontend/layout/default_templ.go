@@ -104,7 +104,7 @@ func Default(d Data) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</summary><ul class=\"bg-neutral rounded-t-none p-2\"><li><a href=\"/users/settings/\">Settings</a></li><li><a href=\"/users/sign-out/\">Sign out</a></li></ul></details></li>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</summary><ul class=\"bg-neutral rounded-t-none p-2\"><li><a href=\"/users/settings/\">Settings</a></li><li><a href=\"/add-book/\">Add book</a></li><li><a href=\"/users/sign-out/\">Sign out</a></li></ul></details></li>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

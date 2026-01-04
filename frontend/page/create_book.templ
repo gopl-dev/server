@@ -1,0 +1,166 @@
+package page
+
+import . "github.com/gopl-dev/server/frontend/component"
+
+templ CreateBookForm() {
+<script>
+    function createBookForm() {
+        return {
+            form: {
+                title: '',
+                description: '',
+                author_name: '',
+                author_link: '',
+                homepage: '',
+                release_date: '',
+                cover_image: '',
+            },
+
+            success: false,
+            error: '',
+            errors: {
+                title: '',
+                description: '',
+                author_name: '',
+                author_link: '',
+                homepage: '',
+                release_date: '',
+                cover_image: '',
+            },
+
+            submitForm() {
+                this.error = ''
+                this.errors = {
+                    title: '',
+                    description: '',
+                    author_name: '',
+                    author_link: '',
+                    homepage: '',
+                    release_date: '',
+                    cover_image: '',
+                }
+
+                fetch('/api/books/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(this.form)
+                })
+                    .then(resp => {
+                        if (resp.status === 201) {
+                            this.success = true;
+                        }
+
+                        return resp.json();
+                    })
+                    .then(resp => {
+                        if (this.success) return;
+
+                        if (resp.status !== 200 && "error" in resp) {
+                            this.error = resp.error
+                        }
+                        if (resp.status !== 200 && resp.input_errors !== null) {
+                            let ie = resp.input_errors
+                            if ("title" in ie) {
+                                this.errors.title = ie.title
+                            }
+                            if ("description" in ie) {
+                                this.errors.description = ie.description
+                            }
+                            if ("author_name" in ie) {
+                                this.errors.author_name = ie.author_name
+                            }
+                            if ("author_link" in ie) {
+                                this.errors.author_link = ie.author_link
+                            }
+                            if ("homepage" in ie) {
+                                this.errors.homepage = ie.homepage
+                            }
+                            if ("release_date" in ie) {
+                                this.errors.release_date = ie.release_date
+                            }
+                            if ("cover_image" in ie) {
+                                this.errors.cover_image = ie.cover_image
+                            }
+                        }
+                    })
+                    .catch(response => {
+                    })
+            }
+        }
+    }
+</script>
+<div class="flex flex-row justify-center">
+    <div class="w-full lg:w-1/2">
+        <h1 class="text-3xl pb-4">Add Book</h1>
+        <div class="bg-base-100 w-full shadow-2xl">
+            <div class="card-body">
+                @Form("createBookForm") {
+                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+                <div role="alert" class="alert alert-success" x-show="success">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Book created successfully!
+                    <!-- TODO: add links: view book | add another one | my books | all books -->
+                    </span>
+
+                </div>
+                <div x-show="!success">
+                    <fieldset class="fieldset">
+                        @Input(InputParams{
+                            ID: "title",
+                            Label: "Title",
+                            Model: "form.title",
+                            ErrorModel: "errors.title",
+                        })
+                        @Textarea(InputParams{
+                            ID: "description",
+                            Label: "Description",
+                            Model: "form.description",
+                            ErrorModel: "errors.description",
+                            Type: "textarea",
+                        })
+                        @Input(InputParams{
+                            ID: "author_name",
+                            Label: "Author Name",
+                            Model: "form.author_name",
+                            ErrorModel: "errors.author_name",
+                        })
+                        @Input(InputParams{
+                            ID: "author_link",
+                            Label: "Author Link",
+                            Model: "form.author_link",
+                            ErrorModel: "errors.author_link",
+                        })
+                        @Input(InputParams{
+                            ID: "homepage",
+                            Label: "Homepage",
+                            Model: "form.homepage",
+                            ErrorModel: "errors.homepage",
+                            Description: "Where to find more information about this book",
+                        })
+                        @Input(InputParams{
+                            ID: "release_date",
+                            Label: "Release Date",
+                            Model: "form.release_date",
+                            ErrorModel: "errors.release_date",
+                        })
+                        @Input(InputParams{
+                            ID: "cover_image",
+                            Label: "Cover Image URL",
+                            Model: "form.cover_image",
+                            ErrorModel: "errors.cover_image",
+                        })
+                        <div class="p-2">
+                            @SubmitButton("Add book")
+                        </div>
+                    </fieldset>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}
