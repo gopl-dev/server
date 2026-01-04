@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app/ds"
@@ -12,12 +13,21 @@ func (r *Repo) CreatePasswordResetToken(ctx context.Context, t *ds.PasswordReset
 	_, span := r.tracer.Start(ctx, "CreatePasswordResetToken")
 	defer span.End()
 
-	query := `
-		INSERT INTO password_reset_tokens (user_id, token, expires_at, created_at)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id
-	`
-	return r.db.QueryRow(ctx, query, t.UserID, t.Token, t.ExpiresAt, t.CreatedAt).Scan(&t.ID)
+	if t.ID.IsNil() {
+		t.ID = ds.NewID()
+	}
+
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = time.Now()
+	}
+
+	return r.insert(ctx, "password_reset_tokens", data{
+		"id":         t.ID,
+		"user_id":    t.UserID,
+		"token":      t.Token,
+		"expires_at": t.ExpiresAt,
+		"created_at": t.CreatedAt,
+	})
 }
 
 // FindPasswordResetToken retrieves a password reset token from the database by the token string.
@@ -27,7 +37,7 @@ func (r *Repo) FindPasswordResetToken(ctx context.Context, token string) (*ds.Pa
 	defer span.End()
 
 	t := new(ds.PasswordResetToken)
-	err := pgxscan.Get(ctx, r.db, t, `SELECT * FROM password_reset_tokens WHERE token = $1`, token)
+	err := pgxscan.Get(ctx, r.getDB(ctx), t, `SELECT * FROM password_reset_tokens WHERE token = $1`, token)
 	if noRows(err) {
 		return nil, ErrPasswordResetTokenNotFound
 	}
@@ -39,15 +49,13 @@ func (r *Repo) DeletePasswordResetToken(ctx context.Context, id ds.ID) error {
 	_, span := r.tracer.Start(ctx, "DeletePasswordResetToken")
 	defer span.End()
 
-	_, err := r.db.Exec(ctx, `DELETE FROM password_reset_tokens WHERE id = $1`, id)
-	return err
+	return r.hardDelete(ctx, "password_reset_tokens", id)
 }
 
 // DeletePasswordResetTokensByUser removes a password reset tokens that belongs to specific user.
 func (r *Repo) DeletePasswordResetTokensByUser(ctx context.Context, userID ds.ID) error {
-	_, span := r.tracer.Start(ctx, "DeletePasswordResetToken")
+	_, span := r.tracer.Start(ctx, "DeletePasswordResetTokensByUser")
 	defer span.End()
 
-	_, err := r.db.Exec(ctx, `DELETE FROM password_reset_tokens WHERE user_id = $1`, userID)
-	return err
+	return r.exec(ctx, `DELETE FROM password_reset_tokens WHERE user_id = $1`, userID)
 }

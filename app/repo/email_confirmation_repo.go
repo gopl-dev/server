@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app/ds"
@@ -15,7 +16,7 @@ func (r *Repo) FindEmailConfirmationByCode(ctx context.Context, code string) (ec
 	defer span.End()
 
 	ec = new(ds.EmailConfirmation)
-	err = pgxscan.Get(ctx, r.db, ec,
+	err = pgxscan.Get(ctx, r.getDB(ctx), ec,
 		"SELECT * FROM email_confirmations WHERE code = $1",
 		code,
 	)
@@ -32,12 +33,21 @@ func (r *Repo) CreateEmailConfirmation(ctx context.Context, ec *ds.EmailConfirma
 	_, span := r.tracer.Start(ctx, "CreateEmailConfirmation")
 	defer span.End()
 
-	row := r.db.QueryRow(ctx,
-		"INSERT INTO email_confirmations (user_id, code, created_at, expires_at) VALUES ($1, $2, $3, $4) RETURNING id",
-		ec.UserID, ec.Code, ec.CreatedAt, ec.ExpiresAt,
-	)
-	err = row.Scan(&ec.ID)
-	return
+	if ec.ID.IsNil() {
+		ec.ID = ds.NewID()
+	}
+
+	if ec.CreatedAt.IsZero() {
+		ec.CreatedAt = time.Now()
+	}
+
+	return r.insert(ctx, "email_confirmations", data{
+		"id":         ec.ID,
+		"user_id":    ec.UserID,
+		"code":       ec.Code,
+		"created_at": ec.CreatedAt,
+		"expires_at": ec.ExpiresAt,
+	})
 }
 
 // DeleteEmailConfirmation deletes an email confirmation record from the database
@@ -46,8 +56,7 @@ func (r *Repo) DeleteEmailConfirmation(ctx context.Context, id ds.ID) (err error
 	_, span := r.tracer.Start(ctx, "DeleteEmailConfirmation")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "DELETE FROM email_confirmations WHERE id = $1", id)
-	return
+	return r.hardDelete(ctx, "email_confirmations", id)
 }
 
 // DeleteEmailConfirmationByUser deletes an email confirmations that belong to specific user.
@@ -55,6 +64,5 @@ func (r *Repo) DeleteEmailConfirmationByUser(ctx context.Context, userID ds.ID) 
 	_, span := r.tracer.Start(ctx, "DeleteEmailConfirmationByUser")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "DELETE FROM email_confirmations WHERE user_id = $1", userID)
-	return
+	return r.exec(ctx, "DELETE FROM email_confirmations WHERE user_id = $1", userID)
 }

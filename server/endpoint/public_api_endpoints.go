@@ -11,7 +11,7 @@ func (r *Router) PublicAPIEndpoints() {
 		POST("password-reset-request/", r.handler.PasswordResetRequest).
 		POST("password-reset/", r.handler.PasswordResetConfirm)
 
-	//r.Group("books").
-	//GET("/", r.handler.FilterBooks).
-	//GET("{book_id}/", r.handler.GetBookByID)
+	// r.Group("books").
+	// GET("/", r.handler.FilterBooks).
+	// GET("{book_id}/", r.handler.GetBookByID)
 }

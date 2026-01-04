@@ -18,23 +18,24 @@ func (r *Repo) CreateUserActivityLog(ctx context.Context, log *ds.UserActivityLo
 	_, span := r.tracer.Start(ctx, "CreateUserActivityLog")
 	defer span.End()
 
+	if log.ID.IsNil() {
+		log.ID = ds.NewID()
+	}
+
 	if log.CreatedAt.IsZero() {
 		log.CreatedAt = time.Now()
 	}
 
-	query := `
-		INSERT INTO user_activity_logs (user_id, action_type, is_public, entity_type, entity_id, meta, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id
-	`
-
-	row := r.db.QueryRow(ctx, query,
-		log.UserID, log.ActionType, log.IsPublic,
-		log.EntityType, log.EntityID, log.Meta, log.CreatedAt,
-	)
-	err = row.Scan(&log.ID)
-
-	return
+	return r.insert(ctx, "user_activity_logs", data{
+		"id":          log.ID,
+		"user_id":     log.UserID,
+		"action_type": log.ActionType,
+		"is_public":   log.IsPublic,
+		"entity_type": log.EntityType,
+		"entity_id":   log.EntityID,
+		"meta":        log.Meta,
+		"created_at":  log.CreatedAt,
+	})
 }
 
 // FindUserActivityLogByUserAndType finds the latest user activity log for a given user and action type.
@@ -51,7 +52,7 @@ func (r *Repo) FindUserActivityLogByUserAndType(
 		ORDER BY created_at DESC
 		LIMIT 1
 	`
-	err := pgxscan.Get(ctx, r.db, log, query, userID, t)
+	err := pgxscan.Get(ctx, r.getDB(ctx), log, query, userID, t)
 	if noRows(err) {
 		return nil, ErrActivityLogNotFound
 	}
@@ -64,12 +65,5 @@ func (r *Repo) UpdateUserActivityLogPublic(ctx context.Context, id ds.ID) (err e
 	_, span := r.tracer.Start(ctx, "UpdateUserActivityLogPublic")
 	defer span.End()
 
-	query := `
-		UPDATE user_activity_logs
-		SET is_public = true
-		WHERE id = $1
-	`
-
-	_, err = r.db.Exec(ctx, query, id)
-	return
+	return r.exec(ctx, "UPDATE user_activity_logs SET is_public = true WHERE id = $1", id)
 }

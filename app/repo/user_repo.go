@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app/ds"
@@ -25,7 +26,7 @@ func (r *Repo) FindUserByEmail(ctx context.Context, email string) (*ds.User, err
 	defer span.End()
 
 	user := new(ds.User)
-	err := pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE email = $1`, email)
+	err := pgxscan.Get(ctx, r.getDB(ctx), user, `SELECT * FROM users WHERE email = $1`, email)
 	if noRows(err) {
 		return nil, ErrUserNotFound
 	}
@@ -39,7 +40,7 @@ func (r *Repo) FindUserByUsername(ctx context.Context, username string) (*ds.Use
 	defer span.End()
 
 	user := new(ds.User)
-	err := pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE username = $1`, username)
+	err := pgxscan.Get(ctx, r.getDB(ctx), user, `SELECT * FROM users WHERE username = $1`, username)
 	if noRows(err) {
 		return nil, ErrUserNotFound
 	}
@@ -53,7 +54,7 @@ func (r *Repo) FindUserByID(ctx context.Context, id ds.ID) (*ds.User, error) {
 	defer span.End()
 
 	user := new(ds.User)
-	err := pgxscan.Get(ctx, r.db, user, `SELECT * FROM users WHERE id = $1`, id)
+	err := pgxscan.Get(ctx, r.getDB(ctx), user, `SELECT * FROM users WHERE id = $1`, id)
 	if noRows(err) {
 		user = nil
 		err = ErrUserNotFound
@@ -71,7 +72,11 @@ func (r *Repo) CreateUser(ctx context.Context, u *ds.User) (err error) {
 		u.ID = ds.NewID()
 	}
 
-	err = r.insert(ctx, "users", map[string]any{
+	if u.CreatedAt.IsZero() {
+		u.CreatedAt = time.Now()
+	}
+
+	err = r.insert(ctx, "users", data{
 		"id":              u.ID,
 		"username":        u.Username,
 		"email":           u.Email,
@@ -90,8 +95,7 @@ func (r *Repo) SetUserEmailConfirmed(ctx context.Context, userID ds.ID) (err err
 	_, span := r.tracer.Start(ctx, "SetUserEmailConfirmed")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "UPDATE users SET email_confirmed = true, updated_at = NOW() WHERE id = $1", userID)
-	return
+	return r.exec(ctx, "UPDATE users SET email_confirmed = true, updated_at = NOW() WHERE id = $1", userID)
 }
 
 // UpdateUserPassword updates the password hash for a specific user.
@@ -99,8 +103,7 @@ func (r *Repo) UpdateUserPassword(ctx context.Context, userID ds.ID, password st
 	_, span := r.tracer.Start(ctx, "UpdateUserPassword")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2", password, userID)
-	return
+	return r.exec(ctx, "UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2", password, userID)
 }
 
 // UpdateUserEmail updates the email for a specific user.
@@ -108,8 +111,7 @@ func (r *Repo) UpdateUserEmail(ctx context.Context, userID ds.ID, email string) 
 	_, span := r.tracer.Start(ctx, "UpdateUserEmail")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "UPDATE users SET email = $1, updated_at = NOW() WHERE id = $2", email, userID)
-	return
+	return r.exec(ctx, "UPDATE users SET email = $1, updated_at = NOW() WHERE id = $2", email, userID)
 }
 
 // UpdateUsername updates the username for a specific user.
@@ -117,8 +119,7 @@ func (r *Repo) UpdateUsername(ctx context.Context, userID ds.ID, username string
 	_, span := r.tracer.Start(ctx, "UpdateUsername")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "UPDATE users SET username = $1, updated_at = NOW() WHERE id = $2", username, userID)
-	return
+	return r.exec(ctx, "UPDATE users SET username = $1, updated_at = NOW() WHERE id = $2", username, userID)
 }
 
 // DeleteUser performs a soft delete on a user record by setting the deleted_at timestamp.
@@ -126,8 +127,7 @@ func (r *Repo) DeleteUser(ctx context.Context, userID ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteUser")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "UPDATE users SET deleted_at = NOW() WHERE id = $1", userID)
-	return
+	return r.delete(ctx, "users", userID)
 }
 
 // HardDeleteUser deletes a user record permanently from the database.
@@ -136,8 +136,7 @@ func (r *Repo) HardDeleteUser(ctx context.Context, userID ds.ID) (err error) {
 	_, span := r.tracer.Start(ctx, "DeleteUser")
 	defer span.End()
 
-	_, err = r.db.Exec(ctx, "DELETE FROM users WHERE id = $1", userID)
-	return
+	return r.hardDelete(ctx, "users", userID)
 }
 
 // FilterUsers ...

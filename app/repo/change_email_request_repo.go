@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app/ds"
@@ -12,12 +13,22 @@ func (r *Repo) CreateChangeEmailRequest(ctx context.Context, req *ds.ChangeEmail
 	_, span := r.tracer.Start(ctx, "CreateChangeEmailRequest")
 	defer span.End()
 
-	query := `
-		INSERT INTO change_email_requests (user_id, new_email, token, expires_at, created_at)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id
-	`
-	return r.db.QueryRow(ctx, query, req.UserID, req.NewEmail, req.Token, req.ExpiresAt, req.CreatedAt).Scan(&req.ID)
+	if req.ID.IsNil() {
+		req.ID = ds.NewID()
+	}
+
+	if req.CreatedAt.IsZero() {
+		req.CreatedAt = time.Now()
+	}
+
+	return r.insert(ctx, "change_email_requests", data{
+		"id":         req.ID,
+		"user_id":    req.UserID,
+		"new_email":  req.NewEmail,
+		"token":      req.Token,
+		"expires_at": req.ExpiresAt,
+		"created_at": req.CreatedAt,
+	})
 }
 
 // FindChangeEmailRequestByToken retrieves a change email request from the database by its token.
@@ -27,7 +38,7 @@ func (r *Repo) FindChangeEmailRequestByToken(ctx context.Context, token string) 
 	defer span.End()
 
 	req := new(ds.ChangeEmailRequest)
-	err := pgxscan.Get(ctx, r.db, req, `SELECT * FROM change_email_requests WHERE token = $1`, token)
+	err := pgxscan.Get(ctx, r.getDB(ctx), req, `SELECT * FROM change_email_requests WHERE token = $1`, token)
 	if noRows(err) {
 		return nil, ErrChangeEmailRequestNotFound
 	}
@@ -39,8 +50,7 @@ func (r *Repo) DeleteChangeEmailRequest(ctx context.Context, id ds.ID) error {
 	_, span := r.tracer.Start(ctx, "DeleteChangeEmailRequest")
 	defer span.End()
 
-	_, err := r.db.Exec(ctx, `DELETE FROM change_email_requests WHERE id = $1`, id)
-	return err
+	return r.hardDelete(ctx, "change_email_requests", id)
 }
 
 // DeleteChangeEmailRequestsByUser removes a change email request for specific user.
@@ -48,6 +58,5 @@ func (r *Repo) DeleteChangeEmailRequestsByUser(ctx context.Context, userID ds.ID
 	_, span := r.tracer.Start(ctx, "DeleteChangeEmailRequest")
 	defer span.End()
 
-	_, err := r.db.Exec(ctx, `DELETE FROM change_email_requests WHERE user_id = $1`, userID)
-	return err
+	return r.exec(ctx, `DELETE FROM change_email_requests WHERE user_id = $1`, userID)
 }

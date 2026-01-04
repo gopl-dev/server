@@ -20,13 +20,15 @@ func (r *Repo) DeleteEntity(ctx context.Context, id ds.ID) error {
 
 // FindEntityByURLName retrieves a entity by its URL-friendly name.
 func (r *Repo) FindEntityByURLName(ctx context.Context, name string) (*ds.Entity, error) {
+	_, span := r.tracer.Start(ctx, "FindEntityByURLName")
+	defer span.End()
+
 	ent := new(ds.Entity)
 	const query = `
 		SELECT * FROM entities 
 		WHERE url_name = $1 AND deleted_at IS NULL`
 
-	db := r.getDB(ctx)
-	err := pgxscan.Get(ctx, db, ent, query, name)
+	err := pgxscan.Get(ctx, r.getDB(ctx), ent, query, name)
 	if noRows(err) {
 		return nil, ErrEntityNotFound
 	}

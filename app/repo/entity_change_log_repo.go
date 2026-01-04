@@ -8,10 +8,18 @@ import (
 
 // CreateEntityChangeLog inserts a new audit record.
 func (r *Repo) CreateEntityChangeLog(ctx context.Context, log *ds.EntityChangeLog) error {
-	const sql = `
-		INSERT INTO entity_change_logs (id, entity_id, user_id, action, created_at)
-		VALUES ($1, $2, $3, $4, $5)`
+	_, span := r.tracer.Start(ctx, "CreateEntityChangeLog")
+	defer span.End()
 
-	err := r.exec(ctx, sql, log.ID, log.EntityID, log.UserID, log.Action, log.CreatedAt)
-	return err
+	if log.ID.IsNil() {
+		log.ID = ds.NewID()
+	}
+
+	return r.insert(ctx, "entity_change_logs", data{
+		"id":         log.ID,
+		"entity_id":  log.EntityID,
+		"user_id":    log.UserID,
+		"action":     log.Action,
+		"created_at": log.CreatedAt,
+	})
 }

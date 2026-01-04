@@ -20,21 +20,21 @@ func (r *Repo) CreateOAuthUserAccount(ctx context.Context, acc *ds.OAuthUserAcco
 	_, span := r.tracer.Start(ctx, "CreateUser")
 	defer span.End()
 
-	if acc.CreatedAt.IsZero() {
-		acc.CreatedAt = time.Now()
-	}
-
 	if acc.ID.IsNil() {
 		acc.ID = ds.NewID()
 	}
 
-	err = r.insert(ctx, "oauth_user_accounts", data{
+	if acc.CreatedAt.IsZero() {
+		acc.CreatedAt = time.Now()
+	}
+
+	return r.insert(ctx, "oauth_user_accounts", data{
+		"id":               acc.ID,
 		"user_id":          acc.UserID,
 		"provider":         acc.Provider,
 		"provider_user_id": acc.ProviderUserID,
 		"created_at":       acc.CreatedAt,
 	})
-	return
 }
 
 // GetOAuthUserAccount ...
@@ -44,7 +44,7 @@ func (r *Repo) GetOAuthUserAccount(
 	defer span.End()
 
 	account := new(ds.OAuthUserAccount)
-	err := pgxscan.Get(ctx, r.db, account,
+	err := pgxscan.Get(ctx, r.getDB(ctx), account,
 		`SELECT * FROM oauth_user_accounts WHERE provider = $1 AND provider_user_id = $2`, prov, provUserID)
 	if noRows(err) {
 		return nil, ErrOAuthUserAccountNotFound

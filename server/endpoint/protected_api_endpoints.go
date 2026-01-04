@@ -11,7 +11,7 @@ func (r *Router) ProtectedAPIEndpoints() {
 
 	// books
 	r.POST("/books/", r.handler.CreateBook)
-	//r.GET("/books/:url_name/", r.handler.GetBook)
-	//r.PUT("/books/:url_name/", r.handler.UpdateBook)
-	//r.DELETE("/books/:url_name/", r.handler.DeleteBook)
+	// r.GET("/books/:url_name/", r.handler.GetBook)
+	// r.PUT("/books/:url_name/", r.handler.UpdateBook)
+	// r.DELETE("/books/:url_name/", r.handler.DeleteBook)
 }

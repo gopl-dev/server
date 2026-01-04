@@ -70,7 +70,6 @@ func (r *Repo) getDB(ctx context.Context) DBI {
 func (r *Repo) insert(ctx context.Context, table string, values data) (err error) {
 	sql, args, err := sq.Insert(table).
 		SetMap(values).
-		Suffix("RETURNING id").
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {
@@ -81,11 +80,32 @@ func (r *Repo) insert(ctx context.Context, table string, values data) (err error
 	return
 }
 
-// insert inserts a data map into the DB.
-// (If another method like insertSomething is needed later, rename this to insertMap;
-// until then, it remains simply insert).
+// delete performs a soft delete by setting the deleted_at timestamp to the current time.
+// It marks a record as deleted without actually removing it from the database.
 func (r *Repo) delete(ctx context.Context, table string, id ds.ID) (err error) {
-	_, err = r.getDB(ctx).Exec(ctx, `UPDATE $1 SET deleted_at = NOW() WHERE id = $2`, table, id)
+	sql, args, err := sq.Update(table).
+		PlaceholderFormat(sq.Dollar).
+		Set("deleted_at", "NOW()").
+		Where("id = ?", id).
+		ToSql()
+	if err != nil {
+		return
+	}
+	_, err = r.getDB(ctx).Exec(ctx, sql, args...)
+	return
+}
+
+// hardDelete permanently removes a record from the database table by its ID.
+// Unlike a soft delete, this action cannot be undone.
+func (r *Repo) hardDelete(ctx context.Context, table string, id ds.ID) (err error) {
+	sql, args, err := sq.Delete(table).
+		PlaceholderFormat(sq.Dollar).
+		Where("id = ?", id).
+		ToSql()
+	if err != nil {
+		return
+	}
+	_, err = r.getDB(ctx).Exec(ctx, sql, args...)
 	return
 }
 
