@@ -83,7 +83,7 @@ CREATE TABLE entities
     owner_id   UUID             NOT NULL,
     title      TEXT,
     type       SMALLINT         NOT NULL DEFAULT 0, -- see ds.EntityType (0 = Draft)
-    visibility SMALLINT         NOT NULL DEFAULT 0, -- Maps to ds.Visibility (0 = Public)
+    visibility TEXT             NOT NULL,
     status     SMALLINT         NOT NULL DEFAULT 0, -- Maps to ds.Status (0 = UnderReview)
     url_name   TEXT             NOT NULL,
     created_at TIMESTAMPTZ      NOT NULL,

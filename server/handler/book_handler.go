@@ -41,7 +41,7 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 			Type:        ds.EntityTypeBook,
 			URLName:     "",
 			Title:       req.Title,
-			Visibility:  ds.EntityVisibilityDraft,
+			Visibility:  req.Visibility,
 			Status:      ds.EntityStatusUnderReview,
 			PublishedAt: nil,
 			CreatedAt:   time.Now(),

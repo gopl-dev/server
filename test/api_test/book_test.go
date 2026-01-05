@@ -21,6 +21,7 @@ func TestCreateBook(t *testing.T) {
 		AuthorLink:  random.URL(),
 		Homepage:    random.URL(),
 		CoverImage:  random.URL(),
+		Visibility:  random.Element(ds.EntityVisibilities),
 	}
 
 	var resp ds.Book
@@ -32,7 +33,7 @@ func TestCreateBook(t *testing.T) {
 		"title":      req.Title,
 		"owner_id":   user.ID,
 		"type":       ds.EntityTypeBook,
-		"visibility": ds.EntityVisibilityDraft,
+		"visibility": req.Visibility,
 		"url_name":   app.Slug(req.Title),
 	})
 

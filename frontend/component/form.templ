@@ -100,6 +100,43 @@ templ Textarea(p InputParams) {
 	</div>
 }
 
+type RadioItem struct {
+	Label       string
+	Value       string
+	Description string
+}
+
+type RadioParams struct {
+	Label      string
+	Model      string
+	ErrorModel string
+	Items      []RadioItem
+}
+
+templ Radio(p RadioParams) {
+	<div class="p-2">
+		<label class="label">
+			<span class="label-text">{ p.Label }</span>
+		</label>
+		<div class="flex">
+			for _, item := range p.Items {
+				<label class="label cursor-pointer p-2">
+					<span class="label-text">{ item.Label }</span>
+					<input type="radio" name={ p.Label } class="radio radio-info" value={ item.Value } x-model={ p.Model }/>
+				</label>
+			}
+		</div>
+		<div class="text-sm text-gray-500 mt-1">
+			for _, item := range p.Items {
+				<span x-show={ p.Model + " === '" + item.Value + "'" }>{ item.Description }</span>
+			}
+		</div>
+		if p.ErrorModel != "" {
+			<p class="text-error text-sm mt-1" x-text={ p.ErrorModel } x-show={ p.ErrorModel + " !== ''" }></p>
+		}
+	</div>
+}
+
 templ SubmitButton(text string) {
 	<button type="submit" class="btn btn-lg btn-info w-full">{ text }</button>
 }

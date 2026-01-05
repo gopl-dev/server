@@ -19,30 +19,6 @@ var entityTypes = []EntityType{
 	EntityTypeBook,
 }
 
-// EntityVisibility controls how the entity is accessed in listings and search results.
-type EntityVisibility int
-
-const (
-	// EntityVisibilityDraft means the entity is visible only to the owner.
-	EntityVisibilityDraft EntityVisibility = iota
-
-	// EntityVisibilityPublic means the entity is visible to everyone and indexed.
-	EntityVisibilityPublic
-
-	// EntityVisibilityPrivate means the entity is restricted to the owner and collaborators.
-	EntityVisibilityPrivate
-
-	// EntityVisibilityUnlisted means the entity is accessible only via direct link.
-	EntityVisibilityUnlisted
-)
-
-var entityVisibilities = []EntityVisibility{
-	EntityVisibilityDraft,
-	EntityVisibilityPublic,
-	EntityVisibilityPrivate,
-	EntityVisibilityUnlisted,
-}
-
 // EntityStatus defines the moderation state of an entity.
 type EntityStatus int
 
@@ -81,7 +57,7 @@ func (e *Entity) CreateRules() z.Shape {
 			return slices.Contains(entityTypes, *val)
 		}),
 		"Visibility": z.CustomFunc(func(val *EntityVisibility, _ z.Ctx) bool {
-			return slices.Contains(entityVisibilities, *val)
+			return val.Valid()
 		}),
 		"Status": z.CustomFunc(func(val *EntityStatus, _ z.Ctx) bool {
 			return slices.Contains([]EntityStatus{

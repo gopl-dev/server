@@ -1,5 +1,7 @@
 package request
 
+import "github.com/gopl-dev/server/app/ds"
+
 // CreateBook ...
 type CreateBook struct {
 	Title       string `json:"title"`
@@ -9,4 +11,6 @@ type CreateBook struct {
 	AuthorLink  string `json:"author_link"`
 	Homepage    string `json:"homepage"`
 	CoverImage  string `json:"cover_image"`
+
+	Visibility ds.EntityVisibility `json:"visibility"`
 }
