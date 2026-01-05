@@ -82,9 +82,9 @@ CREATE TABLE entities
     id         uuid PRIMARY KEY NOT NULL,
     owner_id   UUID             NOT NULL,
     title      TEXT,
-    type       SMALLINT         NOT NULL DEFAULT 0, -- see ds.EntityType (0 = Draft)
+    type       TEXT             NOT NULL,
     visibility TEXT             NOT NULL,
-    status     SMALLINT         NOT NULL DEFAULT 0, -- Maps to ds.Status (0 = UnderReview)
+    status     TEXT             NOT NULL,
     url_name   TEXT             NOT NULL,
     created_at TIMESTAMPTZ      NOT NULL,
     updated_at TIMESTAMPTZ,

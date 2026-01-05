@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/gopl-dev/server/app/ds"
 	"gopkg.in/yaml.v3"
 )
 
@@ -70,6 +71,10 @@ type ConfigT struct {
 		ClientID     string `yaml:"client_id"`
 		ClientSecret string `yaml:"client_secret"`
 	} `yaml:"github_oauth"`
+
+	// Admins is a list of user IDs with administrative privileges.
+	// This is a temporary solution until  ACL is implemented.
+	Admins []ds.ID `yaml:"admins"`
 }
 
 // IsDevEnv ...

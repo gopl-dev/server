@@ -18,6 +18,12 @@ func (s *Service) CreateEntity(ctx context.Context, e *ds.Entity) error {
 	ctx, span := s.tracer.Start(ctx, "CreateEntity")
 	defer span.End()
 
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		return app.ErrUnauthorized()
+	}
+
+	// resolve URLName
 	if strings.TrimSpace(e.URLName) == "" {
 		e.URLName = app.Slug(e.Title)
 		if strings.TrimSpace(e.URLName) == "" {
@@ -36,6 +42,13 @@ resolveURLName:
 	}
 	if err != nil {
 		return err
+	}
+
+	// resolve visibility
+	e.Status = ds.EntityStatusUnderReview
+	// for admins and private entities set status to approved
+	if user.IsAdmin || e.Visibility.Is(ds.EntityVisibilityPrivate) {
+		e.Status = ds.EntityStatusApproved
 	}
 
 	err = ValidateCreate(e)

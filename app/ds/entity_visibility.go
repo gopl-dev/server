@@ -28,3 +28,13 @@ var EntityVisibilities = []EntityVisibility{
 func (v EntityVisibility) Valid() bool {
 	return slices.Contains(EntityVisibilities, v)
 }
+
+// Is ...
+func (v EntityVisibility) Is(v2 ...EntityVisibility) bool {
+	return slices.Contains(v2, v)
+}
+
+// Not ...
+func (v EntityVisibility) Not(v2 ...EntityVisibility) bool {
+	return !v.Is(v2...)
+}

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
@@ -22,6 +23,8 @@ func (mw *Middleware) ResolveUserFromCookie(next endpoint.Handler) endpoint.Hand
 				next(w, r)
 				return
 			}
+
+			user.IsAdmin = slices.Contains(app.Config().Admins, user.ID)
 
 			ctx := user.ToContext(r.Context())
 			ctx = session.ToContext(ctx)

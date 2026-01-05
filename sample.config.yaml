@@ -73,3 +73,7 @@ google_oauth:
 github_oauth:
   client_id: "hello"
   client_secret:  "here"
+
+admins:
+  - "uuid-of-admin"
+  - "uuid-of-another-admin"

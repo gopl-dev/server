@@ -7,6 +7,7 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/google/uuid"
+	"gopkg.in/yaml.v3"
 )
 
 // ErrInvalidIDFormat ...
@@ -82,6 +83,17 @@ func (id *ID) UnmarshalJSON(data []byte) error {
 
 	var u uuid.UUID
 	err := u.UnmarshalText(data[1 : len(data)-1])
+	if err != nil {
+		return fmt.Errorf("ds.ID: unmarshal failed: %w", err)
+	}
+
+	*id = ID(u)
+	return nil
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface.
+func (id *ID) UnmarshalYAML(value *yaml.Node) error {
+	u, err := uuid.Parse(value.Value)
 	if err != nil {
 		return fmt.Errorf("ds.ID: unmarshal failed: %w", err)
 	}

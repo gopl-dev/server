@@ -22,6 +22,10 @@ type User struct {
 	CreatedAt      time.Time  `json:"-"`
 	UpdatedAt      *time.Time `json:"-"`
 	DeletedAt      *time.Time `json:"-"`
+
+	// IsAdmin is true if the user's ID is in the admin list from the config file.
+	// This field is set by the auth middleware.
+	IsAdmin bool `json:"-"`
 }
 
 // UsersFilter is used to filter and paginate user queries.

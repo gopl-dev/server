@@ -7,32 +7,6 @@ import (
 	z "github.com/Oudwins/zog"
 )
 
-// EntityType defines the category of the content and its relation to a specific data table.
-type EntityType int
-
-const (
-	// EntityTypeBook represents a book resource.
-	EntityTypeBook EntityType = iota + 1
-)
-
-var entityTypes = []EntityType{
-	EntityTypeBook,
-}
-
-// EntityStatus defines the moderation state of an entity.
-type EntityStatus int
-
-const (
-	// EntityStatusUnderReview means the entity is awaiting moderation.
-	EntityStatusUnderReview EntityStatus = iota
-
-	// EntityStatusPublished means the entity is live and approved.
-	EntityStatusPublished
-
-	// EntityStatusRejected means the entity failed moderation.
-	EntityStatusRejected
-)
-
 // Entity represents the base metadata for any user-content in the system.
 type Entity struct {
 	ID          ID               `json:"id"`
@@ -54,7 +28,7 @@ func (e *Entity) CreateRules() z.Shape {
 		"ID":      IDInputRules,
 		"OwnerID": IDInputRules,
 		"Type": z.CustomFunc(func(val *EntityType, _ z.Ctx) bool {
-			return slices.Contains(entityTypes, *val)
+			return val.Valid()
 		}),
 		"Visibility": z.CustomFunc(func(val *EntityVisibility, _ z.Ctx) bool {
 			return val.Valid()
@@ -62,7 +36,8 @@ func (e *Entity) CreateRules() z.Shape {
 		"Status": z.CustomFunc(func(val *EntityStatus, _ z.Ctx) bool {
 			return slices.Contains([]EntityStatus{
 				EntityStatusUnderReview,
-				EntityStatusPublished,
+				EntityStatusApproved,
+				// Rejected is not valid status
 			}, *val)
 		}),
 		"URLName": z.String().Trim().Required(),
