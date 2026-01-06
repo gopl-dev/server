@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gopl-dev/server/app"
-
 	"github.com/gopl-dev/server/cmd/cli/commands"
 )
 
