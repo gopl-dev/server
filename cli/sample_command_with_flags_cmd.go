@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	aur "github.com/logrusorgru/aurora"
 )
 
-func init() {
-	Register(Command{
+func NewSampleCommandWithFlagsCmd() Command {
+	return Command{
 		Name:        "how_to_flags",
 		Description: "Demonstrates a CLI command that uses flags",
 		Args: []Arg{{
@@ -18,11 +18,11 @@ func init() {
 			Default:     "STAGING",
 		}},
 		Flags: []Flag{
-			verboseFlag,
-			yesFlag,
+			VerboseFlag,
+			YesFlag,
 		},
 		Command: &SampleCommandWithFlagsCmd{},
-	})
+	}
 }
 
 type SampleCommandWithFlagsCmd struct {

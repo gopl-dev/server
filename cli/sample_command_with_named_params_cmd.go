@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func init() {
-	Register(Command{
-		Name:        "how_to_cli",
+func NewSampleCommandWithNamedParamsCmd() Command {
+	return Command{
+		Name:        "how_to_params",
 		Description: "A command that judges you based on your age",
 		Args: []Arg{
 			{
@@ -18,26 +18,30 @@ func init() {
 				Required:    true,
 			},
 			{
-				Name:        "mood",
+				Name:        "-m",
 				Description: "How you're feeling (as if we care)",
 				Default:     "Happy",
 			},
 			{
-				Name:        "age",
+				Name:        "-a",
 				Description: "How many laps you've done around the sun",
 			},
 		},
-		Command: &SampleCommandWithSignatureCmd{},
-	})
+		Command: &SampleCommandWithNamedParamsCmd{},
+	}
 }
 
-type SampleCommandWithSignatureCmd struct {
+type SampleCommandWithNamedParamsCmd struct {
 	Name string  `arg:"name"`
-	Mood *string `arg:"mood"`
-	Age  *int    `arg:"age"`
+	Mood *string `arg:"-m"`
+	Age  *int    `arg:"-a"`
 }
 
-func (cmd *SampleCommandWithSignatureCmd) Run(ctx context.Context) (err error) {
+func (cmd *SampleCommandWithNamedParamsCmd) Run(ctx context.Context) (err error) {
+	mood := "Happy"
+	if cmd.Mood != nil {
+		mood = *cmd.Mood
+	}
 
 	var a int
 	if cmd.Age != nil {
@@ -77,6 +81,6 @@ func (cmd *SampleCommandWithSignatureCmd) Run(ctx context.Context) (err error) {
 		trait = "Vampire-In-Disguise"
 	}
 
-	fmt.Printf("Hello, %s %s %s!\n", *cmd.Mood, trait, cmd.Name)
+	fmt.Printf("Hello, %s %s %s!\n", mood, trait, cmd.Name)
 	return nil
 }

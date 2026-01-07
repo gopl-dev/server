@@ -1,19 +1,23 @@
 package commands
 
-import "context"
+import (
+	"context"
 
-func init() {
-	Register(Command{
+	"github.com/gopl-dev/server/cli"
+)
+
+func NewMigrateCmd() cli.Command {
+	return cli.Command{
 		Name:        "migrate",
 		Alias:       "mg",
 		Description: "Migrate database to latest version (if new migrations available)",
-		Command:     MigrateCmd{},
-	})
+		Command:     migrateCmd{},
+	}
 }
 
-type MigrateCmd struct{}
+type migrateCmd struct{}
 
-func (MigrateCmd) Run(ctx context.Context) (err error) {
+func (migrateCmd) Run(ctx context.Context) (err error) {
 	// ctx := context.TODO()
 	// return app.MigrateDB(ctx)
 	return nil

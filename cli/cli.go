@@ -1,10 +1,11 @@
-// Package commands provides a lightweight CLI framework with support for
+// Package cli provides a lightweight CLI framework with support for
 // positional arguments, named parameters (-key=val), and flags.
-package commands
+package cli
 
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -12,23 +13,41 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/logrusorgru/aurora"
+	aur "github.com/logrusorgru/aurora"
 )
 
 const flagIdent = "-"
 
-var (
-	verboseFlag = Flag{"v", "Verbose output"}
-	yesFlag     = Flag{"y", "Force confirmation"}
-)
+const usageText = `
+%s CLI (Env: %s; Host: %s)
+                                                                          
+Enter help to list all available commands
+Enter help [command] to show description of given command
+`
 
 var (
-	allCommands = map[string]Command{}
-	allAliases  = map[string]string{}
+	VerboseFlag = Flag{"v", "Verbose output"}
+	YesFlag     = Flag{"y", "Force confirmation"}
 )
 
 type Runner interface {
 	Run(ctx context.Context) error
+}
+
+type App struct {
+	Name     string
+	Env      string
+	commands map[string]Command
+	aliases  map[string]string
+}
+
+func NewApp(name, env string) *App {
+	return &App{
+		Name:     name,
+		Env:      env,
+		commands: make(map[string]Command),
+		aliases:  make(map[string]string),
+	}
 }
 
 type Arg struct {
@@ -55,44 +74,52 @@ type Command struct {
 	requiredArgsCount int
 }
 
-// Register adds a new Command definition to the global registry.
-func Register(c Command) {
-	if _, ok := allCommands[c.Name]; ok {
-		log.Fatalf("Command [%s] already registered", c.Name)
-	}
+// Register adds a new Command definition to registry.
+func (a *App) Register(cs ...Command) error {
+	for _, c := range cs {
+		if _, ok := a.commands[c.Name]; ok {
+			return fmt.Errorf("command [%s] already registered", c.Name)
+		}
 
-	c.argsCount = len(c.Args)
-	for _, arg := range c.Args {
-		if arg.Required {
-			c.requiredArgsCount++
+		c.argsCount = len(c.Args)
+		for _, arg := range c.Args {
+			if arg.Required {
+				c.requiredArgsCount++
+			}
+		}
+
+		a.commands[c.Name] = c
+		if c.Alias != "" {
+			if _, ok := a.commands[c.Alias]; ok {
+				return fmt.Errorf("alias [%s] registered as command name", c.Alias)
+			}
+			a.aliases[c.Alias] = c.Name
+		}
+
+		err := validateCommand(c)
+		if err != nil {
+			return errors.New(aur.Bold(aur.Red(c.Name)).String() + ": " + err.Error())
 		}
 	}
 
-	allCommands[c.Name] = c
-	if c.Alias != "" {
-		if _, ok := allCommands[c.Alias]; ok {
-			log.Fatalf("Alias [%s] registered as command", c.Alias)
-		}
-		allAliases[c.Alias] = c.Name
-	}
-
-	err := validateCommand(c)
-	if err != nil {
-		log.Fatal(aurora.Bold(aurora.Red(c.Name)).String() + ": " + err.Error())
-	}
+	return nil
 }
 
 // Run executes a command by name with provided raw arguments.
-func Run(name string, args ...string) error {
-	cmd, ok := allCommands[name]
+func (a *App) Run(name string, args ...string) error {
+	if name == "help" || name == "?" {
+		return a.showHelp(args)
+	}
+
+	cmd, ok := a.commands[name]
 	if !ok {
-		aliasName, ok := allAliases[name]
+		aliasName, ok := a.aliases[name]
 		if !ok {
 			log.Println("Command " + name + " not found")
-			printSimilarCommands(name)
+			a.printSimilarCommands(name)
 			return nil
 		}
-		cmd = allCommands[aliasName]
+		cmd = a.commands[aliasName]
 	}
 
 	runner, err := cmd.prepareRunner(args)
@@ -103,17 +130,148 @@ func Run(name string, args ...string) error {
 	return runner.Run(context.Background())
 }
 
-// --- ORCHESTRATION ---
+func (a *App) PromptOrRun(args []string) {
+	if len(args) > 1 {
+		tail := args[2:]
+		err := a.Run(os.Args[1], tail...)
+		if err != nil {
+			log.Println(err)
+		}
+
+		return
+	}
+
+	a.WaitForCommand()
+}
+
+func (a *App) WaitForCommand() {
+	hostname, _ := os.Hostname()
+	if hostname == "" {
+		hostname = aur.Red("unknown").String()
+	}
+	log.Printf(usageText, a.Name, a.Env, hostname)
+
+	scanner := bufio.NewScanner(os.Stdin)
+	var input string
+	for {
+		log.Print("> ")
+		scanner.Scan()
+		input = scanner.Text()
+		input = strings.TrimSpace(input)
+
+		args := strings.Split(input, " ")
+		if args[0] == "" {
+			continue
+		}
+
+		cleanedArgs := make([]string, 0)
+		for _, arg := range args {
+			arg = strings.TrimSpace(arg)
+			if arg == "" {
+				continue
+			}
+
+			cleanedArgs = append(cleanedArgs, arg)
+		}
+
+		args = cleanedArgs
+		name := args[0]
+		if name == "" {
+			continue
+		}
+
+		if len(args) > 1 {
+			args = args[1:]
+		} else {
+			args = []string{}
+		}
+
+		err := a.Run(name, args...)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func (a *App) showHelp(args []string) error {
+	if len(args) > 0 {
+		name := args[0]
+		cmd, ok := a.commands[name]
+		if !ok {
+			alias := a.aliases[name]
+			cmd, ok = a.commands[alias]
+		}
+
+		if !ok {
+			fmt.Printf("Command '%s' not found\n", name)
+			a.printSimilarCommands(name)
+			return nil
+		}
+
+		a.printCommandHelp(cmd, true)
+		return nil
+	}
+
+	for _, c := range a.commands {
+		a.printCommandHelp(c, false)
+		println("")
+	}
+
+	return nil
+}
+
+func (a *App) printCommandHelp(cmd Command, verbose bool) {
+	name := cmd.Alias
+	if name == "" {
+		name = cmd.Name
+	}
+
+	sigParts := make([]string, len(cmd.Args)+len(cmd.Flags))
+	for i, a := range cmd.Args {
+		n := a.Name
+		if !a.Required {
+			n = "[" + n + "]"
+			n = aur.Gray(12, n).String()
+		} else {
+			n = aur.Blue(n).String()
+		}
+
+		sigParts[i] = n
+	}
+	for i, a := range cmd.Flags {
+		sigParts[i+len(cmd.Args)] = flagIdent + a.Name
+	}
+
+	name = aur.Green(name).Bold().String()
+	println(name + ": " + cmd.Description)
+	println(" Usage: " + aur.Green(name).Bold().String() + " " + strings.Join(sigParts, " "))
+
+	if verbose {
+		for _, a := range cmd.Args {
+			argStr := "   " + a.Name
+			if !a.Required {
+				argStr += " (optional)"
+			}
+
+			argStr += " - " + aur.Italic(a.Description).String()
+			if a.Default != "" {
+				argStr += " (default: " + a.Default + ")"
+			}
+			println(argStr)
+		}
+		for _, f := range cmd.Flags {
+			println("   " + flagIdent + f.Name + " - " + aur.Italic(f.Description).String())
+		}
+	}
+}
 
 // prepareRunner creates a fresh instance of the command and fills it with data.
 func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	posArgs, foundFlags, namedParams := extractArgs(rawArgs, c.Args)
 
-	// Initialize fresh instance of the struct
 	val, typ := c.createNewInstance()
 	filled := make(map[string]bool)
 
-	// Phase 1: Explicitly named params (-key=val)
 	for k, v := range namedParams {
 		err := fillField(val, typ, "arg", k, v)
 		if err == nil {
@@ -121,20 +279,17 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 		}
 	}
 
-	// Phase 2: Positional arguments
-	err := c.bindPositional(val, typ, posArgs, filled)
+	err := bindPositionalArgs(c.Args, posArgs, val, typ, filled)
 	if err != nil {
 		return nil, err
 	}
 
-	// Phase 3: Boolean flags
-	err = c.bindFlags(val, typ, foundFlags)
+	err = bindFlags(val, typ, foundFlags)
 	if err != nil {
 		return nil, err
 	}
 
-	// Phase 4: Defaults and validation
-	err = c.applyDefaults(val, typ, filled)
+	err = applyDefaults(c.Args, val, typ, filled)
 	if err != nil {
 		return nil, err
 	}
@@ -142,11 +297,9 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	return val.Addr().Interface().(Runner), nil
 }
 
-// --- BINDING LOGIC ---
-
-func (c Command) bindPositional(v reflect.Value, t reflect.Type, args []string, filled map[string]bool) error {
+func bindPositionalArgs(cmdArgs []Arg, args []string, v reflect.Value, t reflect.Type, filled map[string]bool) error {
 	curr := 0
-	for _, argDef := range c.Args {
+	for _, argDef := range cmdArgs {
 		if filled[argDef.Name] {
 			continue
 		}
@@ -168,8 +321,7 @@ func (c Command) bindPositional(v reflect.Value, t reflect.Type, args []string, 
 	return nil
 }
 
-// bindFlags set boolean fields based on existence in input
-func (c Command) bindFlags(v reflect.Value, t reflect.Type, found map[string]bool) error {
+func bindFlags(v reflect.Value, t reflect.Type, found map[string]bool) error {
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		name := f.Tag.Get("flag")
@@ -190,8 +342,8 @@ func (c Command) bindFlags(v reflect.Value, t reflect.Type, found map[string]boo
 	return nil
 }
 
-func (c Command) applyDefaults(v reflect.Value, t reflect.Type, filled map[string]bool) error {
-	for _, arg := range c.Args {
+func applyDefaults(args []Arg, v reflect.Value, t reflect.Type, filled map[string]bool) error {
+	for _, arg := range args {
 		if filled[arg.Name] {
 			continue
 		}
@@ -210,8 +362,6 @@ func (c Command) applyDefaults(v reflect.Value, t reflect.Type, filled map[strin
 	return nil
 }
 
-// --- REFLECTION HELPERS ---
-
 func (c Command) createNewInstance() (reflect.Value, reflect.Type) {
 	orig := reflect.ValueOf(c.Command)
 	if orig.Kind() == reflect.Ptr {
@@ -227,6 +377,7 @@ func fillField(v reflect.Value, t reflect.Type, tag, tagVal, val string) error {
 			return setFieldValue(v.Field(i), val)
 		}
 	}
+
 	return fmt.Errorf("tag %s:%s not found", tag, tagVal)
 }
 
@@ -339,7 +490,7 @@ func confirm(questionOpt ...string) (ok bool) {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Println("\n> " + aurora.Bold(aurora.Green(question)).String() + "\n")
+		fmt.Println("\n> " + aur.Bold(aur.Green(question)).String() + "\n")
 		scanner.Scan()
 		input := scanner.Text()
 		input = strings.ToLower(strings.TrimSpace(input))
@@ -351,9 +502,9 @@ func confirm(questionOpt ...string) (ok bool) {
 	}
 }
 
-func printSimilarCommands(name string) {
+func (a *App) printSimilarCommands(name string) {
 	similar := make([]string, 0)
-	for _, c := range allCommands {
+	for _, c := range a.commands {
 		if strings.Contains(c.Name, name) || strings.Contains(c.Alias, name) {
 			similar = append(similar, "- "+c.Alias)
 		}
