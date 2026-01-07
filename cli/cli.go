@@ -62,6 +62,7 @@ type Flag struct {
 	Description string
 }
 
+// Command represents a CLI command.
 type Command struct {
 	Name        string
 	Alias       string
@@ -72,6 +73,10 @@ type Command struct {
 
 	argsCount         int
 	requiredArgsCount int
+
+	// Reflection cache
+	reflectType  reflect.Type
+	structFields map[string]int // arg/flag name -> field index
 }
 
 // Register adds a new Command definition to registry.
@@ -88,6 +93,9 @@ func (a *App) Register(cs ...Command) error {
 			}
 		}
 
+		// Create reflection cache
+		c.cacheReflection()
+
 		a.commands[c.Name] = c
 		if c.Alias != "" {
 			if _, ok := a.commands[c.Alias]; ok {
@@ -103,6 +111,27 @@ func (a *App) Register(cs ...Command) error {
 	}
 
 	return nil
+}
+
+// cacheReflection prepares reflection metadata once.
+func (c *Command) cacheReflection() {
+	c.structFields = make(map[string]int)
+
+	val := reflect.ValueOf(c.Command)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	c.reflectType = val.Type()
+
+	for i := 0; i < c.reflectType.NumField(); i++ {
+		f := c.reflectType.Field(i)
+		if argTag := f.Tag.Get("arg"); argTag != "" {
+			c.structFields[argTag] = i
+		}
+		if flagTag := f.Tag.Get("flag"); flagTag != "" {
+			c.structFields[flagTag] = i
+		}
+	}
 }
 
 // Run executes a command by name with provided raw arguments.
@@ -130,6 +159,7 @@ func (a *App) Run(name string, args ...string) error {
 	return runner.Run(context.Background())
 }
 
+// PromptOrRun executes the CLI either from args or interactively.
 func (a *App) PromptOrRun(args []string) {
 	if len(args) > 1 {
 		tail := args[2:]
@@ -137,13 +167,13 @@ func (a *App) PromptOrRun(args []string) {
 		if err != nil {
 			log.Println(err)
 		}
-
 		return
 	}
 
 	a.WaitForCommand()
 }
 
+// WaitForCommand starts the interactive CLI loop.
 func (a *App) WaitForCommand() {
 	hostname, _ := os.Hostname()
 	if hostname == "" {
@@ -193,6 +223,7 @@ func (a *App) WaitForCommand() {
 	}
 }
 
+// showHelp prints help for all commands or a specific one.
 func (a *App) showHelp(args []string) error {
 	if len(args) > 0 {
 		name := args[0]
@@ -220,6 +251,7 @@ func (a *App) showHelp(args []string) error {
 	return nil
 }
 
+// printCommandHelp prints a single command's help.
 func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	name := cmd.Alias
 	if name == "" {
@@ -265,243 +297,7 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	}
 }
 
-// prepareRunner creates a fresh instance of the command and fills it with data.
-func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
-	posArgs, foundFlags, namedParams := extractArgs(rawArgs, c.Args)
-
-	val, typ := c.createNewInstance()
-	filled := make(map[string]bool)
-
-	for k, v := range namedParams {
-		err := fillField(val, typ, "arg", k, v)
-		if err == nil {
-			filled[k] = true
-		}
-	}
-
-	err := bindPositionalArgs(c.Args, posArgs, val, typ, filled)
-	if err != nil {
-		return nil, err
-	}
-
-	err = bindFlags(val, typ, foundFlags)
-	if err != nil {
-		return nil, err
-	}
-
-	err = applyDefaults(c.Args, val, typ, filled)
-	if err != nil {
-		return nil, err
-	}
-
-	return val.Addr().Interface().(Runner), nil
-}
-
-func bindPositionalArgs(cmdArgs []Arg, args []string, v reflect.Value, t reflect.Type, filled map[string]bool) error {
-	curr := 0
-	for _, argDef := range cmdArgs {
-		if filled[argDef.Name] {
-			continue
-		}
-
-		if curr < len(args) {
-			err := fillField(v, t, "arg", argDef.Name, args[curr])
-			if err != nil {
-				return err
-			}
-			filled[argDef.Name] = true
-			curr++
-		}
-	}
-
-	if curr < len(args) {
-		return fmt.Errorf("too many positional arguments provided")
-	}
-
-	return nil
-}
-
-func bindFlags(v reflect.Value, t reflect.Type, found map[string]bool) error {
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		name := f.Tag.Get("flag")
-		if name == "" {
-			continue
-		}
-
-		// We know 'found[name]' is a bool, we format it to string
-		// so setFieldValue can parse it back to the struct field.
-		isPresent := strconv.FormatBool(found[name])
-		err := setFieldValue(v.Field(i), isPresent)
-		if err != nil {
-			// This will catch situations where a 'flag' tag is placed on a non-bool field
-			return fmt.Errorf("field '%s' with tag flag:'%s': %w", f.Name, name, err)
-		}
-	}
-
-	return nil
-}
-
-func applyDefaults(args []Arg, v reflect.Value, t reflect.Type, filled map[string]bool) error {
-	for _, arg := range args {
-		if filled[arg.Name] {
-			continue
-		}
-
-		if arg.Required {
-			return fmt.Errorf("argument '%s' is required", arg.Name)
-		}
-
-		if arg.Default != "" {
-			err := fillField(v, t, "arg", arg.Name, arg.Default)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (c Command) createNewInstance() (reflect.Value, reflect.Type) {
-	orig := reflect.ValueOf(c.Command)
-	if orig.Kind() == reflect.Ptr {
-		orig = orig.Elem()
-	}
-	newVal := reflect.New(orig.Type()).Elem()
-	return newVal, newVal.Type()
-}
-
-func fillField(v reflect.Value, t reflect.Type, tag, tagVal, val string) error {
-	for i := 0; i < t.NumField(); i++ {
-		if t.Field(i).Tag.Get(tag) == tagVal {
-			return setFieldValue(v.Field(i), val)
-		}
-	}
-
-	return fmt.Errorf("tag %s:%s not found", tag, tagVal)
-}
-
-func setFieldValue(field reflect.Value, value string) error {
-	fType := field.Type()
-
-	// Handle pointers
-	if fType.Kind() == reflect.Ptr {
-		elemType := fType.Elem()
-		newVal := reflect.New(elemType)
-		err := setFieldValue(newVal.Elem(), value)
-		if err != nil {
-			return err
-		}
-		field.Set(newVal)
-		return nil
-	}
-
-	// Handle slices
-	if fType.Kind() == reflect.Slice {
-		parts := strings.Split(value, ",")
-		slice := reflect.MakeSlice(fType, 0, len(parts))
-		for _, p := range parts {
-			item := reflect.New(fType.Elem()).Elem()
-			err := setFieldValue(item, strings.TrimSpace(p))
-			if err != nil {
-				return err
-			}
-			slice = reflect.Append(slice, item)
-		}
-		field.Set(slice)
-		return nil
-	}
-
-	// Scalar types
-	switch fType.Kind() {
-	case reflect.String:
-		field.SetString(value)
-	case reflect.Int, reflect.Int64:
-		iv, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			return err
-		}
-		field.SetInt(iv)
-	case reflect.Bool:
-		bv, err := strconv.ParseBool(value)
-		if err != nil {
-			return err
-		}
-		field.SetBool(bv)
-	default:
-		return fmt.Errorf("unsupported type %s", fType.Kind())
-	}
-	return nil
-}
-
-func extractArgs(raw []string, expectedArgs []Arg) (pos []string, flags map[string]bool, named map[string]string) {
-	flags = make(map[string]bool)
-	named = make(map[string]string)
-
-	for _, a := range raw {
-		foundAsNamed := false
-
-		// Check against defined arguments for "name=" pattern
-		// to avoid catching random strings containing "="
-		for _, argDef := range expectedArgs {
-			prefix := argDef.Name + "="
-			if strings.HasPrefix(a, prefix) {
-				parts := strings.SplitN(a, "=", 2)
-				named[parts[0]] = parts[1]
-				foundAsNamed = true
-				break
-			}
-		}
-
-		if foundAsNamed {
-			continue
-		}
-
-		// Handle flags and positional arguments
-		if strings.HasPrefix(a, flagIdent) {
-			// It's a flag (e.g., -v)
-			name := strings.TrimPrefix(a, flagIdent)
-			flags[name] = true
-		} else {
-			// It's a positional value
-			pos = append(pos, a)
-		}
-	}
-	return
-}
-func validateCommand(c Command) error {
-	for _, a := range c.Args {
-		if a.Required && a.Default != "" {
-			return fmt.Errorf("arg '%s' cannot be required and have a default", a.Name)
-		}
-	}
-	return nil
-}
-
-func confirm(questionOpt ...string) (ok bool) {
-	question := "Confirm?"
-	yes := "y"
-	yesAlt := "yes"
-
-	if len(questionOpt) > 0 {
-		question = questionOpt[0]
-	}
-	question += " y/n..."
-
-	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		fmt.Println("\n> " + aur.Bold(aur.Green(question)).String() + "\n")
-		scanner.Scan()
-		input := scanner.Text()
-		input = strings.ToLower(strings.TrimSpace(input))
-		if input == yes || input == yesAlt {
-			return true
-		}
-
-		return false
-	}
-}
-
+// printSimilarCommands prints commands with similar names.
 func (a *App) printSimilarCommands(name string) {
 	similar := make([]string, 0)
 	for _, c := range a.commands {
@@ -516,4 +312,203 @@ func (a *App) printSimilarCommands(name string) {
 			fmt.Println(s)
 		}
 	}
+}
+
+// confirm asks for y/n confirmation.
+func confirm(questionOpt ...string) (ok bool) {
+	question := "Confirm?"
+	yes := "y"
+	yesAlt := "yes"
+
+	if len(questionOpt) > 0 {
+		question = questionOpt[0]
+	}
+	question += " y/n..."
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Println("\n> " + aur.Bold(aur.Green(question)).String() + "\n")
+		scanner.Scan()
+		input := strings.ToLower(strings.TrimSpace(scanner.Text()))
+		if input == yes || input == yesAlt {
+			return true
+		}
+
+		return false
+	}
+}
+
+// --- Reflection & argument helpers ---
+func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
+	posArgs, foundFlags, namedParams := extractArgs(rawArgs, c.Args)
+
+	val := reflect.New(c.reflectType).Elem()
+	filled := make(map[string]bool)
+
+	for k, v := range namedParams {
+		if idx, ok := c.structFields[k]; ok {
+			err := setFieldValue(val.Field(idx), v)
+			if err != nil {
+				return nil, err
+			}
+			filled[k] = true
+		}
+	}
+
+	if err := bindPositionalArgs(c.Args, posArgs, val, c.structFields, filled); err != nil {
+		return nil, err
+	}
+	if err := bindFlags(val, c.structFields, foundFlags); err != nil {
+		return nil, err
+	}
+	if err := applyDefaults(c.Args, val, c.structFields, filled); err != nil {
+		return nil, err
+	}
+
+	return val.Addr().Interface().(Runner), nil
+}
+
+func bindPositionalArgs(cmdArgs []Arg, args []string, val reflect.Value, fieldMap map[string]int, filled map[string]bool) error {
+	curr := 0
+	for _, argDef := range cmdArgs {
+		if filled[argDef.Name] {
+			continue
+		}
+
+		if curr < len(args) {
+			if idx, ok := fieldMap[argDef.Name]; ok {
+				err := setFieldValue(val.Field(idx), args[curr])
+				if err != nil {
+					return err
+				}
+				filled[argDef.Name] = true
+			}
+			curr++
+		}
+	}
+
+	if curr < len(args) {
+		return fmt.Errorf("too many positional arguments provided")
+	}
+
+	return nil
+}
+
+func bindFlags(val reflect.Value, fieldMap map[string]int, found map[string]bool) error {
+	for name, present := range found {
+		if idx, ok := fieldMap[name]; ok {
+			err := setFieldValue(val.Field(idx), strconv.FormatBool(present))
+			if err != nil {
+				return fmt.Errorf("field for flag '%s': %w", name, err)
+			}
+		}
+	}
+	return nil
+}
+
+func applyDefaults(args []Arg, val reflect.Value, fieldMap map[string]int, filled map[string]bool) error {
+	for _, arg := range args {
+		if filled[arg.Name] {
+			continue
+		}
+		if arg.Required {
+			return fmt.Errorf("argument '%s' is required", arg.Name)
+		}
+		if arg.Default != "" {
+			if idx, ok := fieldMap[arg.Name]; ok {
+				err := setFieldValue(val.Field(idx), arg.Default)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func setFieldValue(field reflect.Value, value string) error {
+	ft := field.Type()
+
+	if ft.Kind() == reflect.Ptr {
+		newVal := reflect.New(ft.Elem())
+		if err := setFieldValue(newVal.Elem(), value); err != nil {
+			return err
+		}
+		field.Set(newVal)
+		return nil
+	}
+
+	if ft.Kind() == reflect.Slice {
+		parts := strings.Split(value, ",")
+		slice := reflect.MakeSlice(ft, 0, len(parts))
+		for _, p := range parts {
+			item := reflect.New(ft.Elem()).Elem()
+			if err := setFieldValue(item, strings.TrimSpace(p)); err != nil {
+				return err
+			}
+			slice = reflect.Append(slice, item)
+		}
+		field.Set(slice)
+		return nil
+	}
+
+	switch ft.Kind() {
+	case reflect.String:
+		field.SetString(value)
+	case reflect.Int, reflect.Int64:
+		v, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return err
+		}
+		field.SetInt(v)
+	case reflect.Bool:
+		bv, err := strconv.ParseBool(value)
+		if err != nil {
+			return err
+		}
+		field.SetBool(bv)
+	default:
+		return fmt.Errorf("unsupported type %s", ft.Kind())
+	}
+	return nil
+}
+
+func extractArgs(raw []string, expectedArgs []Arg) (pos []string, flags map[string]bool, named map[string]string) {
+	flags = make(map[string]bool)
+	named = make(map[string]string)
+
+	for _, a := range raw {
+		foundAsNamed := false
+
+		for _, argDef := range expectedArgs {
+			prefix := argDef.Name + "="
+			if strings.HasPrefix(a, prefix) {
+				parts := strings.SplitN(a, "=", 2)
+				named[parts[0]] = parts[1]
+				foundAsNamed = true
+				break
+			}
+		}
+
+		if foundAsNamed {
+			continue
+		}
+
+		if strings.HasPrefix(a, flagIdent) {
+			name := strings.TrimPrefix(a, flagIdent)
+			flags[name] = true
+		} else {
+			pos = append(pos, a)
+		}
+	}
+	return
+}
+
+func validateCommand(c Command) error {
+	for _, a := range c.Args {
+		if a.Required && a.Default != "" {
+			return fmt.Errorf("arg '%s' cannot be required and have a default", a.Name)
+		}
+	}
+	return nil
 }

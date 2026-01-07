@@ -66,7 +66,6 @@ func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
 
 	// Actual deployment logic
 	println("Deploying...")
-	time.Sleep(time.Second * 2)
 
 	println("Successfully deployed to " + c.Env)
 	return nil
