@@ -9,23 +9,12 @@ import (
 
 func NewSampleCommandWithNamedParamsCmd() Command {
 	return Command{
-		Name:        "how_to_params",
-		Description: "A command that judges you based on your age",
-		Args: []Arg{
-			{
-				Name:        "name",
-				Description: "The victim's name",
-				Required:    true,
-			},
-			{
-				Name:        "-m",
-				Description: "How you're feeling (as if we care)",
-				Default:     "Happy",
-			},
-			{
-				Name:        "-a",
-				Description: "How many laps you've done around the sun",
-			},
+		Name: "how_to_params",
+		Help: []string{
+			"A command that evaluates you based on your age",
+			"name: The survivor's name",
+			"-m: How you're feeling (We do care)",
+			"-a: How many laps you've done around the sun",
 		},
 		Command: &SampleCommandWithNamedParamsCmd{},
 	}

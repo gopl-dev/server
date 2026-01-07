@@ -10,25 +10,21 @@ import (
 
 func NewSampleCommandWithFlagsCmd() Command {
 	return Command{
-		Name:        "how_to_flags",
-		Description: "Demonstrates a CLI command that uses flags",
-		Args: []Arg{{
-			Name:        "env",
-			Description: "Deployment environment",
-			Default:     "STAGING",
-		}},
-		Flags: []Flag{
-			VerboseFlag,
-			YesFlag,
+		Name: "how_to_flags",
+		Help: []string{
+			"Demonstrates a CLI command that uses flags",
+			"env: Deployment environment",
+			"-v: Verbose output",
+			"-y: Force confirmation",
 		},
 		Command: &SampleCommandWithFlagsCmd{},
 	}
 }
 
 type SampleCommandWithFlagsCmd struct {
-	Env     string `arg:"env"`
-	Verbose bool   `flag:"v"`
-	Confirm bool   `flag:"y"`
+	Env     *string `arg:"env" default:"STAGING"`
+	Verbose bool    `flag:"v"`
+	Confirm bool    `flag:"y"`
 }
 
 func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
@@ -67,6 +63,6 @@ func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
 	// Actual deployment logic
 	println("Deploying...")
 
-	println("Successfully deployed to " + c.Env)
+	println("Successfully deployed to " + *c.Env)
 	return nil
 }

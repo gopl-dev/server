@@ -9,23 +9,12 @@ import (
 
 func NewSampleCommandWithSignatureCmd() Command {
 	return Command{
-		Name:        "how_to_cli",
-		Description: "A command that judges you based on your age",
-		Args: []Arg{
-			{
-				Name:        "name",
-				Description: "The victim's name",
-				Required:    true,
-			},
-			{
-				Name:        "mood",
-				Description: "How you're feeling (as if we care)",
-				Default:     "Happy",
-			},
-			{
-				Name:        "age",
-				Description: "How many laps you've done around the sun",
-			},
+		Name: "how_to_cli",
+		Help: []string{
+			"A command that judges you based on your age",
+			"name: The victim's name",
+			"mood: How you're feeling (as if we care)",
+			"age: How many laps you've done around the sun",
 		},
 		Command: &SampleCommandWithSignatureCmd{},
 	}
@@ -33,7 +22,7 @@ func NewSampleCommandWithSignatureCmd() Command {
 
 type SampleCommandWithSignatureCmd struct {
 	Name string  `arg:"name"`
-	Mood *string `arg:"mood"`
+	Mood *string `arg:"mood" default:"Happy"`
 	Age  *int    `arg:"age"`
 }
 

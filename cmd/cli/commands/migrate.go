@@ -8,10 +8,10 @@ import (
 
 func NewMigrateCmd() cli.Command {
 	return cli.Command{
-		Name:        "migrate",
-		Alias:       "mg",
-		Description: "Migrate database to latest version (if new migrations available)",
-		Command:     migrateCmd{},
+		Name:  "migrate",
+		Alias: "mg",
+		//Help:    "Migrate database to latest version (if new migrations available)",
+		Command: migrateCmd{},
 	}
 }
 

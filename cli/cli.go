@@ -25,11 +25,6 @@ Enter help to list all available commands
 Enter help [command] to show description of given command
 `
 
-var (
-	VerboseFlag = Flag{"v", "Verbose output"}
-	YesFlag     = Flag{"y", "Force confirmation"}
-)
-
 type Runner interface {
 	Run(ctx context.Context) error
 }
@@ -51,10 +46,12 @@ func NewApp(name, env string) *App {
 }
 
 type Arg struct {
-	Name        string
-	Description string
-	Required    bool
+	name        string
+	description string
+	required    bool
 	Default     string
+
+	isFlag bool
 }
 
 type Flag struct {
@@ -66,7 +63,8 @@ type Flag struct {
 type Command struct {
 	Name        string
 	Alias       string
-	Description string
+	Help        []string
+	description string
 	Args        []Arg
 	Flags       []Flag
 	Command     Runner
@@ -86,36 +84,36 @@ func (a *App) Register(cs ...Command) error {
 			return fmt.Errorf("command [%s] already registered", c.Name)
 		}
 
-		c.argsCount = len(c.Args)
-		for _, arg := range c.Args {
-			if arg.Required {
-				c.requiredArgsCount++
-			}
-		}
-
-		// Create reflection cache
-		c.cacheReflection()
-
-		a.commands[c.Name] = c
-		if c.Alias != "" {
+		if c.Alias != "" && c.Alias != c.Name {
 			if _, ok := a.commands[c.Alias]; ok {
 				return fmt.Errorf("alias [%s] registered as command name", c.Alias)
 			}
 			a.aliases[c.Alias] = c.Name
 		}
 
-		err := validateCommand(c)
+		// Create reflection cache
+		c.cacheReflection()
+
+		err := c.prepareHelp()
+		if err != nil {
+			return fmt.Errorf("command [%s] %s", c.Name, err)
+		}
+
+		err = validateCommand(c)
 		if err != nil {
 			return errors.New(aur.Bold(aur.Red(c.Name)).String() + ": " + err.Error())
 		}
+
+		a.commands[c.Name] = c
 	}
 
 	return nil
 }
 
-// cacheReflection prepares reflection metadata once.
+// cacheReflection prepares reflection metadata once, and auto-fills Args from struct tags.
 func (c *Command) cacheReflection() {
 	c.structFields = make(map[string]int)
+	c.Args = nil // clear previous Args
 
 	val := reflect.ValueOf(c.Command)
 	if val.Kind() == reflect.Ptr {
@@ -125,13 +123,88 @@ func (c *Command) cacheReflection() {
 
 	for i := 0; i < c.reflectType.NumField(); i++ {
 		f := c.reflectType.Field(i)
+
+		// handle argument fields
 		if argTag := f.Tag.Get("arg"); argTag != "" {
-			c.structFields[argTag] = i
+			arg := Arg{
+				name: argTag,
+			}
+
+			// required if not a pointer
+			if f.Type.Kind() != reflect.Ptr {
+				arg.required = true
+			}
+
+			// default value from tag, if present
+			if def := f.Tag.Get("default"); def != "" {
+				arg.Default = def
+				arg.required = false // if default present, not required
+			}
+
+			c.Args = append(c.Args, arg)
+			c.structFields[arg.name] = i
 		}
+
+		// handle flag fields
 		if flagTag := f.Tag.Get("flag"); flagTag != "" {
 			c.structFields[flagTag] = i
 		}
 	}
+
+	// count required args
+	c.requiredArgsCount = 0
+	for _, a := range c.Args {
+		if a.required {
+			c.requiredArgsCount++
+		}
+	}
+
+	c.argsCount = len(c.Args)
+}
+
+func (c *Command) prepareHelp() error {
+	if len(c.Help) == 0 {
+		return errors.New("missing help text")
+	}
+
+	if len(c.Args) == 0 {
+		c.description = strings.Join(c.Help, "\n")
+		return nil
+	}
+
+	helpMap := make(map[string]string) // argName -> description
+	descParts := make([]string, 0)
+
+	for _, line := range c.Help {
+		line = strings.TrimSpace(line)
+
+		matched := false
+		for _, a := range c.Args {
+			prefix := a.name + ":"
+			if strings.HasPrefix(line, prefix) {
+				helpMap[a.name] = strings.TrimSpace(
+					strings.TrimPrefix(line, prefix),
+				)
+				matched = true
+				break
+			}
+		}
+
+		if !matched {
+			descParts = append(descParts, line)
+		}
+	}
+
+	for i, a := range c.Args {
+		help, ok := helpMap[a.name]
+		if !ok {
+			return errors.New("description missing for '" + a.name + "' argument")
+		}
+		c.Args[i].description = help
+	}
+
+	c.description = strings.Join(descParts, "\n")
+	return nil
 }
 
 // Run executes a command by name with provided raw arguments.
@@ -260,8 +333,8 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 
 	sigParts := make([]string, len(cmd.Args)+len(cmd.Flags))
 	for i, a := range cmd.Args {
-		n := a.Name
-		if !a.Required {
+		n := a.name
+		if !a.required {
 			n = "[" + n + "]"
 			n = aur.Gray(12, n).String()
 		} else {
@@ -275,17 +348,17 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	}
 
 	name = aur.Green(name).Bold().String()
-	println(name + ": " + cmd.Description)
+	println(name + ": " + cmd.description)
 	println(" Usage: " + aur.Green(name).Bold().String() + " " + strings.Join(sigParts, " "))
 
 	if verbose {
 		for _, a := range cmd.Args {
-			argStr := "   " + a.Name
-			if !a.Required {
+			argStr := "   " + a.name
+			if !a.required {
 				argStr += " (optional)"
 			}
 
-			argStr += " - " + aur.Italic(a.Description).String()
+			argStr += " - " + aur.Italic(a.description).String()
 			if a.Default != "" {
 				argStr += " (default: " + a.Default + ")"
 			}
@@ -371,17 +444,17 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 func bindPositionalArgs(cmdArgs []Arg, args []string, val reflect.Value, fieldMap map[string]int, filled map[string]bool) error {
 	curr := 0
 	for _, argDef := range cmdArgs {
-		if filled[argDef.Name] {
+		if filled[argDef.name] {
 			continue
 		}
 
 		if curr < len(args) {
-			if idx, ok := fieldMap[argDef.Name]; ok {
+			if idx, ok := fieldMap[argDef.name]; ok {
 				err := setFieldValue(val.Field(idx), args[curr])
 				if err != nil {
 					return err
 				}
-				filled[argDef.Name] = true
+				filled[argDef.name] = true
 			}
 			curr++
 		}
@@ -408,14 +481,14 @@ func bindFlags(val reflect.Value, fieldMap map[string]int, found map[string]bool
 
 func applyDefaults(args []Arg, val reflect.Value, fieldMap map[string]int, filled map[string]bool) error {
 	for _, arg := range args {
-		if filled[arg.Name] {
+		if filled[arg.name] {
 			continue
 		}
-		if arg.Required {
-			return fmt.Errorf("argument '%s' is required", arg.Name)
+		if arg.required {
+			return fmt.Errorf("argument '%s' is required", arg.name)
 		}
 		if arg.Default != "" {
-			if idx, ok := fieldMap[arg.Name]; ok {
+			if idx, ok := fieldMap[arg.name]; ok {
 				err := setFieldValue(val.Field(idx), arg.Default)
 				if err != nil {
 					return err
@@ -481,7 +554,7 @@ func extractArgs(raw []string, expectedArgs []Arg) (pos []string, flags map[stri
 		foundAsNamed := false
 
 		for _, argDef := range expectedArgs {
-			prefix := argDef.Name + "="
+			prefix := argDef.name + "="
 			if strings.HasPrefix(a, prefix) {
 				parts := strings.SplitN(a, "=", 2)
 				named[parts[0]] = parts[1]
@@ -506,8 +579,8 @@ func extractArgs(raw []string, expectedArgs []Arg) (pos []string, flags map[stri
 
 func validateCommand(c Command) error {
 	for _, a := range c.Args {
-		if a.Required && a.Default != "" {
-			return fmt.Errorf("arg '%s' cannot be required and have a default", a.Name)
+		if a.required && a.Default != "" {
+			return fmt.Errorf("arg '%s' cannot be required and have a default", a.name)
 		}
 	}
 	return nil
