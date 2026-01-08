@@ -23,8 +23,8 @@ func NewSampleCommandWithFlagsCmd() Command {
 
 type SampleCommandWithFlagsCmd struct {
 	Env     *string `arg:"env" default:"STAGING"`
-	Verbose bool    `flag:"v"`
-	Confirm bool    `flag:"y"`
+	Verbose bool    `flag:"-v"`
+	Confirm bool    `flag:"-y"`
 }
 
 func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
@@ -46,7 +46,7 @@ func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
 			wk := time.Now().Weekday().String()
 			if wk == "Friday" {
 				println(aur.Red("Don't do it on Friday!").String())
-			} else if time.Now().Hour() > 13 {
+			} else if time.Now().Hour() > 15 {
 				println(aur.Red("You should start earlier!").String())
 				println(aur.Red("Consider postponing until tomorrow").String()) // Fixed: Gerund "postponing"
 			} else {
@@ -54,14 +54,14 @@ func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
 			}
 		}
 
-		if !confirm("Are you sure?") {
+		if !Confirm("Are you sure?") {
 			println("Operation canceled.")
 			return nil
 		}
 	}
 
 	// Actual deployment logic
-	println("Deploying...")
+	println("🚀 Deploying...")
 
 	println("Successfully deployed to " + *c.Env)
 	return nil
