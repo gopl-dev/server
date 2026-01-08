@@ -168,10 +168,10 @@ iterateHelp:
 			continue
 		}
 
-		for name, arg := range argMap {
+		for name, ar := range argMap {
 			prefix := name + ":"
 			if strings.HasPrefix(line, prefix) {
-				currentArg = arg
+				currentArg = ar
 				currentArg.description = strings.TrimSpace(strings.TrimPrefix(line, prefix))
 				currentArg.help = make([]string, 0)
 				continue iterateHelp
@@ -224,8 +224,12 @@ func (a *App) Run(name string, args ...string) error {
 // PromptOrRun executes the CLI either from args or interactively.
 func (a *App) PromptOrRun(args []string) {
 	if len(args) > 1 {
-		tail := args[2:]
-		err := a.Run(os.Args[1], tail...)
+		tail, err := splitArgs(strings.Join(args[2:], " "))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		err = a.Run(os.Args[1], tail...)
 		if err != nil {
 			log.Println(err)
 		}
@@ -244,45 +248,122 @@ func (a *App) WaitForCommand() {
 	log.Printf(usageText, a.Name, a.Env, hostname)
 
 	scanner := bufio.NewScanner(os.Stdin)
-	var input string
 	for {
 		log.Print("> ")
-		scanner.Scan()
-		input = scanner.Text()
-		input = strings.TrimSpace(input)
+		if !scanner.Scan() {
+			return
+		}
 
-		args := strings.Split(input, " ")
-		if args[0] == "" {
+		input := strings.TrimSpace(scanner.Text())
+		if input == "" {
 			continue
 		}
 
-		cleanedArgs := make([]string, 0)
-		for _, arg := range args {
-			arg = strings.TrimSpace(arg)
-			if arg == "" {
-				continue
-			}
-
-			cleanedArgs = append(cleanedArgs, arg)
-		}
-
-		args = cleanedArgs
-		name := args[0]
-		if name == "" {
-			continue
-		}
-
-		if len(args) > 1 {
-			args = args[1:]
-		} else {
-			args = []string{}
-		}
-
-		err := a.Run(name, args...)
+		parts, err := splitArgs(input)
 		if err != nil {
+			log.Println(err)
+			continue
+		}
+		if len(parts) == 0 {
+			continue
+		}
+
+		name := parts[0]
+		var tail []string
+		if len(parts) > 1 {
+			tail = parts[1:]
+		} else {
+			tail = []string{}
+		}
+
+		if err := a.Run(name, tail...); err != nil {
 			log.Println(err)
 		}
 	}
+}
+
+// splitArgs splits a command line into args, respecting single and double quotes.
+func splitArgs(s string) ([]string, error) {
+	var out []string
+	var b strings.Builder
+
+	flush := func() {
+		if b.Len() == 0 {
+			return
+		}
+		out = append(out, b.String())
+		b.Reset()
+	}
+
+	// findClosingQuote searches for an unescaped closing quote starting from `start`.
+	// It treats backslash as an escape inside quotes.
+	findClosingQuote := func(quote byte, start int) int {
+		esc := false
+		for i := start; i < len(s); i++ {
+			ch := s[i]
+			if esc {
+				esc = false
+				continue
+			}
+			if ch == '\\' {
+				esc = true
+				continue
+			}
+			if ch == quote {
+				return i
+			}
+		}
+		return -1
+	}
+
+	for i := 0; i < len(s); i++ {
+		ch := s[i]
+
+		// Token separators outside quotes
+		if ch == ' ' || ch == '\t' {
+			flush()
+			continue
+		}
+
+		// If we see a quote, only treat it as a quote if it has a closing pair.
+		if ch == '"' || ch == '\'' {
+			closing := findClosingQuote(ch, i+1)
+			if closing == -1 {
+				// No closing quote -> treat quote as a literal character.
+				b.WriteByte(ch)
+				continue
+			}
+
+			// Consume quoted content with escapes.
+			for j := i + 1; j < closing; j++ {
+				c := s[j]
+				if c == '\\' && j+1 < closing {
+					// Accept escaping inside quotes.
+					j++
+					b.WriteByte(s[j])
+					continue
+				}
+				b.WriteByte(c)
+			}
+
+			i = closing
+			continue
+		}
+
+		// Regular character
+		b.WriteByte(ch)
+	}
+
+	flush()
+
+	// Drop empty tokens (e.g. multiple spaces)
+	clean := out[:0]
+	for _, t := range out {
+		if strings.TrimSpace(t) != "" {
+			clean = append(clean, t)
+		}
+	}
+	return clean, nil
 }
 
 // Confirm asks for y/n confirmation.
@@ -319,7 +400,7 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	for k, v := range named {
 		if idx, ok := c.structFields[k]; ok {
 			if err := setFieldValue(val.Field(idx), v); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("arg %s: %w", k, err)
 			}
 			filled[k] = true
 		}
@@ -328,7 +409,7 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	for name, present := range flags {
 		if idx, ok := c.structFields[name]; ok {
 			if err := setFieldValue(val.Field(idx), strconv.FormatBool(present)); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("arg %s: %w", name, err)
 			}
 			filled[name] = true
 		}
@@ -343,7 +424,7 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 		if curr < len(posArgs) {
 			idx := c.structFields[a.name]
 			if err := setFieldValue(val.Field(idx), posArgs[curr]); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("arg %s: %w", a.name, err)
 			}
 			filled[a.name] = true
 			curr++
@@ -358,7 +439,7 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 			if a.defaultVal != "" {
 				idx := c.structFields[a.name]
 				if err := setFieldValue(val.Field(idx), a.defaultVal); err != nil {
-					return nil, err
+					return nil, fmt.Errorf("arg %s: %w", a.name, err)
 				}
 			}
 		}
@@ -372,8 +453,8 @@ func extractArgs(raw []string, args []arg) (pos []string, flags map[string]bool,
 	flags = make(map[string]bool)
 	named = make(map[string]string)
 
-	paramNames := make(map[string]struct{}) // from "-mood="
-	flagNames := make(map[string]struct{})  // as "-y"
+	paramNames := make(map[string]struct{})
+	flagNames := make(map[string]struct{})
 
 	for _, a := range args {
 		if a.isParam {
@@ -385,7 +466,7 @@ func extractArgs(raw []string, args []arg) (pos []string, flags map[string]bool,
 	}
 
 	for _, tok := range raw {
-		// Named params: check "{argName}=" against known params
+		// Named params: "{argName}=" must match a registered param name.
 		if eq := strings.IndexByte(tok, '='); eq >= 0 {
 			key := tok[:eq]
 			if _, ok := paramNames[key]; ok {
@@ -394,13 +475,13 @@ func extractArgs(raw []string, args []arg) (pos []string, flags map[string]bool,
 			}
 		}
 
-		// Flags: token must match known flag name"
+		// Flags: token must match a registered flag name exactly.
 		if _, ok := flagNames[tok]; ok {
 			flags[tok] = true
 			continue
 		}
 
-		// 3) Positional as value
+		// Otherwise positional value
 		pos = append(pos, tok)
 	}
 
@@ -420,13 +501,13 @@ func setFieldValue(field reflect.Value, value string) error {
 		return nil
 	}
 
-	switch ft.Kind() {
+	switch k := ft.Kind(); k {
 	case reflect.String:
 		field.SetString(value)
 	case reflect.Int, reflect.Int64:
 		v, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return err
+			return fmt.Errorf("expecting %T, got '%s'", k, value)
 		}
 		field.SetInt(v)
 	case reflect.Bool:
@@ -492,13 +573,13 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	}
 
 	sigParts := make([]string, len(cmd.args))
-	for i, arg := range cmd.args {
-		n := arg.name
-		if !arg.required {
+	for i, ar := range cmd.args {
+		n := ar.name
+		if !ar.required {
 			n = "[" + n + "]"
 			n = aur.Gray(12, n).String()
 		} else {
-			if !arg.isFlag {
+			if !ar.isFlag {
 				n = aur.Blue(n).String()
 			}
 		}
@@ -511,19 +592,19 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	println(" Usage: " + aur.Green(name).Bold().String() + " " + strings.Join(sigParts, " "))
 
 	if verbose {
-		for _, arg := range cmd.args {
-			argStr := "   " + arg.name
-			if !arg.required {
+		for _, ar := range cmd.args {
+			argStr := "   " + ar.name
+			if !ar.required {
 				argStr += " (optional)"
 			}
 
-			argStr += " - " + aur.Italic(arg.description).String()
-			if arg.defaultVal != "" {
-				argStr += " (default: " + arg.defaultVal + ")"
+			argStr += " - " + aur.Italic(ar.description).String()
+			if ar.defaultVal != "" {
+				argStr += " (default: " + ar.defaultVal + ")"
 			}
 			println(argStr)
-			if len(arg.help) > 0 {
-				for _, h := range arg.help {
+			if len(ar.help) > 0 {
+				for _, h := range ar.help {
 					println("     " + aur.Italic(h).String())
 				}
 				println("")
