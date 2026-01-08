@@ -23,8 +23,8 @@ func NewSampleCommandWithFlagsCmd() Command {
 
 type SampleCommandWithFlagsCmd struct {
 	Env     *string `arg:"env" default:"STAGING"`
-	Verbose bool    `flag:"-v"`
-	Confirm bool    `flag:"-y"`
+	Verbose bool    `arg:"-v"`
+	Confirm bool    `arg:"-y"`
 }
 
 func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {

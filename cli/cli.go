@@ -16,8 +16,6 @@ import (
 	aur "github.com/logrusorgru/aurora"
 )
 
-const flagIdent = "-"
-
 const usageText = `
 %s CLI (Env: %s; Host: %s)
 
@@ -45,13 +43,14 @@ func NewApp(name, env string) *App {
 	}
 }
 
-type Arg struct {
+type arg struct {
 	name        string
 	description string
 	help        []string
 	required    bool
-	Default     string
+	defaultVal  string
 	isFlag      bool
+	isParam     bool
 }
 
 // Command represents a CLI command.
@@ -60,11 +59,11 @@ type Command struct {
 	Alias       string
 	Help        []string
 	description string
-	Args        []Arg
+	args        []arg
 	Command     Runner
 
 	reflectType  reflect.Type
-	structFields map[string]int // arg/flag name -> struct field index
+	structFields map[string]int // argName -> struct field index
 }
 
 // Register adds commands to the application.
@@ -97,10 +96,10 @@ func (a *App) Register(cs ...Command) error {
 	return nil
 }
 
-// cacheReflection builds reflection metadata and auto-fills Args from struct tags.
+// cacheReflection builds reflection metadata and auto-fills args from struct tags.
 func (c *Command) cacheReflection() {
 	c.structFields = make(map[string]int)
-	c.Args = nil
+	c.args = nil
 
 	val := reflect.ValueOf(c.Command)
 	if val.Kind() == reflect.Ptr {
@@ -111,34 +110,36 @@ func (c *Command) cacheReflection() {
 	for i := 0; i < c.reflectType.NumField(); i++ {
 		f := c.reflectType.Field(i)
 
-		if argTag := f.Tag.Get("arg"); argTag != "" {
-			arg := Arg{
-				name: argTag,
-			}
-
-			// Required if not a pointer
-			if f.Type.Kind() != reflect.Ptr {
-				arg.required = true
-			}
-
-			// Default value from tag
-			if def := f.Tag.Get("default"); def != "" {
-				arg.Default = def
-				arg.required = false
-			}
-
-			c.Args = append(c.Args, arg)
-			c.structFields[arg.name] = i
+		argTag := f.Tag.Get("arg")
+		if argTag == "" {
+			continue
 		}
 
-		if flagTag := f.Tag.Get("flag"); flagTag != "" {
-			arg := Arg{
-				name:   flagTag,
-				isFlag: true,
+		a := arg{name: argTag}
+
+		// 1) bool => flag
+		if f.Type.Kind() == reflect.Bool {
+			a.isFlag = true
+		} else {
+			// 2) non-flag + "-" prefix => named param
+			if strings.HasPrefix(a.name, "-") {
+				a.isParam = true
 			}
-			c.Args = append(c.Args, arg)
-			c.structFields[arg.name] = i
 		}
+
+		// 3) required = not pointer + not flag
+		if f.Type.Kind() != reflect.Ptr && !a.isFlag {
+			a.required = true
+		}
+
+		// default from tag
+		if def := f.Tag.Get("default"); def != "" {
+			a.defaultVal = def
+			a.required = false
+		}
+
+		c.args = append(c.args, a)
+		c.structFields[a.name] = i
 	}
 }
 
@@ -147,18 +148,18 @@ func (c *Command) prepareHelp() error {
 		return errors.New("missing help text")
 	}
 
-	if len(c.Args) == 0 {
+	if len(c.args) == 0 {
 		c.description = strings.Join(c.Help, "\n")
 		return nil
 	}
 
-	argMap := make(map[string]*Arg)
-	for i, a := range c.Args {
-		argMap[a.name] = &c.Args[i]
+	argMap := make(map[string]*arg)
+	for i, a := range c.args {
+		argMap[a.name] = &c.args[i]
 	}
 
 	var commandLines []string
-	var currentArg *Arg
+	var currentArg *arg
 
 iterateHelp:
 	for _, line := range c.Help {
@@ -185,7 +186,7 @@ iterateHelp:
 		currentArg.help = append(currentArg.help, line)
 	}
 
-	for _, a := range c.Args {
+	for _, a := range c.args {
 		if a.description == "" {
 			return fmt.Errorf("description missing for '%s'", a.name)
 		}
@@ -310,7 +311,7 @@ func Confirm(questionOpt ...string) (ok bool) {
 
 // prepareRunner binds arguments and returns a Runner instance.
 func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
-	posArgs, flags, named := extractArgs(rawArgs, c.Args)
+	posArgs, flags, named := extractArgs(rawArgs, c.args)
 
 	val := reflect.New(c.reflectType).Elem()
 	filled := make(map[string]bool)
@@ -334,8 +335,8 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	}
 
 	curr := 0
-	for _, a := range c.Args {
-		if a.isFlag || filled[a.name] {
+	for _, a := range c.args {
+		if a.isFlag || a.isParam || filled[a.name] {
 			continue
 		}
 
@@ -349,14 +350,14 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 		}
 	}
 
-	for _, a := range c.Args {
+	for _, a := range c.args {
 		if !filled[a.name] {
 			if a.required {
 				return nil, fmt.Errorf("argument '%s' is required", a.name)
 			}
-			if a.Default != "" {
+			if a.defaultVal != "" {
 				idx := c.structFields[a.name]
-				if err := setFieldValue(val.Field(idx), a.Default); err != nil {
+				if err := setFieldValue(val.Field(idx), a.defaultVal); err != nil {
 					return nil, err
 				}
 			}
@@ -367,24 +368,40 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 }
 
 // extractArgs splits raw args into positional, flags, and named parameters.
-func extractArgs(raw []string, args []Arg) (pos []string, flags map[string]bool, named map[string]string) {
+func extractArgs(raw []string, args []arg) (pos []string, flags map[string]bool, named map[string]string) {
 	flags = make(map[string]bool)
 	named = make(map[string]string)
 
-	for _, a := range raw {
-		if strings.HasPrefix(a, flagIdent) {
-			name := strings.TrimPrefix(a, flagIdent)
-			flags[name] = true
+	paramNames := make(map[string]struct{}) // from "-mood="
+	flagNames := make(map[string]struct{})  // as "-y"
+
+	for _, a := range args {
+		if a.isParam {
+			paramNames[a.name] = struct{}{}
+		}
+		if a.isFlag {
+			flagNames[a.name] = struct{}{}
+		}
+	}
+
+	for _, tok := range raw {
+		// Named params: check "{argName}=" against known params
+		if eq := strings.IndexByte(tok, '='); eq >= 0 {
+			key := tok[:eq]
+			if _, ok := paramNames[key]; ok {
+				named[key] = tok[eq+1:]
+				continue
+			}
+		}
+
+		// Flags: token must match known flag name"
+		if _, ok := flagNames[tok]; ok {
+			flags[tok] = true
 			continue
 		}
 
-		if strings.Contains(a, "=") {
-			parts := strings.SplitN(a, "=", 2)
-			named[parts[0]] = parts[1]
-			continue
-		}
-
-		pos = append(pos, a)
+		// 3) Positional as value
+		pos = append(pos, tok)
 	}
 
 	return
@@ -426,11 +443,16 @@ func setFieldValue(field reflect.Value, value string) error {
 }
 
 func validateCommand(c Command) error {
-	for _, a := range c.Args {
-		if a.required && a.Default != "" {
+	for _, a := range c.args {
+		if a.required && a.defaultVal != "" {
 			return fmt.Errorf("arg '%s' cannot be required and have a default", a.name)
 		}
+
+		if a.isFlag && !strings.HasPrefix(a.name, "-") {
+			return fmt.Errorf("flag '%s' must start with '-'", a.name)
+		}
 	}
+
 	return nil
 }
 
@@ -469,8 +491,8 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 		name = cmd.Name
 	}
 
-	sigParts := make([]string, len(cmd.Args))
-	for i, arg := range cmd.Args {
+	sigParts := make([]string, len(cmd.args))
+	for i, arg := range cmd.args {
 		n := arg.name
 		if !arg.required {
 			n = "[" + n + "]"
@@ -489,15 +511,15 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	println(" Usage: " + aur.Green(name).Bold().String() + " " + strings.Join(sigParts, " "))
 
 	if verbose {
-		for _, arg := range cmd.Args {
+		for _, arg := range cmd.args {
 			argStr := "   " + arg.name
 			if !arg.required {
 				argStr += " (optional)"
 			}
 
 			argStr += " - " + aur.Italic(arg.description).String()
-			if arg.Default != "" {
-				argStr += " (default: " + arg.Default + ")"
+			if arg.defaultVal != "" {
+				argStr += " (default: " + arg.defaultVal + ")"
 			}
 			println(argStr)
 			if len(arg.help) > 0 {
