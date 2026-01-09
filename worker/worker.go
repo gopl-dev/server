@@ -49,7 +49,7 @@ func Start(ctx context.Context) error {
 		return err
 	}
 
-	db, err := app.NewPool(ctx)
+	db, err := app.NewDB(ctx)
 	if err != nil {
 		return err
 	}

@@ -1,13 +1,14 @@
 package cli
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 
+	"github.com/chzyer/readline"
 	aur "github.com/logrusorgru/aurora"
 )
 
@@ -77,7 +78,8 @@ func (a *App) Run(name string, args ...string) error {
 	if !ok {
 		alias, ok := a.aliases[name]
 		if !ok {
-			log.Println("Command not found:", name)
+			fmt.Println(fmt.Sprintf("%s", aur.Red("Command not found: "+name).String()+
+				"\nType 'help' to get list of all available commands"))
 			a.printSimilarCommands(name)
 			return nil
 		}
@@ -116,39 +118,56 @@ func (a *App) WaitForCommand() {
 	if hostname == "" {
 		hostname = aur.Red("unknown").String()
 	}
-	log.Printf(usageText, a.Name, a.Env, hostname)
+	fmt.Printf(usageText, a.Name, a.Env, hostname)
 
-	scanner := bufio.NewScanner(os.Stdin)
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:            "> ",
+		Stdin:             os.Stdin,
+		Stdout:            os.Stdout,
+		Stderr:            os.Stderr,
+		HistorySearchFold: true,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rl.Close()
+
 	for {
-		log.Print("> ")
-		if !scanner.Scan() {
+		line, err := rl.Readline()
+		if err != nil {
+			if !errors.Is(err, readline.ErrInterrupt) {
+				fmt.Println("[ERROR] read input: " + err.Error())
+			}
 			return
 		}
 
-		input := strings.TrimSpace(scanner.Text())
-		if input == "" {
+		line = strings.TrimSpace(line)
+		if line == "" {
 			continue
 		}
 
-		parts, err := splitArgs(input)
+		err = readline.AddHistory(line)
 		if err != nil {
-			log.Println(err)
+			fmt.Println("[ERROR] saving history: " + err.Error())
+		}
+
+		args, err := splitArgs(line)
+		if err != nil {
+			fmt.Println(err)
 			continue
 		}
-		if len(parts) == 0 {
+		if len(args) == 0 {
 			continue
 		}
 
-		name := parts[0]
-		var tail []string
-		if len(parts) > 1 {
-			tail = parts[1:]
-		} else {
-			tail = []string{}
+		name := args[0]
+		tail := []string{}
+		if len(args) > 1 {
+			tail = args[1:]
 		}
 
 		if err := a.Run(name, tail...); err != nil {
-			log.Println(aur.Red(err).String())
+			fmt.Println(err)
 		}
 	}
 }

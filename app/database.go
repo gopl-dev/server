@@ -32,8 +32,8 @@ type DB struct {
 	*pgxpool.Pool
 }
 
-// NewPool creates a new PostgreSQL connection pool.
-func NewPool(ctx context.Context) (db *DB, err error) {
+// NewDB creates a new PostgreSQL connection pool.
+func NewDB(ctx context.Context) (db *DB, err error) {
 	c := Config().DB
 
 	conf, err := pgxpool.ParseConfig(

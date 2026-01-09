@@ -39,7 +39,7 @@ func NewApp() *App {
 		panic("[TEST] New app: " + err.Error())
 	}
 
-	db, err := app.NewPool(ctx)
+	db, err := app.NewDB(ctx)
 	if err != nil {
 		panic("[TEST] New app: " + err.Error())
 	}

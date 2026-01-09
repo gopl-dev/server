@@ -39,7 +39,7 @@ func main() {
 		syscall.SIGQUIT, // kill -SIGQUIT
 	)
 
-	db, err := app.NewPool(ctx)
+	db, err := app.NewDB(ctx)
 	if err != nil {
 		log.Println(err)
 		return

@@ -23,9 +23,9 @@ func NewSampleCommandWithFlagsCmd() Command {
 }
 
 type SampleCommandWithFlagsCmd struct {
-	Env     *string `arg:"env" default:"STAGING"`
-	Verbose bool    `arg:"-v"`
-	Confirm bool    `arg:"-y"`
+	Env     string `arg:"env" default:"STAGING"`
+	Verbose bool   `arg:"-v"`
+	Confirm bool   `arg:"-y"`
 }
 
 // Run executes the command with the given context.
@@ -65,6 +65,6 @@ func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
 	// Actual deployment logic
 	println("🚀 Deploying...")
 
-	println("Successfully deployed to " + *c.Env)
+	println("Successfully deployed to " + c.Env)
 	return nil
 }
