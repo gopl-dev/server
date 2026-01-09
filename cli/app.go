@@ -19,18 +19,20 @@ Enter help [command] to show description of given command
 `
 
 type App struct {
-	Name     string
-	Env      string
-	commands map[string]Command
-	aliases  map[string]string
+	Name      string
+	Env       string
+	commands  map[string]Command
+	aliases   map[string]string
+	helpCache map[string]string
 }
 
 func NewApp(name, env string) *App {
 	return &App{
-		Name:     name,
-		Env:      env,
-		commands: make(map[string]Command),
-		aliases:  make(map[string]string),
+		Name:      name,
+		Env:       env,
+		commands:  make(map[string]Command),
+		aliases:   make(map[string]string),
+		helpCache: make(map[string]string),
 	}
 }
 
@@ -179,6 +181,13 @@ func (a *App) showHelp(args []string) error {
 
 // printCommandHelp prints a single command's help.
 func (a *App) printCommandHelp(cmd Command, verbose bool) {
+	if cachedHelp, ok := a.helpCache[cmd.Name]; ok && verbose {
+		fmt.Println(cachedHelp)
+		return
+	}
+
+	var help strings.Builder
+
 	// Build usage signature
 	var posArgs []string
 	var flags []string
@@ -199,26 +208,28 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 		}
 	}
 
+	desc := cmd.description
 	if !verbose {
-		cmd.description = strings.SplitN(cmd.description, "\n", 2)[0]
+		desc = strings.SplitN(desc, "\n", 2)[0]
 	}
 
-	// Print command header
+	// Build command header
 	name := cmd.Name
 	if cmd.Alias != "" {
 		name = cmd.Name + " (" + cmd.Alias + ")"
 	}
-	fmt.Printf("%s: %s\n", aur.Green(name).Bold(), cmd.description)
+	help.WriteString(fmt.Sprintf("%s: %s\n", aur.Green(name).Bold(), desc))
 
-	// Print usage line
+	// Build usage line
 	usageParts := append(posArgs, params...)
 	usageParts = append(usageParts, flags...)
 	if cmd.Alias != "" {
 		name = cmd.Alias
 	}
-	fmt.Printf("Usage: %s %s\n\n", aur.Green(name).Bold(), strings.Join(usageParts, " "))
+	help.WriteString(fmt.Sprintf("Usage: %s %s\n\n", aur.Green(name).Bold(), strings.Join(usageParts, " ")))
 
 	if !verbose {
+		fmt.Print(help.String())
 		return
 	}
 
@@ -234,26 +245,30 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 		}
 	}
 
-	// Print Arguments section
+	// Build Arguments section
 	if len(args) > 0 {
-		fmt.Printf("%s\n", aur.Bold(aur.Cyan("Arguments:")))
+		help.WriteString(fmt.Sprintf("%s\n", aur.Bold(aur.Cyan("Arguments:"))))
 		for _, ar := range args {
-			a.printArgumentDetail(ar, "  ")
+			a.buildArgumentDetail(&help, ar, "  ")
 		}
-		fmt.Println()
+		help.WriteString("\n")
 	}
 
-	// Print Flags section
+	// Build Flags section
 	if len(flagArgs) > 0 {
-		fmt.Printf("%s\n", aur.Bold(aur.Cyan("Flags:")))
+		help.WriteString(fmt.Sprintf("%s\n", aur.Bold(aur.Cyan("Flags:"))))
 		for _, ar := range flagArgs {
-			a.printArgumentDetail(ar, "  ")
+			a.buildArgumentDetail(&help, ar, "  ")
 		}
 	}
+
+	result := help.String()
+	a.helpCache[cmd.Name] = result
+	fmt.Print(result)
 }
 
-// printArgumentDetail prints detailed information about a single argument
-func (a *App) printArgumentDetail(ar arg, indent string) {
+// buildArgumentDetail builds detailed information about a single argument into the output buffer
+func (a *App) buildArgumentDetail(help *strings.Builder, ar arg, indent string) {
 	if ar.isFlag {
 		// Flags: single line with description
 		argLine := indent + ar.name + " " + aur.Italic(ar.description).String()
@@ -265,7 +280,7 @@ func (a *App) printArgumentDetail(ar arg, indent string) {
 			}
 		}
 
-		fmt.Printf("%s\n", argLine)
+		help.WriteString(argLine + "\n")
 		return
 	}
 
@@ -282,18 +297,18 @@ func (a *App) printArgumentDetail(ar arg, indent string) {
 		argLine += " " + aur.Yellow("(optional)").String()
 	}
 
-	// Print argument line and description
-	fmt.Printf("%s\n", argLine)
-	fmt.Printf("%s%s\n", indent+"  ", aur.Italic(ar.description))
+	// Build argument line and description
+	help.WriteString(argLine + "\n")
+	help.WriteString(fmt.Sprintf("%s%s\n", indent+"  ", aur.Italic(ar.description)))
 
-	// Print additional help lines
+	// Build additional help lines
 	if len(ar.help) > 0 {
 		for _, h := range ar.help {
-			fmt.Printf("%s• %s\n", indent+"    ", aur.Gray(14, h))
+			help.WriteString(fmt.Sprintf("%s• %s\n", indent+"    ", aur.Gray(14, h)))
 		}
 	}
 
-	fmt.Println("")
+	help.WriteString("\n")
 }
 
 // printSimilarCommands prints commands with similar names.
