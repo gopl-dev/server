@@ -8,6 +8,7 @@ import (
 	aur "github.com/logrusorgru/aurora"
 )
 
+// NewSampleCommandWithFlagsCmd creates a new command instance demonstrating flag usage.
 func NewSampleCommandWithFlagsCmd() Command {
 	return Command{
 		Name: "how_to_flags",
@@ -27,6 +28,7 @@ type SampleCommandWithFlagsCmd struct {
 	Confirm bool    `arg:"-y"`
 }
 
+// Run executes the command with the given context.
 func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
 	now := time.Now()
 	defer func() {

@@ -6,6 +6,7 @@ import (
 	"github.com/gopl-dev/server/cli"
 )
 
+// TestCommandsRun tests the command execution functionality.
 func TestCommandsRun(t *testing.T) {
 	app := cli.NewApp("TestApp", "TEST")
 

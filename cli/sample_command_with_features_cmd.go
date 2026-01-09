@@ -79,6 +79,7 @@ type SampleCommandWithFeaturesCmd struct {
 	Confirm bool `arg:"-y"`
 }
 
+// Run executes the command with the given context.
 func (cmd *SampleCommandWithFeaturesCmd) Run(ctx context.Context) (err error) {
 	fmt.Println("Hello")
 	fmt.Println("We about to begin 🚀")

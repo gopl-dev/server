@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// NewSampleCommandWithNamedParamsCmd creates a new command instance demonstrating named parameters.
 func NewSampleCommandWithNamedParamsCmd() Command {
 	return Command{
 		Name: "how_to_params",
@@ -26,6 +27,7 @@ type SampleCommandWithNamedParamsCmd struct {
 	Age  *int    `arg:"-a"`
 }
 
+// Run executes the command with the given context.
 func (cmd *SampleCommandWithNamedParamsCmd) Run(ctx context.Context) (err error) {
 	mood := "Happy"
 	if cmd.Mood != nil {

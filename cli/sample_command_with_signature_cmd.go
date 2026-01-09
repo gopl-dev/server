@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// NewSampleCommandWithSignatureCmd creates a new command instance for demonstrating signature-based commands.
 func NewSampleCommandWithSignatureCmd() Command {
 	return Command{
 		Name: "how_to_cli",
@@ -26,6 +27,7 @@ type SampleCommandWithSignatureCmd struct {
 	Age  *int    `arg:"age"`
 }
 
+// Run executes the command with the given context.
 func (cmd *SampleCommandWithSignatureCmd) Run(ctx context.Context) (err error) {
 
 	var a int

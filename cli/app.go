@@ -26,6 +26,7 @@ type App struct {
 	helpCache map[string]string
 }
 
+// NewApp creates a new CLI application instance.
 func NewApp(name, env string) *App {
 	return &App{
 		Name:      name,
@@ -66,7 +67,7 @@ func (a *App) Register(cs ...Command) error {
 	return nil
 }
 
-// Run executes a command.
+// Run executes a command by name with given arguments.
 func (a *App) Run(name string, args ...string) error {
 	if name == "help" || name == "?" {
 		return a.showHelp(args)
@@ -91,7 +92,7 @@ func (a *App) Run(name string, args ...string) error {
 	return runner.Run(context.Background())
 }
 
-// PromptOrRun executes the CLI either from args or interactively.
+// PromptOrRun executes the CLI either from provided args or starts interactive mode.
 func (a *App) PromptOrRun(args []string) {
 	if len(args) > 1 {
 		tail, err := splitArgs(strings.Join(args[2:], " "))
@@ -109,7 +110,7 @@ func (a *App) PromptOrRun(args []string) {
 	a.WaitForCommand()
 }
 
-// WaitForCommand starts the interactive CLI loop.
+// WaitForCommand starts the interactive CLI loop waiting for user input.
 func (a *App) WaitForCommand() {
 	hostname, _ := os.Hostname()
 	if hostname == "" {
@@ -152,7 +153,7 @@ func (a *App) WaitForCommand() {
 	}
 }
 
-// showHelp prints help for all commands or a specific one.
+// showHelp handles help command, showing all commands or specific command help.
 func (a *App) showHelp(args []string) error {
 	if len(args) > 0 {
 		name := args[0]
@@ -179,7 +180,7 @@ func (a *App) showHelp(args []string) error {
 	return nil
 }
 
-// printCommandHelp prints a single command's help.
+// printCommandHelp prints the help text for a single command.
 func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	if cachedHelp, ok := a.helpCache[cmd.Name]; ok && verbose {
 		fmt.Println(cachedHelp)
@@ -267,7 +268,7 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	fmt.Print(result)
 }
 
-// buildArgumentDetail builds detailed information about a single argument into the output buffer
+// buildArgumentDetail builds detailed help for a single argument into the output buffer.
 func (a *App) buildArgumentDetail(help *strings.Builder, ar arg, indent string) {
 	if ar.isFlag {
 		// Flags: single line with description
@@ -311,7 +312,7 @@ func (a *App) buildArgumentDetail(help *strings.Builder, ar arg, indent string) 
 	help.WriteString("\n")
 }
 
-// printSimilarCommands prints commands with similar names.
+// printSimilarCommands prints commands with names similar to the given name.
 func (a *App) printSimilarCommands(name string) {
 	similar := make([]string, 0)
 	for _, c := range a.commands {

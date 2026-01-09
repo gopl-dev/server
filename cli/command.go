@@ -81,6 +81,7 @@ func (c *Command) cacheReflection() {
 	}
 }
 
+// prepareHelp processes the help text and extracts argument descriptions.
 func (c *Command) prepareHelp() error {
 	if len(c.Help) == 0 {
 		return errors.New("missing help text")
@@ -134,7 +135,7 @@ iterateHelp:
 	return nil
 }
 
-// prepareRunner binds arguments and returns a Runner instance.
+// prepareRunner binds arguments to the command struct and returns a Runner instance.
 func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	posArgs, flags, named := extractArgs(rawArgs, c.args)
 
@@ -232,7 +233,7 @@ func extractArgs(raw []string, args []arg) (pos []string, flags map[string]bool,
 	return
 }
 
-// setFieldValue assigns string value to a reflected field.
+// setFieldValue assigns a string value to a reflected field, handling type conversion.
 func setFieldValue(field reflect.Value, value string) error {
 	ft := field.Type()
 
@@ -278,6 +279,7 @@ func setFieldValue(field reflect.Value, value string) error {
 	return nil
 }
 
+// validateCommand checks the command configuration for errors.
 func validateCommand(c Command) error {
 	for _, a := range c.args {
 		if a.required && a.defaultVal != "" {
