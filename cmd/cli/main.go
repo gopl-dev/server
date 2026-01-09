@@ -7,6 +7,7 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/cli"
+	"github.com/gopl-dev/server/cmd/cli/commands"
 )
 
 func main() {
@@ -15,11 +16,12 @@ func main() {
 	cliApp := cli.NewApp(conf.App.Name, conf.App.Env)
 
 	err := cliApp.Register(
-		//commands.NewMigrateCmd(),
+		commands.NewMigrateCmd(),
 
 		cli.NewSampleCommandWithSignatureCmd(),
 		cli.NewSampleCommandWithNamedParamsCmd(),
 		cli.NewSampleCommandWithFlagsCmd(),
+		cli.NewSampleCommandWithFeaturesCmd(),
 	)
 	if err != nil {
 		log.Fatal(err)

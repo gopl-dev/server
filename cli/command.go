@@ -16,6 +16,7 @@ type arg struct {
 	defaultVal  string
 	isFlag      bool
 	isParam     bool
+	typ         string
 }
 
 // Command represents a CLI command.
@@ -55,11 +56,13 @@ func (c *Command) cacheReflection() {
 		// 1) bool => flag
 		if f.Type.Kind() == reflect.Bool {
 			a.isFlag = true
+			a.typ = "bool"
 		} else {
 			// 2) non-flag + "-" prefix => named param
 			if strings.HasPrefix(a.name, "-") {
 				a.isParam = true
 			}
+			a.typ = strings.TrimPrefix(f.Type.String(), "*")
 		}
 
 		// 3) required = not pointer + not flag
@@ -175,7 +178,7 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	for _, a := range c.args {
 		if !filled[a.name] {
 			if a.required {
-				return nil, fmt.Errorf("argument '%s' is required", a.name)
+				return nil, fmt.Errorf("argument '%s' is required. use '? [command]' for help", a.name)
 			}
 			if a.defaultVal != "" {
 				idx := c.structFields[a.name]
@@ -257,6 +260,17 @@ func setFieldValue(field reflect.Value, value string) error {
 			return err
 		}
 		field.SetBool(b)
+	case reflect.Slice:
+		if ft.Elem().Kind() == reflect.String {
+			parts := strings.Split(value, ",")
+			slice := reflect.MakeSlice(ft, len(parts), len(parts))
+			for i, part := range parts {
+				slice.Index(i).SetString(strings.TrimSpace(part))
+			}
+			field.Set(slice)
+		} else {
+			return fmt.Errorf("unsupported slice type %s", ft.Elem().Kind())
+		}
 	default:
 		return fmt.Errorf("unsupported type %s", ft.Kind())
 	}

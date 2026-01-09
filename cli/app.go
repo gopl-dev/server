@@ -145,7 +145,7 @@ func (a *App) WaitForCommand() {
 		}
 
 		if err := a.Run(name, tail...); err != nil {
-			log.Println(err)
+			log.Println(aur.Red(err).String())
 		}
 	}
 }
@@ -172,7 +172,6 @@ func (a *App) showHelp(args []string) error {
 
 	for _, c := range a.commands {
 		a.printCommandHelp(c, false)
-		println("")
 	}
 
 	return nil
@@ -180,50 +179,121 @@ func (a *App) showHelp(args []string) error {
 
 // printCommandHelp prints a single command's help.
 func (a *App) printCommandHelp(cmd Command, verbose bool) {
-	name := cmd.Alias
-	if name == "" {
-		name = cmd.Name
-	}
+	// Build usage signature
+	var posArgs []string
+	var flags []string
+	var params []string
 
-	sigParts := make([]string, len(cmd.args))
-	for i, ar := range cmd.args {
+	for _, ar := range cmd.args {
 		n := ar.name
 		if !ar.required {
 			n = "[" + n + "]"
-			n = aur.Gray(12, n).String()
+		}
+
+		if ar.isFlag {
+			flags = append(flags, n)
+		} else if ar.isParam {
+			params = append(params, n)
 		} else {
-			if !ar.isFlag {
-				n = aur.Blue(n).String()
+			posArgs = append(posArgs, n)
+		}
+	}
+
+	if !verbose {
+		cmd.description = strings.SplitN(cmd.description, "\n", 2)[0]
+	}
+
+	// Print command header
+	name := cmd.Name
+	if cmd.Alias != "" {
+		name = cmd.Name + " (" + cmd.Alias + ")"
+	}
+	fmt.Printf("%s: %s\n", aur.Green(name).Bold(), cmd.description)
+
+	// Print usage line
+	usageParts := append(posArgs, params...)
+	usageParts = append(usageParts, flags...)
+	if cmd.Alias != "" {
+		name = cmd.Alias
+	}
+	fmt.Printf("Usage: %s %s\n\n", aur.Green(name).Bold(), strings.Join(usageParts, " "))
+
+	if !verbose {
+		return
+	}
+
+	// Group arguments by type
+	var args []arg
+	var flagArgs []arg
+
+	for _, ar := range cmd.args {
+		if ar.isFlag {
+			flagArgs = append(flagArgs, ar)
+		} else {
+			args = append(args, ar)
+		}
+	}
+
+	// Print Arguments section
+	if len(args) > 0 {
+		fmt.Printf("%s\n", aur.Bold(aur.Cyan("Arguments:")))
+		for _, ar := range args {
+			a.printArgumentDetail(ar, "  ")
+		}
+		fmt.Println()
+	}
+
+	// Print Flags section
+	if len(flagArgs) > 0 {
+		fmt.Printf("%s\n", aur.Bold(aur.Cyan("Flags:")))
+		for _, ar := range flagArgs {
+			a.printArgumentDetail(ar, "  ")
+		}
+	}
+}
+
+// printArgumentDetail prints detailed information about a single argument
+func (a *App) printArgumentDetail(ar arg, indent string) {
+	if ar.isFlag {
+		// Flags: single line with description
+		argLine := indent + ar.name + " " + aur.Italic(ar.description).String()
+
+		// Add additional help lines if present
+		if len(ar.help) > 0 {
+			for _, h := range ar.help {
+				argLine += "\n" + indent + "  " + aur.Gray(14, "• "+h).String()
 			}
 		}
 
-		sigParts[i] = n
+		fmt.Printf("%s\n", argLine)
+		return
 	}
 
-	name = aur.Green(name).Bold().String()
-	println(name + ": " + cmd.description)
-	println(" Usage: " + aur.Green(name).Bold().String() + " " + strings.Join(sigParts, " "))
+	// Arguments: multi-line with type info
+	argLine := indent + aur.Blue(ar.name).String() + " " + aur.Gray(12, fmt.Sprintf("(type: %s)", ar.typ)).String()
 
-	if verbose {
-		for _, ar := range cmd.args {
-			argStr := "   " + ar.name
-			if !ar.required {
-				argStr += " (optional)"
-			}
+	// Add default value if present
+	if ar.defaultVal != "" {
+		argLine += " " + aur.Gray(12, fmt.Sprintf("[default: %s]", ar.defaultVal)).String()
+	}
 
-			argStr += " - " + aur.Italic(ar.description).String()
-			if ar.defaultVal != "" {
-				argStr += " (default: " + ar.defaultVal + ")"
-			}
-			println(argStr)
-			if len(ar.help) > 0 {
-				for _, h := range ar.help {
-					println("     " + aur.Italic(h).String())
-				}
-				println("")
-			}
+	// Add optional marker
+	if !ar.required {
+		argLine += " " + aur.Yellow("(optional)").String()
+	}
+
+	// Print argument line and description
+	fmt.Printf("%s\n", argLine)
+	fmt.Printf("%s%s\n", indent+"  ", aur.Italic(ar.description))
+
+	// Print additional help lines
+	if len(ar.help) > 0 {
+		for _, h := range ar.help {
+			fmt.Printf("%s• %s\n", indent+"    ", aur.Gray(14, h))
 		}
 	}
+
+	fmt.Println("")
 }
 
 // printSimilarCommands prints commands with similar names.
@@ -231,7 +301,13 @@ func (a *App) printSimilarCommands(name string) {
 	similar := make([]string, 0)
 	for _, c := range a.commands {
 		if strings.Contains(c.Name, name) || strings.Contains(c.Alias, name) {
-			similar = append(similar, "- "+c.Alias)
+			cName := c.Name
+			if c.Alias != "" {
+				cName += " (" + c.Alias + ")"
+			}
+			desc := strings.SplitN(c.description, "\n", 2)[0]
+
+			similar = append(similar, "- "+fmt.Sprintf("%s: %s", aur.Blue(cName), desc))
 		}
 	}
 
