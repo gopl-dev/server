@@ -8,6 +8,8 @@ import (
 
 // TestCommandsRun tests the command execution functionality.
 func TestCommandsRun(t *testing.T) {
+	t.Parallel()
+
 	app := cli.NewApp("TestApp", "TEST")
 
 	err := app.Register(

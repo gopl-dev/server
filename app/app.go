@@ -23,8 +23,8 @@ const (
 	// StagingEnv is a production-like environment used for final testing before a full public release.
 	StagingEnv = "staging"
 
-	// ReleaseEnv refers to the final production environment serving live users.
-	ReleaseEnv = "release"
+	// ProductionEnv refers to the final production environment serving live users.
+	ProductionEnv = "production"
 )
 
 var (

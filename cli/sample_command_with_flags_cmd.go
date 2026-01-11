@@ -1,3 +1,4 @@
+//nolint:mnd
 package cli
 
 import (
@@ -18,18 +19,19 @@ func NewSampleCommandWithFlagsCmd() Command {
 			"-v: Verbose output",
 			"-y: Force confirmation",
 		},
-		Command: &SampleCommandWithFlagsCmd{},
+		Handler: &SampleCommandWithFlagsCmd{},
 	}
 }
 
+// SampleCommandWithFlagsCmd ...
 type SampleCommandWithFlagsCmd struct {
 	Env     string `arg:"env" default:"STAGING"`
 	Verbose bool   `arg:"-v"`
 	Confirm bool   `arg:"-y"`
 }
 
-// Run executes the command with the given context.
-func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
+// Handle ...
+func (c *SampleCommandWithFlagsCmd) Handle(_ context.Context) (err error) {
 	now := time.Now()
 	defer func() {
 		if c.Verbose {
@@ -46,13 +48,18 @@ func (c *SampleCommandWithFlagsCmd) Run(ctx context.Context) (err error) {
 
 		if c.Verbose {
 			wk := time.Now().Weekday().String()
-			if wk == "Friday" {
-				println(aur.Red("Don't do it on Friday!").String())
-			} else if time.Now().Hour() > 15 {
-				println(aur.Red("You should start earlier!").String())
-				println(aur.Red("Consider postponing until tomorrow").String()) // Fixed: Gerund "postponing"
-			} else {
-				fmt.Println(aur.Green(fmt.Sprintf("%s %s is a great time for deployment", wk, time.Now().Format("15:04"))).String())
+			switch {
+			case wk == "Friday":
+				Err("Don't do it on Friday!")
+
+			case now.Hour() > 15:
+				Err("You should start earlier!")
+				Info("Consider postponing until tomorrow")
+
+			default:
+				fmt.Println(aur.Green(
+					fmt.Sprintf("%s %s is a great time for deployment", wk, now.Format("15:04")),
+				).String())
 			}
 		}
 

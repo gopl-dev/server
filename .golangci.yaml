@@ -28,6 +28,7 @@ linters:
     - wsl_v5
     - godoclint
     - nlreturn
+    - lll
 
   exclusions:
     # Mode of the generated files analysis.

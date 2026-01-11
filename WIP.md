@@ -24,7 +24,9 @@ for simplicity, I keep todo list and progress here for now
 - [ ] RELEASE
 ---
 
-Next features:
+NEXT:
+- [ ] Rework workers so it is possible to display a list of workers, enable/disable them, see run status, last run time, logs, etc.
+- [ ] Create a CLI command to set up a new dev environment
 - [ ] Jobs
 - [ ] Events
 - [ ] Comments

@@ -1,3 +1,4 @@
+//nolint:mnd
 package cli
 
 import (
@@ -17,18 +18,19 @@ func NewSampleCommandWithNamedParamsCmd() Command {
 			"-m: How you're feeling (We do care)",
 			"-a: How many laps you've done around the sun",
 		},
-		Command: &SampleCommandWithNamedParamsCmd{},
+		Handler: &SampleCommandWithNamedParamsCmd{},
 	}
 }
 
+// SampleCommandWithNamedParamsCmd ...
 type SampleCommandWithNamedParamsCmd struct {
 	Name string  `arg:"name"`
 	Mood *string `arg:"-m"`
 	Age  *int    `arg:"-a"`
 }
 
-// Run executes the command with the given context.
-func (cmd *SampleCommandWithNamedParamsCmd) Run(ctx context.Context) (err error) {
+// Handle ...
+func (cmd *SampleCommandWithNamedParamsCmd) Handle(_ context.Context) (err error) {
 	mood := "Happy"
 	if cmd.Mood != nil {
 		mood = *cmd.Mood
@@ -38,7 +40,7 @@ func (cmd *SampleCommandWithNamedParamsCmd) Run(ctx context.Context) (err error)
 	if cmd.Age != nil {
 		a = *cmd.Age
 	} else {
-		a = rand.Intn(121)
+		a = rand.Intn(121) //nolint:gosec
 	}
 
 	var trait string

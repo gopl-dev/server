@@ -87,9 +87,9 @@ func (c ConfigT) IsTestEnv() bool {
 	return c.App.Env == TestEnv
 }
 
-// IsReleaseEnv ...
-func (c ConfigT) IsReleaseEnv() bool {
-	return c.App.Env == ReleaseEnv
+// IsProductionEnv ...
+func (c ConfigT) IsProductionEnv() bool {
+	return c.App.Env == ProductionEnv
 }
 
 // TracingDisabled ...
@@ -120,4 +120,18 @@ func Config() *ConfigT {
 	})
 
 	return conf
+}
+
+// ConfigFromFile returns config from given YAML file.
+func ConfigFromFile(filename string) (conf *ConfigT, err error) {
+	data, err := os.ReadFile(filename) //nolint:gosec
+	if err != nil {
+		err = fmt.Errorf("read '%s': %w", filename, err)
+		return
+	}
+
+	conf = new(ConfigT)
+	err = yaml.Unmarshal(data, conf)
+
+	return
 }

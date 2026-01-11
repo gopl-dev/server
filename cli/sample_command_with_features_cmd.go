@@ -26,7 +26,7 @@ func NewSampleCommandWithFeaturesCmd() Command {
 		// - A line starting with "{argName}:" begins the description for that argument.
 		// - Subsequent lines continue the same argument’s description until another "{argName}:" line appears.
 		Help: []string{
-			// Command description (until the first argument entry).
+			// Handler description (until the first argument entry).
 			"Publishes a project to a specified environment.",
 			"It allows control over the deployed version and the target environment.",
 			"Optional flags enable dry runs, detailed logging, and safety overrides during deployment.",
@@ -51,10 +51,11 @@ func NewSampleCommandWithFeaturesCmd() Command {
 			"-v: Enables detailed logging during the deployment process.",
 			"-y: Requires explicit confirmation before executing the deployment.",
 		},
-		Command: &SampleCommandWithFeaturesCmd{},
+		Handler: &SampleCommandWithFeaturesCmd{},
 	}
 }
 
+// SampleCommandWithFeaturesCmd ...
 type SampleCommandWithFeaturesCmd struct {
 	// Positional arguments: must appear in the order they are declared here.
 	// Their values are assigned to the corresponding fields.
@@ -79,8 +80,8 @@ type SampleCommandWithFeaturesCmd struct {
 	Confirm bool `arg:"-y"`
 }
 
-// Run executes the command with the given context.
-func (cmd *SampleCommandWithFeaturesCmd) Run(ctx context.Context) (err error) {
+// Handle ...
+func (cmd *SampleCommandWithFeaturesCmd) Handle(_ context.Context) (err error) {
 	fmt.Println("Hello")
 	fmt.Println("We about to begin 🚀")
 

@@ -12,6 +12,12 @@ import (
 	aur "github.com/logrusorgru/aurora"
 )
 
+var (
+	errCommandNameTaken = errors.New("command name already registered")
+	errAliasIsCommand   = errors.New("alias is already used as command name")
+	errAliasNameTaken   = errors.New("alias already taken")
+)
+
 const usageText = `
 %s CLI (Env: %s; Host: %s)
 
@@ -19,6 +25,7 @@ Enter help to list all available commands
 Enter help [command] to show description of given command
 `
 
+// App ...
 type App struct {
 	Name      string
 	Env       string
@@ -42,23 +49,29 @@ func NewApp(name, env string) *App {
 func (a *App) Register(cs ...Command) error {
 	for _, c := range cs {
 		if _, ok := a.commands[c.Name]; ok {
-			return fmt.Errorf("command [%s] already registered", c.Name)
+			return fmt.Errorf("%s: %w", c.Name, errCommandNameTaken)
 		}
 
 		if c.Alias != "" && c.Alias != c.Name {
 			if _, ok := a.commands[c.Alias]; ok {
-				return fmt.Errorf("alias [%s] registered as command name", c.Alias)
+				return fmt.Errorf("%w (alias '%s' of '%s')", errAliasIsCommand, c.Alias, c.Name)
+			}
+			if conflictName, ok := a.aliases[c.Alias]; ok {
+				conflicted := a.commands[conflictName]
+				return fmt.Errorf("%w (alias '%s' of '%s' is taken by '%s')", errAliasNameTaken, c.Alias, c.Name, conflicted.Name)
 			}
 			a.aliases[c.Alias] = c.Name
 		}
 
 		c.cacheReflection()
 
-		if err := c.prepareHelp(); err != nil {
+		err := c.prepareHelp()
+		if err != nil {
 			return fmt.Errorf("command [%s]: %w", c.Name, err)
 		}
 
-		if err := validateCommand(c); err != nil {
+		err = validateCommand(c)
+		if err != nil {
 			return err
 		}
 
@@ -78,31 +91,26 @@ func (a *App) Run(name string, args ...string) error {
 	if !ok {
 		alias, ok := a.aliases[name]
 		if !ok {
-			fmt.Println(fmt.Sprintf("%s", aur.Red("Command not found: "+name).String()+
-				"\nType 'help' to get list of all available commands"))
+			Err("Handler '%s' not found", name)
 			a.printSimilarCommands(name)
 			return nil
 		}
 		cmd = a.commands[alias]
 	}
 
-	runner, err := cmd.prepareRunner(args)
+	handler, err := cmd.prepareHandler(args)
 	if err != nil {
 		return err
 	}
 
-	return runner.Run(context.Background())
+	return handler.Handle(context.Background())
 }
 
 // PromptOrRun executes the CLI either from provided args or starts interactive mode.
 func (a *App) PromptOrRun(args []string) {
 	if len(args) > 1 {
-		tail, err := splitArgs(strings.Join(args[2:], " "))
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		err = a.Run(os.Args[1], tail...)
+		tail := splitArgs(strings.Join(args[2:], " "))
+		err := a.Run(os.Args[1], tail...)
 		if err != nil {
 			log.Println(err)
 		}
@@ -130,7 +138,9 @@ func (a *App) WaitForCommand() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rl.Close()
+	defer func() {
+		_ = rl.Close()
+	}()
 
 	for {
 		line, err := rl.Readline()
@@ -151,11 +161,7 @@ func (a *App) WaitForCommand() {
 			fmt.Println("[ERROR] saving history: " + err.Error())
 		}
 
-		args, err := splitArgs(line)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+		args := splitArgs(line)
 		if len(args) == 0 {
 			continue
 		}
@@ -166,8 +172,9 @@ func (a *App) WaitForCommand() {
 			tail = args[1:]
 		}
 
-		if err := a.Run(name, tail...); err != nil {
-			fmt.Println(err)
+		err = a.Run(name, tail...)
+		if err != nil {
+			fmt.Println(aur.Red(err).String())
 		}
 	}
 }
@@ -183,7 +190,7 @@ func (a *App) showHelp(args []string) error {
 		}
 
 		if !ok {
-			fmt.Printf("Command '%s' not found\n", name)
+			fmt.Printf("Handler '%s' not found\n", name)
 			a.printSimilarCommands(name)
 			return nil
 		}
@@ -219,18 +226,21 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 			n = "[" + n + "]"
 		}
 
-		if ar.isFlag {
+		switch {
+		case ar.isFlag:
 			flags = append(flags, n)
-		} else if ar.isParam {
+
+		case ar.isParam:
 			params = append(params, n)
-		} else {
+
+		default:
 			posArgs = append(posArgs, n)
 		}
 	}
 
 	desc := cmd.description
 	if !verbose {
-		desc = strings.SplitN(desc, "\n", 2)[0]
+		desc = strings.SplitN(desc, "\n", 2)[0] //nolint:mnd
 	}
 
 	// Build command header
@@ -241,7 +251,9 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	help.WriteString(fmt.Sprintf("%s: %s\n", aur.Green(name).Bold(), desc))
 
 	// Build usage line
-	usageParts := append(posArgs, params...)
+	usageParts := make([]string, 0)
+	usageParts = append(usageParts, posArgs...)
+	usageParts = append(usageParts, params...)
 	usageParts = append(usageParts, flags...)
 	if cmd.Alias != "" {
 		name = cmd.Alias
@@ -290,26 +302,36 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 // buildArgumentDetail builds detailed help for a single argument into the output buffer.
 func (a *App) buildArgumentDetail(help *strings.Builder, ar arg, indent string) {
 	if ar.isFlag {
+		var b strings.Builder
+
 		// Flags: single line with description
-		argLine := indent + ar.name + " " + aur.Italic(ar.description).String()
+		b.WriteString(indent)
+		b.WriteString(ar.name)
+		b.WriteString(" ")
+		b.WriteString(aur.Italic(ar.description).String())
 
 		// Add additional help lines if present
 		if len(ar.help) > 0 {
 			for _, h := range ar.help {
-				argLine += "\n" + indent + "  " + aur.Gray(14, "• "+h).String()
+				b.WriteString("\n")
+				b.WriteString(indent)
+				b.WriteString("  ")
+				b.WriteString(Gray("• " + h))
 			}
 		}
+
+		argLine := b.String()
 
 		help.WriteString(argLine + "\n")
 		return
 	}
 
 	// Arguments: multi-line with type info
-	argLine := indent + aur.Blue(ar.name).String() + " " + aur.Gray(12, fmt.Sprintf("(type: %s)", ar.typ)).String()
+	argLine := indent + aur.Blue(ar.name).String() + " " + Gray("(type: %s)", ar.typ)
 
 	// Add default value if present
 	if ar.defaultVal != "" {
-		argLine += " " + aur.Gray(12, fmt.Sprintf("[default: %s]", ar.defaultVal)).String()
+		argLine += " " + Gray("[default: %s]", ar.defaultVal)
 	}
 
 	// Add optional marker
@@ -319,12 +341,12 @@ func (a *App) buildArgumentDetail(help *strings.Builder, ar arg, indent string) 
 
 	// Build argument line and description
 	help.WriteString(argLine + "\n")
-	help.WriteString(fmt.Sprintf("%s%s\n", indent+"  ", aur.Italic(ar.description)))
+	_, _ = fmt.Fprintf(help, "%s%s\n", indent+"  ", aur.Italic(ar.description))
 
 	// Build additional help lines
 	if len(ar.help) > 0 {
 		for _, h := range ar.help {
-			help.WriteString(fmt.Sprintf("%s• %s\n", indent+"    ", aur.Gray(14, h)))
+			_, _ = fmt.Fprintf(help, "%s• %s\n", indent+"    ", Gray(h))
 		}
 	}
 
@@ -340,7 +362,7 @@ func (a *App) printSimilarCommands(name string) {
 			if c.Alias != "" {
 				cName += " (" + c.Alias + ")"
 			}
-			desc := strings.SplitN(c.description, "\n", 2)[0]
+			desc := strings.SplitN(c.description, "\n", 2)[0] //nolint:mnd
 
 			similar = append(similar, "- "+fmt.Sprintf("%s: %s", aur.Blue(cName), desc))
 		}

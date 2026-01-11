@@ -8,6 +8,7 @@ import (
 	"github.com/gopl-dev/server/cli"
 )
 
+// NewMigrateCmd ...
 func NewMigrateCmd() cli.Command {
 	return cli.Command{
 		Name:  "migrate",
@@ -15,13 +16,13 @@ func NewMigrateCmd() cli.Command {
 		Help: []string{
 			"Migrate database to latest version (if new migrations available)",
 		},
-		Command: migrateCmd{},
+		Handler: migrateCmd{},
 	}
 }
 
 type migrateCmd struct{}
 
-func (migrateCmd) Run(ctx context.Context) (err error) {
+func (migrateCmd) Handle(ctx context.Context) (err error) {
 	db, err := app.NewDB(ctx)
 	if err != nil {
 		log.Println(err)

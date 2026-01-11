@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+var (
+	errFlagMustStartWithDash  = errors.New("must start with '-'")
+	errRequiredOrDefault      = errors.New("cannot be required and have a default")
+	errUnsupportedSliceType   = errors.New("unsupported slice type")
+	errUnsupportedType        = errors.New("unsupported type")
+	errInvalidInt             = errors.New("expecting integer")
+	errArgRequired            = errors.New("argument is required")
+	errArgDescriptionRequired = errors.New("argument description missing")
+	errHelpTextRequired       = errors.New("help text is missing")
+)
+
 type arg struct {
 	name        string
 	description string
@@ -26,7 +37,7 @@ type Command struct {
 	Help        []string
 	description string
 	args        []arg
-	Command     Runner
+	Handler     Handler
 
 	reflectType  reflect.Type
 	structFields map[string]int // argName -> struct field index
@@ -37,13 +48,13 @@ func (c *Command) cacheReflection() {
 	c.structFields = make(map[string]int)
 	c.args = nil
 
-	val := reflect.ValueOf(c.Command)
+	val := reflect.ValueOf(c.Handler)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 	c.reflectType = val.Type()
 
-	for i := 0; i < c.reflectType.NumField(); i++ {
+	for i := range c.reflectType.NumField() {
 		f := c.reflectType.Field(i)
 
 		argTag := f.Tag.Get("arg")
@@ -84,7 +95,7 @@ func (c *Command) cacheReflection() {
 // prepareHelp processes the help text and extracts argument descriptions.
 func (c *Command) prepareHelp() error {
 	if len(c.Help) == 0 {
-		return errors.New("missing help text")
+		return fmt.Errorf("command %s: %w", c.Name, errHelpTextRequired)
 	}
 
 	if len(c.args) == 0 {
@@ -127,7 +138,7 @@ iterateHelp:
 
 	for _, a := range c.args {
 		if a.description == "" {
-			return fmt.Errorf("description missing for '%s'", a.name)
+			return fmt.Errorf("%s: %w", a.name, errArgDescriptionRequired)
 		}
 	}
 
@@ -135,16 +146,25 @@ iterateHelp:
 	return nil
 }
 
-// prepareRunner binds arguments to the command struct and returns a Runner instance.
-func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
+// prepareHandler binds arguments to the command struct and returns a Handler instance.
+func (c *Command) prepareHandler(rawArgs []string) (Handler, error) {
 	posArgs, flags, named := extractArgs(rawArgs, c.args)
 
+	proto := reflect.ValueOf(c.Handler)
+	if proto.Kind() == reflect.Ptr {
+		proto = proto.Elem()
+	}
+
 	val := reflect.New(c.reflectType).Elem()
+
+	val.Set(proto)
+
 	filled := make(map[string]bool)
 
 	for k, v := range named {
 		if idx, ok := c.structFields[k]; ok {
-			if err := setFieldValue(val.Field(idx), v); err != nil {
+			err := setFieldValue(val.Field(idx), v)
+			if err != nil {
 				return nil, fmt.Errorf("arg %s: %w", k, err)
 			}
 			filled[k] = true
@@ -153,7 +173,8 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 
 	for name, present := range flags {
 		if idx, ok := c.structFields[name]; ok {
-			if err := setFieldValue(val.Field(idx), strconv.FormatBool(present)); err != nil {
+			err := setFieldValue(val.Field(idx), strconv.FormatBool(present))
+			if err != nil {
 				return nil, fmt.Errorf("arg %s: %w", name, err)
 			}
 			filled[name] = true
@@ -165,10 +186,10 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 		if a.isFlag || a.isParam || filled[a.name] {
 			continue
 		}
-
 		if curr < len(posArgs) {
 			idx := c.structFields[a.name]
-			if err := setFieldValue(val.Field(idx), posArgs[curr]); err != nil {
+			err := setFieldValue(val.Field(idx), posArgs[curr])
+			if err != nil {
 				return nil, fmt.Errorf("arg %s: %w", a.name, err)
 			}
 			filled[a.name] = true
@@ -179,18 +200,19 @@ func (c Command) prepareRunner(rawArgs []string) (Runner, error) {
 	for _, a := range c.args {
 		if !filled[a.name] {
 			if a.required {
-				return nil, fmt.Errorf("argument '%s' is required. use '? [command]' for help", a.name)
+				return nil, fmt.Errorf("%s: %w. Use '? [command]' for help", a.name, errArgRequired)
 			}
 			if a.defaultVal != "" {
 				idx := c.structFields[a.name]
-				if err := setFieldValue(val.Field(idx), a.defaultVal); err != nil {
+				err := setFieldValue(val.Field(idx), a.defaultVal)
+				if err != nil {
 					return nil, fmt.Errorf("arg %s: %w", a.name, err)
 				}
 			}
 		}
 	}
 
-	return val.Addr().Interface().(Runner), nil
+	return val.Addr().Interface().(Handler), nil //nolint:forcetypeassert // c.Handler is Handler by design
 }
 
 // extractArgs splits raw args into positional, flags, and named parameters.
@@ -239,7 +261,8 @@ func setFieldValue(field reflect.Value, value string) error {
 
 	if ft.Kind() == reflect.Ptr {
 		v := reflect.New(ft.Elem())
-		if err := setFieldValue(v.Elem(), value); err != nil {
+		err := setFieldValue(v.Elem(), value)
+		if err != nil {
 			return err
 		}
 		field.Set(v)
@@ -252,7 +275,7 @@ func setFieldValue(field reflect.Value, value string) error {
 	case reflect.Int, reflect.Int64:
 		v, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return fmt.Errorf("expecting integer, got '%s'", value)
+			return fmt.Errorf("%w, got '%s'", errInvalidInt, value)
 		}
 		field.SetInt(v)
 	case reflect.Bool:
@@ -270,10 +293,10 @@ func setFieldValue(field reflect.Value, value string) error {
 			}
 			field.Set(slice)
 		} else {
-			return fmt.Errorf("unsupported slice type %s", ft.Elem().Kind())
+			return fmt.Errorf("%w: %s", errUnsupportedSliceType, ft.Elem().Kind())
 		}
 	default:
-		return fmt.Errorf("unsupported type %s", ft.Kind())
+		return fmt.Errorf("%w: %s", errUnsupportedType, ft.Kind())
 	}
 
 	return nil
@@ -283,11 +306,11 @@ func setFieldValue(field reflect.Value, value string) error {
 func validateCommand(c Command) error {
 	for _, a := range c.args {
 		if a.required && a.defaultVal != "" {
-			return fmt.Errorf("arg '%s' cannot be required and have a default", a.name)
+			return fmt.Errorf("flag %s: %w", a.name, errRequiredOrDefault)
 		}
 
 		if a.isFlag && !strings.HasPrefix(a.name, "-") {
-			return fmt.Errorf("flag '%s' must start with '-'", a.name)
+			return fmt.Errorf("flag %s: %w", a.name, errFlagMustStartWithDash)
 		}
 	}
 

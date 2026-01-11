@@ -29,8 +29,10 @@ var jobs = []Job{
 type Job interface {
 	// Name returns the unique name of the job.
 	Name() string
+
 	// Schedule defines when the job should run.
 	Schedule() gocron.JobDefinition
+
 	// Do executes the job's task.
 	Do(ctx context.Context, s *service.Service, db *app.DB) error
 }

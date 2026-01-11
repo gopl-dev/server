@@ -12,20 +12,31 @@ import (
 
 func main() {
 	conf := app.Config()
-
 	cliApp := cli.NewApp(conf.App.Name, conf.App.Env)
 
 	err := cliApp.Register(
 		commands.NewMigrateCmd(),
 
-		cli.NewSampleCommandWithSignatureCmd(),
-		cli.NewSampleCommandWithNamedParamsCmd(),
-		cli.NewSampleCommandWithFlagsCmd(),
-		cli.NewSampleCommandWithFeaturesCmd(),
+		// cli.NewSampleCommandWithSignatureCmd(),
+		// cli.NewSampleCommandWithNamedParamsCmd(),
+		// cli.NewSampleCommandWithFlagsCmd(),
+		// cli.NewSampleCommandWithFeaturesCmd(),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// commands that should not be run in production
+	if !conf.IsProductionEnv() {
+		err = cliApp.Register(
+			commands.NewResetDevEnvCmd(),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	cliApp.PromptOrRun(os.Args)
+
+	commands.CloseDB()
 }

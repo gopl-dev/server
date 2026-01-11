@@ -1,3 +1,4 @@
+//nolint:mnd
 package cli
 
 import (
@@ -17,24 +18,24 @@ func NewSampleCommandWithSignatureCmd() Command {
 			"mood: How you're feeling (as if we care)",
 			"age: How many laps you've done around the sun",
 		},
-		Command: &SampleCommandWithSignatureCmd{},
+		Handler: &SampleCommandWithSignatureCmd{},
 	}
 }
 
+// SampleCommandWithSignatureCmd ...
 type SampleCommandWithSignatureCmd struct {
 	Name string  `arg:"name"`
 	Mood *string `arg:"mood" default:"Happy"`
 	Age  *int    `arg:"age"`
 }
 
-// Run executes the command with the given context.
-func (cmd *SampleCommandWithSignatureCmd) Run(ctx context.Context) (err error) {
-
+// Handle ...
+func (cmd *SampleCommandWithSignatureCmd) Handle(_ context.Context) (err error) {
 	var a int
 	if cmd.Age != nil {
 		a = *cmd.Age
 	} else {
-		a = rand.Intn(121)
+		a = rand.Intn(121) //nolint:gosec
 	}
 
 	var trait string
