@@ -22,14 +22,14 @@ func NewSampleCommandWithNamedParamsCmd() Command {
 	}
 }
 
-// SampleCommandWithNamedParamsCmd ...
+// SampleCommandWithNamedParamsCmd demonstrates a command with named parameters.
 type SampleCommandWithNamedParamsCmd struct {
 	Name string  `arg:"name"`
 	Mood *string `arg:"-m"`
 	Age  *int    `arg:"-a"`
 }
 
-// Handle ...
+// Handle executes the command logic.
 func (cmd *SampleCommandWithNamedParamsCmd) Handle(_ context.Context) (err error) {
 	mood := "Happy"
 	if cmd.Mood != nil {

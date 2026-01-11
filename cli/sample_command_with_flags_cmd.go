@@ -23,14 +23,14 @@ func NewSampleCommandWithFlagsCmd() Command {
 	}
 }
 
-// SampleCommandWithFlagsCmd ...
+// SampleCommandWithFlagsCmd demonstrates a command with boolean flags.
 type SampleCommandWithFlagsCmd struct {
 	Env     string `arg:"env" default:"STAGING"`
 	Verbose bool   `arg:"-v"`
 	Confirm bool   `arg:"-y"`
 }
 
-// Handle ...
+// Handle executes the command logic.
 func (c *SampleCommandWithFlagsCmd) Handle(_ context.Context) (err error) {
 	now := time.Now()
 	defer func() {

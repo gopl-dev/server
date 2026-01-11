@@ -12,12 +12,13 @@ import (
 	aur "github.com/logrusorgru/aurora"
 )
 
-// Handler ...
+// Handler defines the interface for command execution logic.
 type Handler interface {
 	Handle(ctx context.Context) error
 }
 
-// Confirm asks for y/n confirmation.
+// Confirm asks for y/n confirmation from the user via stdin.
+// It returns true if the user enters 'y' or 'yes' (case-insensitive).
 func Confirm(questionOpt ...string) (ok bool) {
 	question := "Confirm?"
 	yes := "y"
@@ -39,7 +40,7 @@ func Confirm(questionOpt ...string) (ok bool) {
 	return false
 }
 
-// splitArgs splits a command line into args, respecting single and double quotes.
+// splitArgs splits a command line string into arguments, respecting single and double quotes.
 func splitArgs(s string) []string {
 	var out []string
 	var b strings.Builder
@@ -161,7 +162,7 @@ func OK(s string, args ...any) {
 
 const grayLevel = 12 // from 0 to 24.
 
-// Gray return string in gray color.
+// Gray returns a string formatted in gray color.
 func Gray(s string, args ...any) string {
 	if len(args) > 0 {
 		s = fmt.Sprintf(s, args...)

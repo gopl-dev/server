@@ -30,7 +30,7 @@ type arg struct {
 	typ         string
 }
 
-// Command represents a CLI command.
+// Command represents a CLI command configuration.
 type Command struct {
 	Name        string
 	Alias       string
@@ -43,7 +43,8 @@ type Command struct {
 	structFields map[string]int // argName -> struct field index
 }
 
-// cacheReflection builds reflection metadata and auto-fills args from struct tags.
+// cacheReflection builds reflection metadata from struct tags.
+// It inspects the c.Handler struct to identify arguments, flags, and parameters.
 func (c *Command) cacheReflection() {
 	c.structFields = make(map[string]int)
 	c.args = nil
@@ -146,7 +147,7 @@ iterateHelp:
 	return nil
 }
 
-// prepareHandler binds arguments to the command struct and returns a Handler instance.
+// prepareHandler binds arguments to the c.Handler struct and returns a Handler instance.
 func (c *Command) prepareHandler(rawArgs []string) (Handler, error) {
 	posArgs, flags, named := extractArgs(rawArgs, c.args)
 
@@ -212,7 +213,7 @@ func (c *Command) prepareHandler(rawArgs []string) (Handler, error) {
 		}
 	}
 
-	return val.Addr().Interface().(Handler), nil //nolint:forcetypeassert // c.Handler is Handler by design
+	return val.Addr().Interface().(Handler), nil //nolint:forcetypeassert // c.Handler is a Handler by design
 }
 
 // extractArgs splits raw args into positional, flags, and named parameters.

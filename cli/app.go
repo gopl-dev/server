@@ -25,7 +25,7 @@ Enter help to list all available commands
 Enter help [command] to show description of given command
 `
 
-// App ...
+// App represents the main CLI application structure.
 type App struct {
 	Name      string
 	Env       string
@@ -34,7 +34,7 @@ type App struct {
 	helpCache map[string]string
 }
 
-// NewApp creates a new CLI application instance.
+// NewApp creates a new CLI application instance with the given name and environment.
 func NewApp(name, env string) *App {
 	return &App{
 		Name:      name,
@@ -45,7 +45,7 @@ func NewApp(name, env string) *App {
 	}
 }
 
-// Register adds commands to the application.
+// Register adds one or more commands to the application.
 func (a *App) Register(cs ...Command) error {
 	for _, c := range cs {
 		if _, ok := a.commands[c.Name]; ok {
@@ -81,7 +81,7 @@ func (a *App) Register(cs ...Command) error {
 	return nil
 }
 
-// Run executes a command by name with given arguments.
+// Run executes a command by name with the given arguments.
 func (a *App) Run(name string, args ...string) error {
 	if name == "help" || name == "?" {
 		return a.showHelp(args)
@@ -106,11 +106,15 @@ func (a *App) Run(name string, args ...string) error {
 	return handler.Handle(context.Background())
 }
 
-// PromptOrRun executes the CLI either from provided args or starts interactive mode.
+// PromptOrRun executes the CLI either from provided command-line arguments or starts interactive mode.
+// If arguments are provided (beyond the binary name), it runs the specified command.
+// Otherwise, it enters the interactive mode.
 func (a *App) PromptOrRun(args []string) {
 	if len(args) > 1 {
-		tail := splitArgs(strings.Join(args[2:], " "))
-		err := a.Run(os.Args[1], tail...)
+		// args[0] is the program name.
+		// args[1] is the command name.
+		// args[2:] are the arguments for the command.
+		err := a.Run(args[1], args[2:]...)
 		if err != nil {
 			log.Println(err)
 		}
@@ -179,7 +183,7 @@ func (a *App) WaitForCommand() {
 	}
 }
 
-// showHelp handles help command, showing all commands or specific command help.
+// showHelp handles the help command, showing all commands or help for a specific command.
 func (a *App) showHelp(args []string) error {
 	if len(args) > 0 {
 		name := args[0]
@@ -207,6 +211,7 @@ func (a *App) showHelp(args []string) error {
 }
 
 // printCommandHelp prints the help text for a single command.
+// If verbose is true, it prints detailed argument descriptions.
 func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	if cachedHelp, ok := a.helpCache[cmd.Name]; ok && verbose {
 		fmt.Println(cachedHelp)

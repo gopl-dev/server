@@ -168,7 +168,7 @@ func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
 		return err
 	}
 
-	cli.OK("New user %s <%s> with passowrd %s created", *cmd.Username, *cmd.Email, *cmd.Password)
+	cli.OK("New user %s <%s> with password %s created", *cmd.Username, *cmd.Email, *cmd.Password)
 	cli.Info("    USER ID: %s", u.ID)
 
 	err = writeAdminsToConfig(u.ID.String())

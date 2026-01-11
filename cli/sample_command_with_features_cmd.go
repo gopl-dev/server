@@ -55,7 +55,7 @@ func NewSampleCommandWithFeaturesCmd() Command {
 	}
 }
 
-// SampleCommandWithFeaturesCmd ...
+// SampleCommandWithFeaturesCmd demonstrates a complex command with various argument types.
 type SampleCommandWithFeaturesCmd struct {
 	// Positional arguments: must appear in the order they are declared here.
 	// Their values are assigned to the corresponding fields.
@@ -80,7 +80,7 @@ type SampleCommandWithFeaturesCmd struct {
 	Confirm bool `arg:"-y"`
 }
 
-// Handle ...
+// Handle executes the command logic.
 func (cmd *SampleCommandWithFeaturesCmd) Handle(_ context.Context) (err error) {
 	fmt.Println("Hello")
 	fmt.Println("We about to begin 🚀")

@@ -22,14 +22,14 @@ func NewSampleCommandWithSignatureCmd() Command {
 	}
 }
 
-// SampleCommandWithSignatureCmd ...
+// SampleCommandWithSignatureCmd demonstrates a command with positional arguments.
 type SampleCommandWithSignatureCmd struct {
 	Name string  `arg:"name"`
 	Mood *string `arg:"mood" default:"Happy"`
 	Age  *int    `arg:"age"`
 }
 
-// Handle ...
+// Handle executes the command logic
 func (cmd *SampleCommandWithSignatureCmd) Handle(_ context.Context) (err error) {
 	var a int
 	if cmd.Age != nil {

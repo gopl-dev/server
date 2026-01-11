@@ -3,7 +3,6 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/cli"
@@ -36,7 +35,7 @@ func main() {
 		}
 	}
 
-	cliApp.PromptOrRun(os.Args)
+	cliApp.PromptOrRun()
 
 	commands.CloseDB()
 }
