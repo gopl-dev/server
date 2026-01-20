@@ -26,7 +26,7 @@ type UploadFileArgs struct {
 	OwnerID ds.ID
 	Purpose ds.FilePurpose
 	Temp    bool
-	Reader  io.Reader
+	File    file.ReadSeekCloser
 }
 
 // UploadFile ...
@@ -34,8 +34,15 @@ func (s *Service) UploadFile(ctx context.Context, args UploadFileArgs) (*ds.File
 	ctx, span := s.tracer.Start(ctx, "UploadFile")
 	defer span.End()
 
+	if file.IsResizableImage(args.Name) {
+		err := file.CheckImageDimensions(args.File)
+		if err != nil {
+			return nil, app.ErrUnprocessable(err.Error())
+		}
+	}
+
 	buf := make([]byte, 512) //nolint:mnd
-	n, err := io.ReadFull(args.Reader, buf)
+	n, err := io.ReadFull(args.File, buf)
 	if errors.Is(err, io.ErrUnexpectedEOF) {
 		err = nil
 	}
@@ -44,7 +51,7 @@ func (s *Service) UploadFile(ctx context.Context, args UploadFileArgs) (*ds.File
 	}
 
 	mimeType := http.DetectContentType(buf[:n])
-	reader := io.MultiReader(bytes.NewReader(buf[:n]), args.Reader)
+	reader := io.MultiReader(bytes.NewReader(buf[:n]), args.File)
 
 	tmp, err := os.CreateTemp("", ".temp-upload-*")
 	if err != nil {
@@ -124,14 +131,14 @@ func (s *Service) UploadFile(ctx context.Context, args UploadFileArgs) (*ds.File
 			return nil, err
 		}
 
-		if file.CanDoPreview(f.Path) {
+		if file.IsResizableImage(f.Path) {
 			f.PreviewPath, err = file.CreatePreview(ctx, f.Path)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		err = s.db.CreateFile(ctx, f)
+		err = s.CreateFile(ctx, f)
 		return f, err
 	}
 
@@ -143,8 +150,21 @@ func (s *Service) UploadFile(ctx context.Context, args UploadFileArgs) (*ds.File
 	f.Purpose = existing.Purpose
 	f.Size = existing.Size
 
-	err = s.db.CreateFile(ctx, f)
+	err = s.CreateFile(ctx, f)
 	return f, err
+}
+
+// CreateFile ...
+func (s *Service) CreateFile(ctx context.Context, f *ds.File) error {
+	ctx, span := s.tracer.Start(ctx, "CreateFile")
+	defer span.End()
+
+	err := ValidateCreate(f)
+	if err != nil {
+		return err
+	}
+
+	return s.db.CreateFile(ctx, f)
 }
 
 // handleFilePurpose validates the given file purpose and applies
@@ -160,8 +180,8 @@ func handleFilePurpose(f *ds.File) error {
 		if f.Type != file.TypeImage {
 			return app.InputError{"purpose": "invalid file type for book cover"}
 		}
-		if !file.CanDoPreview(f.Path) {
-			return app.InputError{"purpose": fmt.Sprintf("invalid file type for book cover, only %v types is accepted", file.PreviewValidExt)}
+		if !file.IsResizableImage(f.Path) {
+			return app.InputError{"purpose": fmt.Sprintf("invalid file type for book cover, only %v types is accepted", file.ResizableImages)}
 		}
 		subDir = "book-covers"
 	default:

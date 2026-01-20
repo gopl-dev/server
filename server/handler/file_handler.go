@@ -68,7 +68,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		OwnerID: user.ID,
 		Purpose: ds.FilePurpose(r.FormValue("purpose")),
 		Temp:    true,
-		Reader:  src,
+		File:    src,
 	})
 	if err != nil {
 		Abort(w, err)

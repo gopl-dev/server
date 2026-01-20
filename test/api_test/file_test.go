@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/file"
 	"github.com/gopl-dev/server/server/handler"
@@ -41,6 +42,16 @@ func TestUploadFile(t *testing.T) {
 		"type":      file.TypeImage,
 		"mime_type": resp.MimeType,
 		"temp":      true,
+	})
+
+	t.Run("upload file with large dimensions", func(t *testing.T) {
+		conf := app.Config().Files
+		imageBytes, err = random.ImagePNG(conf.ImageMaxWidth+1, conf.ImageMaxHeight+1)
+		test.CheckErr(t, err)
+
+		req.file = bytes.NewReader(imageBytes)
+		req.assertStatus = http.StatusUnprocessableEntity
+		resp = UploadFile(t, req)
 	})
 }
 

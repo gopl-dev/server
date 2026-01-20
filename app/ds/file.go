@@ -7,14 +7,6 @@ import (
 	"github.com/gopl-dev/server/file"
 )
 
-// FilePurpose describes the semantic purpose of a file in the system.
-type FilePurpose string
-
-const (
-	// FilePurposeBookCover marks a file used as a book cover image.
-	FilePurposeBookCover FilePurpose = "book-cover"
-)
-
 const (
 	// DeleteTempFilesAfterDays defines how long temporary files
 	// are kept before being eligible for deletion.
@@ -46,10 +38,27 @@ type File struct {
 // CreateRules returns the validation schema for creating a new File.
 func (f *File) CreateRules() z.Shape {
 	return z.Shape{
-		"OriginalName": z.String().Trim().Required(),
-		"MimeType":     z.String().Trim().Required(),
-		"Size":         z.Int().GT(0).Required(),
-		"Path":         z.String().Trim().Required(),
+		"ID":      IDInputRules,
+		"OwnerID": IDInputRules,
+		"Size":    z.Int64().GT(0).Required(),
+		"Name":    z.String().Trim().Required(),
+		"Path":    z.String().Trim().Required(),
+		"Hash":    z.String().Trim().Required(),
+		"Type": z.CustomFunc(func(val *file.Type, _ z.Ctx) bool {
+			if val == nil || !val.Valid() {
+				return false
+			}
+
+			return true
+		}, z.Message("Invalid type")),
+		"MimeType": z.String().Trim().Required(),
+		"Purpose": z.CustomFunc(func(val *FilePurpose, _ z.Ctx) bool {
+			if val == nil || !val.Valid() {
+				return false
+			}
+
+			return true
+		}, z.Message("Invalid purpose")),
 	}
 }
 

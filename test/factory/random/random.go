@@ -152,13 +152,30 @@ func ImagePNG(whOpt ...int) ([]byte, error) {
 
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
+	// random base colors (start → end)
+	r1, g1, b1 := Int(0, 255), Int(0, 255), Int(0, 255) //nolint:mnd
+	r2, g2, b2 := Int(0, 255), Int(0, 255), Int(0, 255) //nolint:mnd
+
+	wf := float64(w - 1)
+	hf := float64(h - 1)
+
 	for y := range h {
+		ty := float64(y) / hf
 		for x := range w {
+			tx := float64(x) / wf
+
+			// diagonal gradient factor (0..1)
+			t := (tx + ty) * 0.5 //nolint:mnd
+
+			r := uint8(float64(r1)*(1-t) + float64(r2)*t)
+			g := uint8(float64(g1)*(1-t) + float64(g2)*t)
+			b := uint8(float64(b1)*(1-t) + float64(b2)*t)
+
 			img.Set(x, y, color.RGBA{
-				R: uint8(x % 256),       //nolint:gosec,mnd
-				G: uint8(y % 256),       //nolint:gosec,mnd
-				B: uint8((x + y) % 256), //nolint:gosec,mnd
-				A: 255,                  //nolint:mnd
+				R: r,
+				G: g,
+				B: b,
+				A: 255, //nolint:mnd
 			})
 		}
 	}

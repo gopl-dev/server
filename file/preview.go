@@ -18,11 +18,40 @@ import (
 	_ "golang.org/x/image/webp" // register WEBP decoder for image.Decode
 )
 
-// ErrPreviewNotSupported ...
-var ErrPreviewNotSupported = errors.New("preview not supported")
+var (
+	// ErrPreviewNotSupported ...
+	ErrPreviewNotSupported = errors.New("preview not supported")
 
-// PreviewValidExt is the list of file extensions for which we can generate previews.
-var PreviewValidExt = []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+	// ErrInvalidImageDimensions ...
+	ErrInvalidImageDimensions = errors.New("invalid image dimensions")
+
+	// ErrIImageResolutionIsTooLarge ...
+	ErrIImageResolutionIsTooLarge = errors.New("image resolution is too large")
+)
+
+// ResizableImages is the list of file extensions for which we can generate previews.
+var ResizableImages = []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+
+// CheckImageDimensions validates image resolution.
+func CheckImageDimensions(r io.ReadSeeker) error {
+	conf := app.Config().Files
+
+	dc, _, err := image.DecodeConfig(r)
+	if err != nil {
+		return err
+	}
+	_, _ = r.Seek(0, io.SeekStart)
+
+	if dc.Width <= 0 || dc.Height <= 0 {
+		return ErrInvalidImageDimensions
+	}
+
+	if dc.Width > conf.ImageMaxWidth || dc.Height > conf.ImageMaxHeight {
+		return fmt.Errorf("%w: max is %dx%d; your is %dx%d", ErrIImageResolutionIsTooLarge, conf.ImageMaxHeight, conf.ImageMaxWidth, dc.Width, dc.Height)
+	}
+
+	return nil
+}
 
 // CreatePreview generates a preview image for the given source object using default settings
 // from config (preview width/height and JPEG quality).
@@ -32,7 +61,7 @@ var PreviewValidExt = []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
 func CreatePreview(ctx context.Context, source string) (string, error) {
 	conf := app.Config().Files
 
-	if !CanDoPreview(source) {
+	if !IsResizableImage(source) {
 		return "", ErrPreviewNotSupported
 	}
 
@@ -140,11 +169,11 @@ func fit(w, h, maxW, maxH int) (int, int) {
 	return nw, nh
 }
 
-// CanDoPreview reports whether a preview can be generated for the given filename
-// by checking its extension against PreviewValidExt.
-func CanDoPreview(filename string) bool {
+// IsResizableImage reports whether a preview can be generated for the given filename
+// by checking its extension against ResizableImages.
+func IsResizableImage(filename string) bool {
 	return slices.Contains(
-		PreviewValidExt,
+		ResizableImages,
 		strings.ToLower(filepath.Ext(filename)),
 	)
 }

@@ -262,12 +262,13 @@ func loginAs(t *testing.T, u *ds.User) (token string) {
 }
 
 type fileForm struct {
-	fields      map[string]string
-	fileField   string
-	purpose     ds.FilePurpose
-	filename    string
-	contentType string
-	file        io.Reader
+	fields       map[string]string
+	fileField    string
+	purpose      ds.FilePurpose
+	filename     string
+	contentType  string
+	file         io.Reader
+	assertStatus int
 }
 
 // UploadFile sends a multipart/form-data request containing a file.
@@ -281,7 +282,11 @@ func UploadFile(t *testing.T, form fileForm) *ds.File {
 		method:       http.MethodPost,
 		path:         "/api/files/",
 		bindResponse: &fileResponse,
-		assertStatus: http.StatusCreated,
+		assertStatus: form.assertStatus,
+	}
+
+	if r.assertStatus == 0 {
+		r.assertStatus = http.StatusCreated
 	}
 
 	if form.fileField == "" {

@@ -52,7 +52,7 @@ func (s *Service) GetFilePreview(ctx context.Context, f *ds.File) (fh file.ReadS
 	defer span.End()
 
 	if f.PreviewPath == "" {
-		if !file.CanDoPreview(f.Path) {
+		if !file.IsResizableImage(f.Path) {
 			err = ErrPreviewUnavailable
 			return
 		}

@@ -2,6 +2,7 @@ package file
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -19,6 +20,17 @@ const (
 	// TypeVideo represents video files.
 	TypeVideo Type = "video"
 )
+
+var types = []Type{
+	TypeOther,
+	TypeImage,
+	TypeVideo,
+}
+
+// Valid ...
+func (t Type) Valid() bool {
+	return slices.Contains(types, t)
+}
 
 // fileTypes defines supported file extensions grouped by file type.
 var fileTypes = map[Type][]string{
