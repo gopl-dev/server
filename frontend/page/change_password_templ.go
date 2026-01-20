@@ -31,7 +31,7 @@ func ChangePasswordForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t\tfunction changePasswordForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\told_password: '',\r\n\t\t\t\t\tnew_password: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terror: '',\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\told_password: '',\r\n\t\t\t\t\tnew_password: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.error = ''\r\n\t\t\t\t\tthis.errors = {\r\n                        old_password: '',\r\n                        new_password: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/password/', {\r\n\t\t\t\t\t\tmethod: 'PUT',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (\"token\" in resp) {\r\n\t\t\t\t\t\t\t\tlocalStorage.setItem('auth_token', resp.token)\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"error\" in resp) {\r\n\t\t\t\t\t\t\t\tthis.error = resp.error\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && resp.input_errors !== null) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"old_password\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.old_password = ie.old_password\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"new_password\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.new_password = ie.new_password\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t})\r\n\t\t\t\t\t\t.catch(response => {})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Change password</h1><div class=\"bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const CHANGE_PASSWORD_DEFAULTS = {\r\n        old_password: '',\r\n        new_password: '',\r\n    }\r\n\r\n    function changePasswordForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: CHANGE_PASSWORD_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.putJSON('/api/users/password/', this.form)\r\n\r\n                    if (data?.token) {\r\n                        localStorage.setItem('auth_token', data.token)\r\n                    }\r\n\r\n                    if (resp.status === 200) {\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n        }\r\n    }\r\n</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Change password</h1><div class=\"bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -47,7 +47,7 @@ func ChangePasswordForm() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><fieldset class=\"fieldset\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><div role=\"alert\" class=\"alert alert-success\" x-show=\"success\" x-cloak><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span>Your password has been changed.</span></div><div x-show=\"!success\"><fieldset class=\"fieldset\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -79,7 +79,7 @@ func ChangePasswordForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></fieldset>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></fieldset></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

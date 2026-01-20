@@ -138,5 +138,12 @@ templ Radio(p RadioParams) {
 }
 
 templ SubmitButton(text string) {
-	<button type="submit" class="btn btn-lg btn-info w-full">{ text }</button>
+    <button
+            type="submit"
+            class="btn btn-lg btn-info w-full"
+            :disabled="submitting"
+    >
+        <span class="loading loading-spinner" x-show="submitting"></span>
+        <span x-show="!submitting">{ text }</span>
+    </button>
 }

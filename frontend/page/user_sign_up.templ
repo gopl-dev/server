@@ -3,110 +3,85 @@ package page
 import . "github.com/gopl-dev/server/frontend/component"
 
 templ UserSignUpForm() {
-	<script>
-		function userSignUpForm() {
-			return {
-				form: {
-					username: '',
-					email: '',
-					password: '',
-				},
+<script src="/assets/http_helpers.js"></script>
+<script src="/assets/form_helpers.js"></script>
+<script>
+    const USER_SIGN_UP_DEFAULTS = {
+        username: '',
+        email: '',
+        password: '',
+    }
 
-				error: '',
+    function userSignUpForm() {
+        return {
+            ...FormHelpers.makeForm({
+                defaults: USER_SIGN_UP_DEFAULTS,
+                submit: async function () {
+                    const {resp, data} = await HTTP.postJSON('/api/users/sign-up/', this.form)
 
-				errors: {
-					username: '',
-					email: '',
-					password: '',
-				},
+                    if (data?.success === true || resp.status === 200) {
+                        window.location.href = '/users/confirm-email/'
+                        return
+                    }
 
-				submitForm() {
-					this.error = ''
-					this.errors = {
-						username: '',
-						email: '',
-						password: '',
-					}
+                    if (data?.error) {
+                        this.error = (data?.code ? (data.code + ': ') : '') + data.error
+                    }
 
-					fetch('/api/users/sign-up/', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(this.form)
-					})
-						.then(resp => resp.json())
-						.then(resp => {
-							if ("success" in resp && resp.success === true) {
-								window.location.href = '/users/confirm-email/'
-							}
-							if (resp.status !== 200 && "error" in resp) {
-								this.error = resp.code + ': ' + resp.error
-							}
-							if (resp.status !== 200 && resp.input_errors !== null) {
-								let ie = resp.input_errors
-								if ("username" in ie) {
-									this.errors.username = ie.username
-								}
-								if ("email" in ie) {
-									this.errors.email = ie.email
-								}
-								if ("password" in ie) {
-									this.errors.password = ie.password
-								}
-							}
-				})
-						.catch(response => {
+                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)
+                },
+            }),
+        }
+    }
+</script>
 
-						})
-				}
-			}
-		}
-	</script>
-	<div class="flex flex-row justify-center">
-		<div class="w-full lg:w-1/2">
-			<h1 class="text-3xl pb-4">Sign Up</h1>
-			<div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-				<div class="card-body">
-                    <div class="p-5 columns-2">
-                        <div>
-                            <a href="/auth/google/" class="link">Join using Google</a>
-                        </div>
-                        <div class="float-right">
-                            <a href="/auth/github/"  class="link">Join using GitHub</a>
-                        </div>
+<div class="flex flex-row justify-center">
+    <div class="w-full lg:w-1/2">
+        <h1 class="text-3xl pb-4">Sign Up</h1>
+        <div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+            <div class="card-body">
+                <div class="p-5 columns-2">
+                    <div>
+                        <a href="/auth/google/" class="link">Join using Google</a>
                     </div>
+                    <div class="float-right">
+                        <a href="/auth/github/" class="link">Join using GitHub</a>
+                    </div>
+                </div>
 
-					@Form("userSignUpForm") {
-						<p class="text-red-500" x-text="error" x-show="error !== ''"></p>
-						<fieldset class="fieldset">
-						@Input(InputParams{
-							ID:          "username",
-							Label:       "Username",
-							Model:       "form.username",
-							ErrorModel:  "errors.username",
-							Description: "a-Z, 0-9, dot, underline, dash. Min 2; Max 30",
-						})
-						@Input(InputParams{
-							ID:         "email",
-							Label:      "E-mail",
-							Model:      "form.email",
-							ErrorModel: "errors.email",
-						})
-						@Input(InputParams{
-							ID:         "password",
-							Label:      "Password",
-							Model:      "form.password",
-							ErrorModel: "errors.password",
-							Type:       "password",
-							Description: "Min. 6 characters",
-							NoAutoFill:  true,
-						})
-						<div class="p-2">
-							@SubmitButton("Sign up")
-						</div>
-						</fieldset>
-					}
-				</div>
-			</div>
-		</div>
-	</div>
+                @Form("userSignUpForm") {
+                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+
+                <fieldset class="fieldset" :disabled="submitting">
+                    @Input(InputParams{
+                    ID: "username",
+                    Label: "Username",
+                    Model: "form.username",
+                    ErrorModel: "errors.username",
+                    Description: "a-Z, 0-9, dot, underline, dash. Min 2; Max 30",
+                    })
+                    @Input(InputParams{
+                    ID: "email",
+                    Label: "E-mail",
+                    Model: "form.email",
+                    ErrorModel: "errors.email",
+                    })
+                    @Input(InputParams{
+                    ID: "password",
+                    Label: "Password",
+                    Model: "form.password",
+                    ErrorModel: "errors.password",
+                    Type: "password",
+                    Description: "Min. 6 characters",
+                    NoAutoFill: true,
+                    })
+                    <div class="p-2">
+                        @SubmitButton("Sign up")
+                    </div>
+                </fieldset>
+                }
+            </div>
+        </div>
+    </div>
+</div>
 }

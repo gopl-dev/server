@@ -3,39 +3,49 @@ package page
 import . "github.com/gopl-dev/server/frontend/component"
 
 templ CreateBookForm() {
+<script src="/assets/http_helpers.js"></script>
+<script src="/assets/form_helpers.js"></script>
 <script>
+    const BOOK_FORM_DEFAULTS = {
+        title: '',
+        description: '',
+        author_name: '',
+        author_link: '',
+        homepage: '',
+        release_date: '',
+        cover_file_id: '',
+        visibility: 'public',
+    }
+
     function createBookForm() {
         return {
-            form: {
-                title: '',
-                description: '',
-                author_name: '',
-                author_link: '',
-                homepage: '',
-                release_date: '',
-                cover_file_id: '',
-                visibility: 'public',
+            ...FormHelpers.makeForm({
+                defaults: BOOK_FORM_DEFAULTS,
+                submit: async function () {
+                    const { resp, data } = await HTTP.postJSON('/api/books/', this.form)
+
+                    if (resp.status === 201) {
+                        this.createdBook = data
+                        this.success = true
+                        return
+                    }
+
+                    if (data?.error) this.error = data.error
+                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)
+                },
+            }),
+
+            createdBook: null,
+
+            get createdBookURL() {
+                const pid = this.createdBook?.public_id
+                return pid ? `/books/${pid}/` : ''
             },
 
-            // Cover upload UI state
-            coverUpload: {
-                uploading: false,
-                error: '',
-                fileName: '',
-            },
-
-            success: false,
-            error: '',
-            errors: {
-                title: '',
-                description: '',
-                author_name: '',
-                author_link: '',
-                homepage: '',
-                release_date: '',
-                cover_file_id: '',
-                visibility: '',
-            },
+            coverUpload: makeCoverUpload({
+                purpose: 'book-cover',
+                onUploaded: id => { this.form.cover_file_id = id },
+            }),
 
             get coverPreviewURL() {
                 if (!this.form.cover_file_id) return ''
@@ -77,7 +87,6 @@ templ CreateBookForm() {
                     this.coverUpload.uploading = false
                 }
             },
-
             async removeCover() {
                 this.coverUpload.error = ''
 
@@ -106,69 +115,47 @@ templ CreateBookForm() {
                     this.coverUpload.error = 'Remove failed'
                 }
             },
+        }
+    }
 
-            submitForm() {
+    function makeCoverUpload({ purpose, onUploaded }) {
+        return {
+            uploading: false,
+            error: '',
+            fileName: '',
+
+            async upload(e) {
+                const file = e?.target?.files?.[0]
+                if (!file) return
+
+                this.uploading = true
                 this.error = ''
-                this.errors = {
-                    title: '',
-                    description: '',
-                    author_name: '',
-                    author_link: '',
-                    homepage: '',
-                    release_date: '',
-                    cover_file_id: '',
-                    visibility: '',
+                this.fileName = file.name
+
+                try {
+                    const fd = new FormData()
+                    fd.append('file', file)
+                    fd.append('purpose', purpose)
+
+                    const resp = await fetch('/api/files/', {
+                        method: 'POST',
+                        body: fd,
+                    })
+
+                    const data = await resp.json()
+
+                    if (resp.status !== 201) {
+                        this.error = data?.error || 'Upload failed'
+                        return
+                    }
+
+                    onUploaded(data.id)
+                } catch {
+                    this.error = 'Upload failed'
+                } finally {
+                    this.uploading = false
                 }
-
-                fetch('/api/books/', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(this.form)
-                })
-                    .then(resp => {
-                        if (resp.status === 201) {
-                            this.success = true;
-                        }
-
-                        return resp.json();
-                    })
-                    .then(resp => {
-                        if (this.success) return;
-
-                        if (resp.status !== 200 && "error" in resp) {
-                            this.error = resp.error
-                        }
-                        if (resp.status !== 200 && resp.input_errors !== null) {
-                            let ie = resp.input_errors
-                            if ("title" in ie) {
-                                this.errors.title = ie.title
-                            }
-                            if ("description" in ie) {
-                                this.errors.description = ie.description
-                            }
-                            if ("author_name" in ie) {
-                                this.errors.author_name = ie.author_name
-                            }
-                            if ("author_link" in ie) {
-                                this.errors.author_link = ie.author_link
-                            }
-                            if ("homepage" in ie) {
-                                this.errors.homepage = ie.homepage
-                            }
-                            if ("release_date" in ie) {
-                                this.errors.release_date = ie.release_date
-                            }
-                            if ("cover_file_id" in ie) {
-                                this.errors.cover_file_id = ie.cover_file_id
-                            }
-                            if ("visibility" in ie) {
-                                this.errors.visibility = ie.visibility
-                            }
-                        }
-                    })
-                    .catch(response => {
-                    })
-            }
+            },
         }
     }
 </script>
@@ -180,15 +167,23 @@ templ CreateBookForm() {
             <div class="card-body">
                 @Form("createBookForm") {
                 <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
-                <div role="alert" class="alert alert-success" x-show="success">
+                <div role="alert" class="alert alert-success" x-show="success" x-cloak>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
                          viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>Book created successfully!
-                        <!-- TODO: add links: view book | add another one | my books | all books -->
-                    </span>
+
+                    <div>Book created successfully!</div>
+                    <a
+                            class="link"
+                            :href="createdBookURL"
+                            x-show="createdBookURL !== ''"
+                    >
+                        View book page
+                    </a>
+                    |
+                    <a href="/add-book/" class="link">Add another one</a>
 
                 </div>
                 <div x-show="!success">

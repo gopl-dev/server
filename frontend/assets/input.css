@@ -2,3 +2,4 @@
 @plugin "@tailwindcss/typography";
 @plugin "./daisyui.js";
 
+[x-cloak]{display:none !important;}

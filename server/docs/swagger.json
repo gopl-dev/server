@@ -61,6 +61,118 @@
                 }
             }
         },
+        "/files/": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Upload file",
+                "operationId": "UploadFile",
+                "parameters": [
+                    {
+                        "description": "File",
+                        "name": "file",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "description": "File purpose",
+                        "name": "purpose",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/files/{id}/": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Get file metadata",
+                "operationId": "GetFileMetadata",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "File ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ds.File"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/users/": {
             "delete": {
                 "security": [
@@ -592,7 +704,7 @@
                 "author_name": {
                     "type": "string"
                 },
-                "cover_image": {
+                "cover_file_id": {
                     "type": "string"
                 },
                 "created_at": {
@@ -610,6 +722,12 @@
                 "owner_id": {
                     "type": "string"
                 },
+                "preview_file_id": {
+                    "type": "string"
+                },
+                "public_id": {
+                    "type": "string"
+                },
                 "published_at": {
                     "type": "string"
                 },
@@ -625,40 +743,86 @@
                 "updated_at": {
                     "type": "string"
                 },
-                "url_name": {
-                    "type": "string"
-                },
                 "visibility": {
                     "$ref": "#/definitions/ds.EntityVisibility"
                 }
             }
         },
         "ds.EntityStatus": {
-            "type": "integer",
+            "type": "string",
             "enum": [
-                0,
-                1,
-                2
+                "review",
+                "approved",
+                "rejected"
             ],
             "x-enum-varnames": [
                 "EntityStatusUnderReview",
-                "EntityStatusPublished",
+                "EntityStatusApproved",
                 "EntityStatusRejected"
             ]
         },
         "ds.EntityVisibility": {
-            "type": "integer",
+            "type": "string",
             "enum": [
-                0,
-                1,
-                2,
-                3
+                "public",
+                "private",
+                "unlisted"
             ],
             "x-enum-varnames": [
-                "EntityVisibilityDraft",
                 "EntityVisibilityPublic",
                 "EntityVisibilityPrivate",
                 "EntityVisibilityUnlisted"
+            ]
+        },
+        "ds.File": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "$ref": "#/definitions/ds.FilePurpose"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/file.Type"
+                }
+            }
+        },
+        "ds.FilePurpose": {
+            "type": "string",
+            "enum": [
+                "book-cover"
+            ],
+            "x-enum-varnames": [
+                "FilePurposeBookCover"
+            ]
+        },
+        "file.Type": {
+            "type": "string",
+            "enum": [
+                "other",
+                "image",
+                "video"
+            ],
+            "x-enum-varnames": [
+                "TypeOther",
+                "TypeImage",
+                "TypeVideo"
             ]
         },
         "handler.Error": {
@@ -723,7 +887,7 @@
                 "author_name": {
                     "type": "string"
                 },
-                "cover_image": {
+                "cover_file_id": {
                     "type": "string"
                 },
                 "description": {
@@ -737,6 +901,9 @@
                 },
                 "title": {
                     "type": "string"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/ds.EntityVisibility"
                 }
             }
         },

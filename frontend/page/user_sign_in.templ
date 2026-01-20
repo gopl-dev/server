@@ -3,99 +3,81 @@ package page
 import . "github.com/gopl-dev/server/frontend/component"
 
 templ UserSignInForm(redirectTo string) {
-    if redirectTo == "" {
-        {{ redirectTo = "/" }}
+if redirectTo == "" {
+{{ redirectTo = "/" }}
+}
+
+<script src="/assets/http_helpers.js"></script>
+<script src="/assets/form_helpers.js"></script>
+<script>
+    const redirectTo = "{{ redirectTo }}"
+
+    const USER_SIGN_IN_DEFAULTS = {
+        email: '',
+        password: '',
     }
-	<script>
-	    let redirectTo = {{ redirectTo }}
-		function userSignInForm() {
-			return {
-				form: {
-					email: '',
-					password: '',
-				},
 
-				error: '',
+    function userSignInForm() {
+        return {
+            ...FormHelpers.makeForm({
+                defaults: USER_SIGN_IN_DEFAULTS,
+                submit: async function () {
+                    const { resp, data } = await HTTP.postJSON('/api/users/sign-in/', this.form)
 
-				errors: {
-					email: '',
-					password: '',
-				},
+                    if (data?.token) {
+                        localStorage.setItem('auth_token', data.token)
+                        window.location.href = redirectTo
+                        return
+                    }
 
-				submitForm() {
-					this.error = ''
-					this.errors = {
-						email: '',
-						password: '',
-					}
+                    if (data?.error && resp.status !== 200) this.error = data.error
+                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)
+                },
+            }),
+        }
+    }
+</script>
 
-					fetch('/api/users/sign-in/', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(this.form)
-					})
-						.then(resp => resp.json())
-						.then(resp => {
-							if ("token" in resp) {
-								localStorage.setItem('auth_token', resp.token)
-								window.location.href = redirectTo
-							}
-							if (resp.status !== 200 && "error" in resp) {
-								this.error = resp.error
-							}
-							if (resp.status !== 200 && resp.input_errors !== null) {
-								let ie = resp.input_errors
-								if ("email" in ie) {
-									this.errors.email = ie.email
-								}
-								if ("password" in ie) {
-									this.errors.password = ie.password
-								}
-							}
-				})
-						.catch(response => {})
-				}
-			}
-		}
-	</script>
-	<div class="flex flex-row justify-center">
-		<div class="w-full lg:w-1/2">
-			<h1 class="text-3xl pb-4">Sign In</h1>
-			<div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-				<div class="card-body">
-                    <div class="p-5 columns-2">
-                        <div>
-                            <a href="/auth/google/" class="link">Sign-in using Google</a>
-                        </div>
-                        <div class="float-right">
-                            <a href="/auth/github/"  class="link">Sign-in using GitHub</a>
-                        </div>
+<div class="flex flex-row justify-center">
+    <div class="w-full lg:w-1/2">
+        <h1 class="text-3xl pb-4">Sign In</h1>
+        <div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+            <div class="card-body">
+                <div class="p-5 columns-2">
+                    <div>
+                        <a href="/auth/google/" class="link">Sign-in using Google</a>
                     </div>
+                    <div class="float-right">
+                        <a href="/auth/github/" class="link">Sign-in using GitHub</a>
+                    </div>
+                </div>
 
-					@Form("userSignInForm") {
-						<p class="text-red-500" x-text="error" x-show="error !== ''"></p>
-						<fieldset class="fieldset">
-						@Input(InputParams{
-							ID:         "email",
-							Label:      "E-mail",
-							Model:      "form.email",
-							ErrorModel: "errors.email",
-						})
-						@Input(InputParams{
-							ID:         "password",
-							Label:      "Password",
-							Model:      "form.password",
-							ErrorModel: "errors.password",
-							Type:       "password",
-						})
-						<div class="p-2">
-							@SubmitButton("Sign in")
-						</div>
-						</fieldset>
-					}
-					<p><a href="/password-reset/" class="link link-primary">Reset password</a></p>
-				</div>
-			</div>
-		</div>
-	</div>
+                @Form("userSignInForm") {
+                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+
+                <fieldset class="fieldset" :disabled="submitting">
+                    @Input(InputParams{
+                    ID:         "email",
+                    Label:      "E-mail",
+                    Model:      "form.email",
+                    ErrorModel: "errors.email",
+                    })
+                    @Input(InputParams{
+                    ID:         "password",
+                    Label:      "Password",
+                    Model:      "form.password",
+                    ErrorModel: "errors.password",
+                    Type:       "password",
+                    })
+                    <div class="p-2">
+                        @SubmitButton("Sign in")
+                    </div>
+                </fieldset>
+                }
+
+                <p><a href="/password-reset/" class="link link-primary">Reset password</a></p>
+            </div>
+        </div>
+    </div>
+</div>
 }

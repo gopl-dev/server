@@ -34,19 +34,19 @@ func UserSignInForm(redirectTo string) templ.Component {
 		if redirectTo == "" {
 			redirectTo = "/"
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n\t    let redirectTo = ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const redirectTo = \"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var2, templ_7745c5c3_Err := templruntime.ScriptContentOutsideStringLiteral(redirectTo)
+		templ_7745c5c3_Var2, templ_7745c5c3_Err := templruntime.ScriptContentInsideStringLiteral(redirectTo)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/user_sign_in.templ`, Line: 10, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/user_sign_in.templ`, Line: 13, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\r\n\t\tfunction userSignInForm() {\r\n\t\t\treturn {\r\n\t\t\t\tform: {\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\terror: '',\r\n\r\n\t\t\t\terrors: {\r\n\t\t\t\t\temail: '',\r\n\t\t\t\t\tpassword: '',\r\n\t\t\t\t},\r\n\r\n\t\t\t\tsubmitForm() {\r\n\t\t\t\t\tthis.error = ''\r\n\t\t\t\t\tthis.errors = {\r\n\t\t\t\t\t\temail: '',\r\n\t\t\t\t\t\tpassword: '',\r\n\t\t\t\t\t}\r\n\r\n\t\t\t\t\tfetch('/api/users/sign-in/', {\r\n\t\t\t\t\t\tmethod: 'POST',\r\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\r\n\t\t\t\t\t\tbody: JSON.stringify(this.form)\r\n\t\t\t\t\t})\r\n\t\t\t\t\t\t.then(resp => resp.json())\r\n\t\t\t\t\t\t.then(resp => {\r\n\t\t\t\t\t\t\tif (\"token\" in resp) {\r\n\t\t\t\t\t\t\t\tlocalStorage.setItem('auth_token', resp.token)\r\n\t\t\t\t\t\t\t\twindow.location.href = redirectTo\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && \"error\" in resp) {\r\n\t\t\t\t\t\t\t\tthis.error = resp.error\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\tif (resp.status !== 200 && resp.input_errors !== null) {\r\n\t\t\t\t\t\t\t\tlet ie = resp.input_errors\r\n\t\t\t\t\t\t\t\tif (\"email\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.email = ie.email\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t\tif (\"password\" in ie) {\r\n\t\t\t\t\t\t\t\t\tthis.errors.password = ie.password\r\n\t\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t})\r\n\t\t\t\t\t\t.catch(response => {})\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Sign In</h1><div class=\"bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\"><div class=\"p-5 columns-2\"><div><a href=\"/auth/google/\" class=\"link\">Sign-in using Google</a></div><div class=\"float-right\"><a href=\"/auth/github/\" class=\"link\">Sign-in using GitHub</a></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"\r\n\r\n    const USER_SIGN_IN_DEFAULTS = {\r\n        email: '',\r\n        password: '',\r\n    }\r\n\r\n    function userSignInForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: USER_SIGN_IN_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.postJSON('/api/users/sign-in/', this.form)\r\n\r\n                    if (data?.token) {\r\n                        localStorage.setItem('auth_token', data.token)\r\n                        window.location.href = redirectTo\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error && resp.status !== 200) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n        }\r\n    }\r\n</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Sign In</h1><div class=\"bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\"><div class=\"p-5 columns-2\"><div><a href=\"/auth/google/\" class=\"link\">Sign-in using Google</a></div><div class=\"float-right\"><a href=\"/auth/github/\" class=\"link\">Sign-in using GitHub</a></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -62,7 +62,7 @@ func UserSignInForm(redirectTo string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><fieldset class=\"fieldset\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><fieldset class=\"fieldset\" :disabled=\"submitting\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -3,51 +3,33 @@ package page
 import . "github.com/gopl-dev/server/frontend/component"
 
 templ ChangeEmailForm() {
+<script src="/assets/http_helpers.js"></script>
+<script src="/assets/form_helpers.js"></script>
 <script>
+    const CHANGE_EMAIL_DEFAULTS = {
+        email: '',
+    }
+
     function changeEmailForm() {
         return {
-            form: {
-                email: '',
-            },
+            ...FormHelpers.makeForm({
+                defaults: CHANGE_EMAIL_DEFAULTS,
+                submit: async function () {
+                    const { resp, data } = await HTTP.postJSON('/api/users/email/', this.form)
 
-            success: false,
-            error: '',
-            errors: {
-                email: '',
-            },
+                    if (data?.success === true || resp.status === 200) {
+                        this.success = true
+                        return
+                    }
 
-            submitForm() {
-                this.error = ''
-                this.errors = {
-                    email: '',
-                }
-
-                fetch('/api/users/email/', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(this.form)
-                })
-                    .then(resp => resp.json())
-                    .then(resp => {
-                        if ("success" in resp && resp.success === true) {
-                            this.success = true
-                        }
-                        if (resp.status !== 200 && "error" in resp) {
-                            this.error = resp.error
-                        }
-                        if (resp.status !== 200 && resp.input_errors !== null) {
-                            let ie = resp.input_errors
-                            if ("email" in ie) {
-                                this.errors.email = ie.email
-                            }
-                        }
-                    })
-                    .catch(response => {
-                    })
-            }
+                    if (data?.error) this.error = data.error
+                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)
+                },
+            }),
         }
     }
 </script>
+
 <div class="flex flex-row justify-center">
     <div class="w-full lg:w-1/2">
         <h1 class="text-3xl pb-4">Change email</h1>
@@ -55,7 +37,8 @@ templ ChangeEmailForm() {
             <div class="card-body">
                 @Form("changeEmailForm") {
                 <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
-                <div role="alert" class="alert alert-success" x-show="success">
+
+                <div role="alert" class="alert alert-success" x-show="success" x-cloak>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
                          viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -63,14 +46,15 @@ templ ChangeEmailForm() {
                     </svg>
                     <span>A confirmation link has been sent to your new email address.</span>
                 </div>
+
                 <div x-show="!success">
                     <p>We'll send a confirmation link to your new email address.</p>
                     <fieldset class="fieldset">
                         @Input(InputParams{
-                            ID: "email",
-                            Label: "New e-mail",
-                            Model: "form.email",
-                            ErrorModel: "errors.email",
+                        ID: "email",
+                        Label: "New e-mail",
+                        Model: "form.email",
+                        ErrorModel: "errors.email",
                         })
                         <div class="p-2">
                             @SubmitButton("Submit")

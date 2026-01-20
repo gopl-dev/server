@@ -5,7 +5,7 @@ definitions:
         type: string
       author_name:
         type: string
-      cover_image:
+      cover_file_id:
         type: string
       created_at:
         type: string
@@ -17,6 +17,10 @@ definitions:
         type: string
       owner_id:
         type: string
+      preview_file_id:
+        type: string
+      public_id:
+        type: string
       published_at:
         type: string
       release_date:
@@ -27,33 +31,64 @@ definitions:
         type: string
       updated_at:
         type: string
-      url_name:
-        type: string
       visibility:
         $ref: '#/definitions/ds.EntityVisibility'
     type: object
   ds.EntityStatus:
     enum:
-    - 0
-    - 1
-    - 2
-    type: integer
+    - review
+    - approved
+    - rejected
+    type: string
     x-enum-varnames:
     - EntityStatusUnderReview
-    - EntityStatusPublished
+    - EntityStatusApproved
     - EntityStatusRejected
   ds.EntityVisibility:
     enum:
-    - 0
-    - 1
-    - 2
-    - 3
-    type: integer
+    - public
+    - private
+    - unlisted
+    type: string
     x-enum-varnames:
-    - EntityVisibilityDraft
     - EntityVisibilityPublic
     - EntityVisibilityPrivate
     - EntityVisibilityUnlisted
+  ds.File:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      mime_type:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: string
+      purpose:
+        $ref: '#/definitions/ds.FilePurpose'
+      size:
+        type: integer
+      type:
+        $ref: '#/definitions/file.Type'
+    type: object
+  ds.FilePurpose:
+    enum:
+    - book-cover
+    type: string
+    x-enum-varnames:
+    - FilePurposeBookCover
+  file.Type:
+    enum:
+    - other
+    - image
+    - video
+    type: string
+    x-enum-varnames:
+    - TypeOther
+    - TypeImage
+    - TypeVideo
   handler.Error:
     properties:
       code:
@@ -94,7 +129,7 @@ definitions:
         type: string
       author_name:
         type: string
-      cover_image:
+      cover_file_id:
         type: string
       description:
         type: string
@@ -104,6 +139,8 @@ definitions:
         type: string
       title:
         type: string
+      visibility:
+        $ref: '#/definitions/ds.EntityVisibility'
     type: object
   request.DeleteUser:
     properties:
@@ -196,6 +233,77 @@ paths:
       summary: Create a new book
       tags:
       - books
+  /files/:
+    post:
+      consumes:
+      - multipart/form-data
+      operationId: UploadFile
+      parameters:
+      - description: File
+        in: body
+        name: file
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      - description: File purpose
+        in: body
+        name: purpose
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Status'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload file
+      tags:
+      - files
+  /files/{id}/:
+    post:
+      consumes:
+      - application/json
+      operationId: GetFileMetadata
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ds.File'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get file metadata
+      tags:
+      - files
   /users/:
     delete:
       consumes:

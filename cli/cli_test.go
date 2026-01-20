@@ -30,14 +30,14 @@ func TestCommandsRun(t *testing.T) {
 			{"how_to_cli", []string{"Alice", "Excited", "25"}, ""},
 			{"how_to_cli_defaults_1", []string{"Alice", "Excited"}, ""},
 			{"how_to_cli_defaults_2", []string{"Alice"}, ""},
-			{"how_to_cli_required_err", []string{}, "argument 'name' is required"},
+			{"how_to_cli_required_err", []string{}, "name: argument is required. Use '? [command]' for help"},
 		},
 		"how_to_params": {
 			{"how_to_params", []string{"Bob", "-m=Happy", "-a=30"}, ""},
 			{"how_to_params_defaults_1", []string{"Bob", "-m=Happy"}, ""},
 			{"how_to_params_defaults_2", []string{"Bob", "-m=Happy"}, ""},
 			{"how_to_params_order", []string{"-m=Happy", "-a=30", "Bob"}, ""},
-			{"how_to_params_required_err", []string{"-m=Happy"}, "argument 'name' is required"},
+			{"how_to_params_required_err", []string{"-m=Happy"}, "name: argument is required. Use '? [command]' for help"},
 		},
 		"how_to_flags": {
 			{"how_to_flags", []string{"STAGING", "-v", "-y"}, ""},

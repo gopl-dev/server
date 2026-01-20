@@ -31,19 +31,19 @@ func PasswordResetForm(token string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\r\n    function passwordResetForm() {\r\n        return {\r\n            form: {\r\n                token: \"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const PASSWORD_RESET_DEFAULTS = {\r\n        token: \"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Var2, templ_7745c5c3_Err := templruntime.ScriptContentInsideStringLiteral(token)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/password_reset_form.templ`, Line: 10, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/password_reset_form.templ`, Line: 10, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\",\r\n                password: '',\r\n            },\r\n\r\n            success: false,\r\n            error: '',\r\n            errors: {\r\n                password: '',\r\n            },\r\n\r\n            submitForm() {\r\n                this.error = ''\r\n                this.errors = {\r\n                    password: '',\r\n                }\r\n\r\n                fetch('/api/users/password-reset/', {\r\n                    method: 'POST',\r\n                    headers: {'Content-Type': 'application/json'},\r\n                    body: JSON.stringify(this.form)\r\n                })\r\n                    .then(resp => resp.json())\r\n                    .then(resp => {\r\n                        if (\"success\" in resp && resp.success === true) {\r\n                            this.success = true\r\n                        }\r\n                        if (resp.status !== 200 && \"error\" in resp) {\r\n                            this.error = resp.error\r\n                        }\r\n                        if (resp.status !== 200 && resp.input_errors !== null) {\r\n                            let ie = resp.input_errors\r\n                            if (\"password\" in ie) {\r\n                                this.errors.password = ie.password\r\n                            }\r\n                        }\r\n                    })\r\n                    .catch(response => {\r\n                    })\r\n            }\r\n        }\r\n    }\r\n</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Password reset</h1><div class=\"bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\",\r\n        password: '',\r\n    }\r\n\r\n    function passwordResetForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: PASSWORD_RESET_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.postJSON('/api/users/password-reset/', this.form)\r\n\r\n                    if (data?.success === true || resp.status === 200) {\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n        }\r\n    }\r\n</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Password reset</h1><div class=\"bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -59,7 +59,7 @@ func PasswordResetForm(token string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><div x-show=\"success\"><div role=\"alert\" class=\"alert alert-success\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span>Your password has been reset.</span></div><div class=\"pt-6 justify-center items-center flex\"><a href=\"/users/sign-in/\" class=\"btn btn-info\">Sign-in</a></div></div><div x-show=\"!success\"><fieldset class=\"fieldset\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><div x-show=\"success\" x-cloak><div role=\"alert\" class=\"alert alert-success\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span>Your password has been reset.</span></div><div class=\"pt-6 justify-center items-center flex\"><a href=\"/users/sign-in/\" class=\"btn btn-info\">Sign-in</a></div></div><div x-show=\"!success\"><fieldset class=\"fieldset\" :disabled=\"submitting\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
