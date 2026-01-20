@@ -17,14 +17,14 @@ func TestCleanupExpiredPasswordChangeRequests(t *testing.T) {
 		ExpiresAt: time.Now().AddDate(0, 0, -1),
 	})
 
-	runJob(t, cleanupexpiredpasswordchangerequests.Job{})
+	runJob(t, cleanupexpiredpasswordchangerequests.NewJob())
 
 	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{
 		"user_id": user.ID,
 	})
 
 	token := tt.Factory.CreatePasswordResetToken(t)
-	runJob(t, cleanupexpiredpasswordchangerequests.Job{})
+	runJob(t, cleanupexpiredpasswordchangerequests.NewJob())
 
 	test.AssertInDB(t, tt.DB, "password_reset_tokens", test.Data{
 		"id": token.ID,

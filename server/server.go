@@ -31,7 +31,7 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 
 	h := handler.New(s, t)
 	mw := middleware.New(s, t)
-	r := endpoint.NewRouter(h)
+	r := endpoint.NewRouter(mw, h)
 
 	r.HandleAssets()
 	r.HandleOpenAPIDocs()
@@ -89,8 +89,8 @@ func corsConfig() gin.HandlerFunc { // TODO review
 func registerOAuthProviders() {
 	c := app.Config()
 
-	callbackURL := func(prov string) string {
-		return fmt.Sprintf("%sauth/%s/callback/", c.Server.Addr, prov)
+	callbackURL := func(providerName string) string {
+		return fmt.Sprintf("%sauth/%s/callback/", c.Server.Addr, providerName)
 	}
 
 	goth.UseProviders(

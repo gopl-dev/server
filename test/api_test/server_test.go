@@ -9,7 +9,7 @@ import (
 
 func TestGetServerStatus(t *testing.T) {
 	var resp response.ServerStatus
-	testGET(t, "status", &resp)
+	GET(t, "status", &resp)
 
 	assert.Equal(t, resp.Env, tt.Conf.App.Env)
 	assert.Equal(t, resp.Version, tt.Conf.App.Version)

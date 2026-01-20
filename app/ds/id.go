@@ -13,7 +13,10 @@ import (
 // ErrInvalidIDFormat ...
 var ErrInvalidIDFormat = errors.New("invalid UUID format")
 
-// ID is a domain-specific type for UUID v7.
+// ID is a domain-specific UUID (v7).
+// Add `json:",omitzero"` to JSON payloads where ID is optional,
+// or zero ID will happily serialize itself as
+// "00000000-0000-0000-0000-000000000000".
 type ID uuid.UUID //nolint:recvcheck
 
 // NilID is an empty UUID, all zeros.
@@ -47,6 +50,10 @@ func (id ID) String() string {
 
 // Value implements driver.Valuer to allow ID to be used in SQL queries.
 func (id ID) Value() (driver.Value, error) {
+	if id.IsNil() {
+		return nil, nil
+	}
+
 	return uuid.UUID(id).Value()
 }
 

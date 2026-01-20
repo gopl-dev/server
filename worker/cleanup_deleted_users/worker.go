@@ -15,6 +15,11 @@ import (
 // Job implements the worker.Job interface for cleaning up deleted user accounts.
 type Job struct{}
 
+// NewJob ...
+func NewJob() *Job {
+	return &Job{}
+}
+
 // Name returns the unique name of the job.
 func (w Job) Name() string {
 	return "CLEANUP:DELETED_USER_ACCOUNTS"

@@ -5,9 +5,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/gopl-dev/server/app/ds"
 	"gopkg.in/yaml.v3"
 )
+
+const defaultConfigFile = ".config.yaml"
 
 // ConfigT ...
 type ConfigT struct {
@@ -42,6 +43,26 @@ type ConfigT struct {
 		UptraceDSN string `yaml:"uptrace_dsn"`
 	} `yaml:"tracing"`
 
+	Files struct {
+		StorageDriver   string `yaml:"storage_driver"`
+		MaxUploadSizeMB int64  `yaml:"max_upload_size_mb"`
+		ImageMaxWidth   int    `yaml:"image_max_width"`
+		ImageMaxHeight  int    `yaml:"image_max_height"`
+		PreviewWidth    int    `yaml:"preview_width"`
+		PreviewHeight   int    `yaml:"preview_height"`
+		LocalFS         struct {
+			StoragePath string `yaml:"storage_path"`
+		} `yaml:"local_fs"`
+	} `yaml:"files"`
+
+	Entities struct {
+		Books struct {
+			Covers struct {
+				Path string `yaml:"path"`
+			} `yaml:"covers"`
+		} `yaml:"books"`
+	} `yaml:"entities"`
+
 	Email struct {
 		// Driver can be: smtp or test
 		Driver   string `yaml:"driver"`
@@ -74,26 +95,26 @@ type ConfigT struct {
 
 	// Admins is a list of user IDs with administrative privileges.
 	// This is a temporary solution until  ACL is implemented.
-	Admins []ds.ID `yaml:"admins"`
+	Admins []string `yaml:"admins"`
 }
 
 // IsDevEnv ...
-func (c ConfigT) IsDevEnv() bool {
+func (c *ConfigT) IsDevEnv() bool {
 	return c.App.Env == DevEnv
 }
 
 // IsTestEnv ...
-func (c ConfigT) IsTestEnv() bool {
+func (c *ConfigT) IsTestEnv() bool {
 	return c.App.Env == TestEnv
 }
 
 // IsProductionEnv ...
-func (c ConfigT) IsProductionEnv() bool {
+func (c *ConfigT) IsProductionEnv() bool {
 	return c.App.Env == ProductionEnv
 }
 
 // TracingDisabled ...
-func (c ConfigT) TracingDisabled() bool {
+func (c *ConfigT) TracingDisabled() bool {
 	return !c.Tracing.Enabled
 }
 
@@ -103,17 +124,8 @@ var conf *ConfigT
 // Config returns config from .config.yaml.
 func Config() *ConfigT {
 	loadConfigOnce.Do(func() {
-		name := ".config.yaml"
-
-		data, err := os.ReadFile(name)
-		if err != nil {
-			err = fmt.Errorf("read '.config.yaml': %w", err)
-			panic(err)
-		}
-
-		conf = new(ConfigT)
-
-		err = yaml.Unmarshal(data, conf)
+		var err error
+		conf, err = ConfigFromFile(defaultConfigFile)
 		if err != nil {
 			panic(err)
 		}
@@ -122,16 +134,18 @@ func Config() *ConfigT {
 	return conf
 }
 
-// ConfigFromFile returns config from given YAML file.
-func ConfigFromFile(filename string) (conf *ConfigT, err error) {
+// ConfigFromFile returns new config from given YAML file.
+func ConfigFromFile(filename string) (*ConfigT, error) {
 	data, err := os.ReadFile(filename) //nolint:gosec
 	if err != nil {
-		err = fmt.Errorf("read '%s': %w", filename, err)
-		return
+		return nil, fmt.Errorf("read '%s': %w", filename, err)
 	}
 
-	conf = new(ConfigT)
-	err = yaml.Unmarshal(data, conf)
+	fileConf := new(ConfigT)
+	err = yaml.Unmarshal(data, fileConf)
+	if err != nil {
+		return nil, err
+	}
 
-	return
+	return fileConf, err
 }

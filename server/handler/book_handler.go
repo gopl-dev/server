@@ -36,24 +36,25 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 
 	book := &ds.Book{
 		Entity: ds.Entity{
-			ID:          ds.NewID(),
-			OwnerID:     user.ID,
-			Type:        ds.EntityTypeBook,
-			URLName:     "",
-			Title:       req.Title,
-			Visibility:  req.Visibility,
-			Status:      ds.EntityStatusUnderReview,
-			PublishedAt: nil,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   nil,
-			DeletedAt:   nil,
+			ID:            ds.NewID(),
+			OwnerID:       user.ID,
+			PreviewFileID: req.CoverFileID,
+			Type:          ds.EntityTypeBook,
+			PublicID:      "",
+			Title:         req.Title,
+			Visibility:    req.Visibility,
+			Status:        ds.EntityStatusUnderReview,
+			PublishedAt:   nil,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     nil,
+			DeletedAt:     nil,
 		},
 		Description: req.Description,
 		AuthorName:  req.AuthorName,
 		AuthorLink:  req.AuthorLink,
 		Homepage:    req.Homepage,
 		ReleaseDate: req.ReleaseDate,
-		CoverImage:  req.CoverImage,
+		CoverFileID: req.CoverFileID,
 	}
 
 	err := h.service.CreateBook(ctx, book)

@@ -76,19 +76,36 @@ CREATE TABLE oauth_user_accounts
     UNIQUE (provider, provider_user_id)
 );
 
+CREATE TABLE files
+(
+    id           uuid PRIMARY KEY NOT NULL,
+    owner_id     uuid             NOT NULL,
+    name         text             NOT NULL,
+    path         text             NOT NULL,
+    preview_path text,
+    hash         text             NOT NULL,
+    type         text             NOT NULL,
+    mime_type    text,
+    purpose      text             NOT NULL,
+    size         bigint           NOT NULL CHECK (size >= 0),
+    created_at   timestamptz      NOT NULL,
+    deleted_at   timestamptz,
+    temp         boolean          NOT NULL DEFAULT false
+);
 
 CREATE TABLE entities
 (
-    id         uuid PRIMARY KEY NOT NULL,
-    owner_id   UUID             NOT NULL,
-    title      TEXT,
-    type       TEXT             NOT NULL,
-    visibility TEXT             NOT NULL,
-    status     TEXT             NOT NULL,
-    url_name   TEXT             NOT NULL,
-    created_at TIMESTAMPTZ      NOT NULL,
-    updated_at TIMESTAMPTZ,
-    deleted_at TIMESTAMPTZ
+    id              uuid PRIMARY KEY NOT NULL,
+    public_id       TEXT             NOT NULL,
+    owner_id        UUID             NOT NULL,
+    preview_file_id uuid REFERENCES files (id),
+    title           TEXT,
+    type            TEXT             NOT NULL,
+    visibility      TEXT             NOT NULL,
+    status          TEXT             NOT NULL,
+    created_at      TIMESTAMPTZ      NOT NULL,
+    updated_at      TIMESTAMPTZ,
+    deleted_at      TIMESTAMPTZ
 );
 
 CREATE TABLE entity_change_logs
@@ -103,12 +120,11 @@ CREATE TABLE entity_change_logs
 
 CREATE TABLE books
 (
-    id           uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
-    description  TEXT             NOT NULL,
-    author_name  TEXT             NOT NULL,
-    author_link  TEXT,
-    homepage     TEXT,
-    release_date TEXT             NOT NULL,
-    cover_image  TEXT             NOT NULL
+    id            uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
+    description   TEXT             NOT NULL,
+    author_name   TEXT             NOT NULL,
+    author_link   TEXT,
+    homepage      TEXT,
+    release_date  TEXT             NOT NULL,
+    cover_file_id uuid REFERENCES files (id)
 );
-

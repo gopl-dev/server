@@ -23,8 +23,9 @@ type User struct {
 	UpdatedAt      *time.Time `json:"-"`
 	DeletedAt      *time.Time `json:"-"`
 
-	// IsAdmin is true if the user's ID is in the admin list from the config file.
+	// IsAdmin is true if the user ID is listed in "admins" key in config file.
 	// This field is set by the auth middleware.
+	// Until proper RBAC/ACL is implemented, we trust authority generously granted by the devs themselves.
 	IsAdmin bool `json:"-"`
 }
 

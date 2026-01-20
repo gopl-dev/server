@@ -29,6 +29,7 @@ linters:
     - godoclint
     - nlreturn
     - lll
+    - nilnil
 
   exclusions:
     # Mode of the generated files analysis.

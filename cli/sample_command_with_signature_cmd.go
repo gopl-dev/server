@@ -29,7 +29,7 @@ type SampleCommandWithSignatureCmd struct {
 	Age  *int    `arg:"age"`
 }
 
-// Handle executes the command logic
+// Handle executes the command logic.
 func (cmd *SampleCommandWithSignatureCmd) Handle(_ context.Context) (err error) {
 	var a int
 	if cmd.Age != nil {

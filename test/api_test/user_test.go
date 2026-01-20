@@ -26,7 +26,8 @@ func TestUserSignUp(t *testing.T) {
 	}
 
 	var resp response.Status
-	POST(t, Request{
+	Request(t, RequestArgs{
+		method:       http.MethodPost,
 		path:         "/users/sign-up",
 		body:         req,
 		bindResponse: &resp,
@@ -68,7 +69,8 @@ func TestUserSignUp(t *testing.T) {
 		}
 
 		var resp handler.Error
-		POST(t, Request{
+		Request(t, RequestArgs{
+			method:       http.MethodPost,
 			path:         "/users/sign-up",
 			body:         req,
 			bindResponse: &resp,
@@ -86,7 +88,8 @@ func TestUserSignUp(t *testing.T) {
 		}
 
 		var resp handler.Error
-		POST(t, Request{
+		Request(t, RequestArgs{
+			method:       http.MethodPost,
 			path:         "/users/sign-up",
 			body:         req,
 			bindResponse: &resp,
@@ -109,7 +112,8 @@ func TestUserConfirmEmail(t *testing.T) {
 	}
 
 	var resp response.Status
-	POST(t, Request{
+	Request(t, RequestArgs{
+		method:       http.MethodPost,
 		path:         "/users/confirm-email",
 		body:         req,
 		bindResponse: &resp,
@@ -145,7 +149,8 @@ func TestUserSignIn(t *testing.T) {
 	}
 
 	var resp response.UserSignIn
-	POST(t, Request{
+	Request(t, RequestArgs{
+		method:       http.MethodPost,
 		path:         "/users/sign-in",
 		body:         req,
 		bindResponse: &resp,
@@ -170,7 +175,8 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	var resp response.Status
-	PUT(t, Request{
+	Request(t, RequestArgs{
+		method:       http.MethodPut,
 		path:         "/users/password/",
 		body:         req,
 		authToken:    token,
@@ -180,8 +186,9 @@ func TestChangePassword(t *testing.T) {
 
 	// Login with the old password
 	var signInResp handler.Error
-	POST(t, Request{
-		path: "/users/sign-in/",
+	Request(t, RequestArgs{
+		method: http.MethodPost,
+		path:   "/users/sign-in/",
 		body: request.UserSignIn{
 			Email:    user.Email,
 			Password: oldPassword,
@@ -192,8 +199,9 @@ func TestChangePassword(t *testing.T) {
 
 	t.Run("login with new password", func(t *testing.T) {
 		var signInResp response.UserSignIn
-		POST(t, Request{
-			path: "/users/sign-in/",
+		Request(t, RequestArgs{
+			method: http.MethodPost,
+			path:   "/users/sign-in/",
 			body: request.UserSignIn{
 				Email:    user.Email,
 				Password: newPassword,
@@ -210,7 +218,8 @@ func TestChangePassword(t *testing.T) {
 		}
 
 		var resp handler.Error
-		PUT(t, Request{
+		Request(t, RequestArgs{
+			method:       http.MethodPut,
 			path:         "/users/password/",
 			body:         req,
 			authToken:    token,
@@ -225,9 +234,10 @@ func TestChangePassword(t *testing.T) {
 func TestPasswordReset(t *testing.T) {
 	user := tt.Factory.CreateUser(t)
 
-	// 1. Request password reset
+	// 1. RequestArgs password reset
 	var reqResetResp response.Status
-	POST(t, Request{
+	Request(t, RequestArgs{
+		method:       http.MethodPost,
 		path:         "users/password-reset-request",
 		body:         request.PasswordResetRequest{Email: user.Email},
 		bindResponse: &reqResetResp,
@@ -243,8 +253,9 @@ func TestPasswordReset(t *testing.T) {
 	// 2. Successfully reset the password
 	newPassword := random.String()
 	var resetResp response.Status
-	POST(t, Request{
-		path: "users/password-reset",
+	Request(t, RequestArgs{
+		method: http.MethodPost,
+		path:   "users/password-reset",
 		body: request.PasswordReset{
 			Token:    token,
 			Password: newPassword,
@@ -258,8 +269,9 @@ func TestPasswordReset(t *testing.T) {
 
 	// 3. Verify login with the new password
 	var signInResp response.UserSignIn
-	POST(t, Request{
-		path: "users/sign-in",
+	Request(t, RequestArgs{
+		method: http.MethodPost,
+		path:   "users/sign-in",
 		body: request.UserSignIn{
 			Email:    user.Email,
 			Password: newPassword,
@@ -271,8 +283,9 @@ func TestPasswordReset(t *testing.T) {
 	// 4. Test failure cases
 	t.Run("reset with invalid token", func(t *testing.T) {
 		var errorResp handler.Error
-		POST(t, Request{
-			path: "users/password-reset",
+		Request(t, RequestArgs{
+			method: http.MethodPost,
+			path:   "users/password-reset",
 			body: request.PasswordReset{
 				Token:    "invalid-token",
 				Password: newPassword,
@@ -287,8 +300,9 @@ func TestPasswordReset(t *testing.T) {
 			UserID: user.ID,
 		})
 		var errorResp handler.Error
-		POST(t, Request{
-			path: "users/password-reset",
+		Request(t, RequestArgs{
+			method: http.MethodPost,
+			path:   "users/password-reset",
 			body: request.PasswordReset{
 				Token:    prt.Token,
 				Password: strings.Repeat("a", service.UserPasswordMinLen-1),
@@ -304,10 +318,11 @@ func TestChangeEmail(t *testing.T) {
 	user := tt.Factory.CreateUser(t)
 	token := loginAs(t, user)
 
-	// Request email change
+	// RequestArgs email change
 	newEmail := random.Email()
 	var reqEmailChangeResp response.Status
-	POST(t, Request{
+	Request(t, RequestArgs{
+		method:       http.MethodPost,
 		path:         "/users/email/",
 		body:         request.EmailChangeRequest{Email: newEmail},
 		authToken:    token,
@@ -326,8 +341,9 @@ func TestChangeEmail(t *testing.T) {
 
 	// Confirm the email change with the confirmToken
 	var confirmResp response.Status
-	PUT(t, Request{
-		path: "/users/email/",
+	Request(t, RequestArgs{
+		method: http.MethodPut,
+		path:   "/users/email/",
 		body: request.EmailChangeConfirm{
 			Token: confirmToken,
 		},
@@ -347,8 +363,9 @@ func TestChangeEmail(t *testing.T) {
 
 	// Test failure case: using the same authToken again
 	var errorResp handler.Error
-	PUT(t, Request{
-		path: "/users/email/",
+	Request(t, RequestArgs{
+		method: http.MethodPut,
+		path:   "/users/email/",
 		body: request.EmailChangeConfirm{
 			Token: confirmToken,
 		},
@@ -373,7 +390,8 @@ func TestChangeUsername(t *testing.T) {
 		}
 
 		var resp response.Status
-		PUT(t, Request{
+		Request(t, RequestArgs{
+			method:       http.MethodPut,
 			path:         "/users/username/",
 			body:         req,
 			authToken:    token,
@@ -394,7 +412,8 @@ func TestChangeUsername(t *testing.T) {
 		}
 
 		var resp handler.Error
-		PUT(t, Request{
+		Request(t, RequestArgs{
+			method:       http.MethodPut,
 			path:         "/users/username/",
 			body:         req,
 			authToken:    token,
@@ -413,7 +432,8 @@ func TestChangeUsername(t *testing.T) {
 		}
 
 		var resp handler.Error
-		PUT(t, Request{
+		Request(t, RequestArgs{
+			method:       http.MethodPut,
 			path:         "/users/username/",
 			body:         req,
 			authToken:    token,
@@ -435,7 +455,8 @@ func TestDeleteUser(t *testing.T) {
 	}
 
 	var resp response.Status
-	DELETE(t, Request{
+	Request(t, RequestArgs{
+		method:       http.MethodDelete,
 		path:         "/users/",
 		body:         req,
 		authToken:    token,
@@ -454,8 +475,9 @@ func TestDeleteUser(t *testing.T) {
 
 	// try to login
 	var signInResp handler.Error
-	POST(t, Request{
-		path: "/users/sign-in/",
+	Request(t, RequestArgs{
+		method: http.MethodPost,
+		path:   "/users/sign-in/",
 		body: request.UserSignIn{
 			Email:    user.Email,
 			Password: password,

@@ -21,7 +21,7 @@ func TestCleanupDeletedUserAccounts(t *testing.T) {
 	factory.Five(t, tt.Factory.CreateEmailConfirmation, ds.EmailConfirmation{UserID: user.ID})
 	factory.Five(t, tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{UserID: user.ID})
 
-	runJob(t, cleanupdeletedusers.Job{})
+	runJob(t, cleanupdeletedusers.NewJob())
 
 	test.AssertNotInDB(t, tt.DB, "user_sessions", test.Data{"user_id": user.ID})
 	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"user_id": user.ID})

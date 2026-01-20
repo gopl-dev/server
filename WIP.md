@@ -2,12 +2,6 @@
 
 for simplicity, I keep todo list and progress here for now
 
-- [ ] files
-  - [ ] create file
-  - [ ] update file
-  - [ ] view file
-  - [ ] delete file
-
 - [ ] books
   - [x] create book
   - [ ] update book
@@ -16,9 +10,11 @@ for simplicity, I keep todo list and progress here for now
   - [ ] delete book
   - [ ] list books
 
-  
-- [ ] Remove DEFAULT for IDs in DB, create IDs manually in app
-- [ ] Review "TODO!"
+
+- [ ] Maybe group services by entity not by action (Ask opinions)
+- [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
+- [ ] Make tools to seed data
+- [ ] Review "TODO!"s
 - [ ] enable "unused" linter 
 - [ ] Frontpage
 - [ ] RELEASE

@@ -10,7 +10,7 @@ type CreateBook struct {
 	AuthorName  string `json:"author_name"`
 	AuthorLink  string `json:"author_link"`
 	Homepage    string `json:"homepage"`
-	CoverImage  string `json:"cover_image"`
+	CoverFileID ds.ID  `json:"cover_file_id,omitzero"`
 
 	Visibility ds.EntityVisibility `json:"visibility"`
 }

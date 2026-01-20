@@ -130,10 +130,10 @@ func (r *Repo) DeleteUser(ctx context.Context, userID ds.ID) (err error) {
 	return r.delete(ctx, "users", userID)
 }
 
-// HardDeleteUser deletes a user record permanently from the database.
-// F.
+// HardDeleteUser permanently deletes a user.
+// This is not a logout. See you at the Afterlife, V.
 func (r *Repo) HardDeleteUser(ctx context.Context, userID ds.ID) (err error) {
-	_, span := r.tracer.Start(ctx, "DeleteUser")
+	_, span := r.tracer.Start(ctx, "HardDeleteUser")
 	defer span.End()
 
 	return r.hardDelete(ctx, "users", userID)

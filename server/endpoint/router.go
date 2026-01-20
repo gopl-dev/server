@@ -13,16 +13,11 @@ import (
 	"github.com/gopl-dev/server/frontend"
 	"github.com/gopl-dev/server/server/docs"
 	"github.com/gopl-dev/server/server/handler"
+	"github.com/gopl-dev/server/server/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const exactMatchSuffix = "{$}"
-
-// Handler is the function signature for a standard request handler.
-type Handler func(w http.ResponseWriter, r *http.Request)
-
-// Middleware is the function signature for a middleware.
-type Middleware func(Handler) Handler
 
 // Router manages the application's routing table, handles middleware application,
 // and delegates requests to the standard http.ServeMux.
@@ -30,17 +25,19 @@ type Router struct {
 	basePath    string
 	mux         *http.ServeMux
 	routes      map[string]string
+	mw          *middleware.Middleware
 	handler     *handler.Handler
-	middlewares []Middleware
+	middlewares []middleware.Fn
 }
 
 // NewRouter initializes and returns a new Router instance.
-func NewRouter(h *handler.Handler) *Router {
+func NewRouter(mw *middleware.Middleware, h *handler.Handler) *Router {
 	return &Router{
 		basePath:    "/",
 		mux:         http.NewServeMux(),
+		mw:          mw,
 		handler:     h,
-		middlewares: []Middleware{},
+		middlewares: []middleware.Fn{},
 	}
 }
 
@@ -56,35 +53,35 @@ func (r *Router) Group(pattern string) *Router {
 }
 
 // Use appends one or more Middleware functions to the router's middleware stack.
-func (r *Router) Use(mw ...Middleware) *Router {
+func (r *Router) Use(mw ...middleware.Fn) *Router {
 	r.middlewares = append(r.middlewares, mw...)
 
 	return r
 }
 
 // GET registers a handler for the HTTP GET method at the specified pattern relative to the base path.
-func (r *Router) GET(pattern string, handler Handler) *Router {
+func (r *Router) GET(pattern string, handler handler.Fn) *Router {
 	r.register(http.MethodGet, pattern, handler)
 
 	return r
 }
 
 // POST registers a handler for the HTTP POST method at the specified pattern relative to the base path.
-func (r *Router) POST(pattern string, handler Handler) *Router {
+func (r *Router) POST(pattern string, handler handler.Fn) *Router {
 	r.register(http.MethodPost, pattern, handler)
 
 	return r
 }
 
 // PUT registers a handler for the HTTP PUT method at the specified pattern relative to the base path.
-func (r *Router) PUT(pattern string, handler Handler) *Router {
+func (r *Router) PUT(pattern string, handler handler.Fn) *Router {
 	r.register(http.MethodPut, pattern, handler)
 
 	return r
 }
 
 // DELETE registers a handler for the HTTP DELETE method at the specified pattern relative to the base path.
-func (r *Router) DELETE(pattern string, handler Handler) *Router {
+func (r *Router) DELETE(pattern string, handler handler.Fn) *Router {
 	r.register(http.MethodDelete, pattern, handler)
 
 	return r
@@ -161,7 +158,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.mux.ServeHTTP(w, req)
 }
 
-func (r *Router) register(method, pattern string, handler Handler) {
+func (r *Router) register(method, pattern string, handler handler.Fn) {
 	for i := len(r.middlewares) - 1; i >= 0; i-- {
 		handler = r.middlewares[i](handler)
 	}

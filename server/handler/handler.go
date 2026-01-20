@@ -36,6 +36,9 @@ var (
 	ErrIDParamMustBeInt64 = app.ErrBadRequest("ID param must be positive int64")
 )
 
+// Fn is the function signature for a standard request handler.
+type Fn func(w http.ResponseWriter, r *http.Request)
+
 // Handler holds dependencies required by request handlers.
 type Handler struct {
 	service *service.Service
@@ -196,7 +199,7 @@ func (h *Request) jsonCreated(body any) {
 // jsonSuccess writes a standard HTTP 200 OK JSON response using the predefined
 // success struct.
 func (h *Request) jsonSuccess() {
-	jsonOK(h.Response, response.Success)
+	jsonSuccess(h.Response)
 }
 
 // bindJSON reads and decodes the request body as JSON into the provided object.
@@ -265,6 +268,11 @@ func jsonOK(w http.ResponseWriter, body any) {
 	}
 }
 
+// jsonSuccess writes a standard HTTP 200 OK JSON response with the provided body.
+func jsonSuccess(w http.ResponseWriter) {
+	jsonOK(w, response.Success)
+}
+
 // jsonCreated writes a standard HTTP 201 Created JSON response with the provided body.
 func jsonCreated(w http.ResponseWriter, body any) {
 	err := writeJSON(w, body, http.StatusCreated)
@@ -317,34 +325,14 @@ type Sanitizer interface {
 	Sanitize()
 }
 
-/*
-func bindID(c *gin.Context, id *int64, paramNameOpt ...string) (ok bool) {
-    name := "id"
-    if len(paramNameOpt) == 1 {
-       name = paramNameOpt[0]
-    }
+func idFromPath(r *http.Request, paramNameOpt ...string) (ds.ID, error) {
+	name := "id"
+	if len(paramNameOpt) == 1 {
+		name = paramNameOpt[0]
+	}
 
-    val := c.Param(name)
-    if val == "" {
-       abort(c, ErrIDParamMissingFromRequest)
-       return
-    }
-
-    intVal, err := strconv.ParseInt(val, 10, 64)
-    if err != nil {
-       abort(c, ErrIDParamMustBeInt64)
-       return
-    }
-
-    if intVal < 1 {
-       abort(c, ErrIDParamMustBeInt64)
-       return
-    }
-
-    *id = intVal
-    return true
+	return ds.ParseID(r.PathValue(name))
 }
-*/
 
 // copyRequestBody reads the entire request body into a byte slice,
 // and then resets the request's Body reader so it can be read again later.

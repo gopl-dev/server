@@ -1,17 +1,23 @@
 package ds
 
-import z "github.com/Oudwins/zog"
+import (
+	"context"
+
+	z "github.com/Oudwins/zog"
+)
+
+var bookCtxKey ctxKey = "book"
 
 // Book defines the data structure for a book.
 type Book struct {
 	Entity
 
+	CoverFileID ID     `json:"cover_file_id"`
 	Description string `json:"description"`
 	AuthorName  string `json:"author_name"`
 	AuthorLink  string `json:"author_link"`
 	Homepage    string `json:"homepage"`
 	ReleaseDate string `json:"release_date"`
-	CoverImage  string `json:"cover_image"`
 }
 
 // CreateRules provides the validation map used when saving a new book.
@@ -23,11 +29,26 @@ func (b *Book) CreateRules() z.Shape {
 		"AuthorLink":  z.String().Trim().URL(),
 		"Homepage":    z.String().Trim().URL().Required(),
 		"ReleaseDate": z.String().Trim().Required(),
-		"CoverImage":  z.String().Trim().URL().Required(),
 	}
 }
 
 // UpdateRules provides the validation map used when editing an existing book.
 func (b *Book) UpdateRules() z.Shape {
 	return b.CreateRules()
+}
+
+// ToContext adds the given book object to the provided context.
+func (b *Book) ToContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, bookCtxKey, b)
+}
+
+// BookFromContext attempts to retrieve book object from the context.
+func BookFromContext(ctx context.Context) *Book {
+	if v := ctx.Value(bookCtxKey); v != nil {
+		if book, ok := v.(*Book); ok {
+			return book
+		}
+	}
+
+	return nil
 }

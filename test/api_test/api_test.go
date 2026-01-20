@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,12 +18,12 @@ import (
 	"github.com/gopl-dev/server/server"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/test"
-	"github.com/logrusorgru/aurora"
+	aur "github.com/logrusorgru/aurora"
 )
 
 type Headers map[string]string
 
-type Request struct {
+type RequestArgs struct {
 	method       string
 	path         string
 	body         any
@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func makeRequest(t *testing.T, r Request) *httptest.ResponseRecorder {
+func makeRequest(t *testing.T, r RequestArgs) *httptest.ResponseRecorder {
 	t.Helper()
 	req, err := http.NewRequestWithContext(
 		context.Background(),
@@ -88,10 +88,10 @@ func makeRequest(t *testing.T, r Request) *httptest.ResponseRecorder {
 	return w
 }
 
-// Do sends given request,
+// Request sends given request,
 // asserts that status is correct
-// binds response and returns response.
-func Do(t *testing.T, req Request) *httptest.ResponseRecorder {
+// binds to response and returns httptest.ResponseRecorder (if you need more asserts).
+func Request(t *testing.T, req RequestArgs) *httptest.ResponseRecorder {
 	t.Helper()
 
 	var (
@@ -117,47 +117,8 @@ func Do(t *testing.T, req Request) *httptest.ResponseRecorder {
 	req.bodyReader = bytes.NewReader(body)
 
 	resp := makeRequest(t, req)
-	if resp.Code != req.assertStatus {
-		t.Errorf(aurora.Red("(%d) %s %s").Bold().String(), resp.Code, req.method, req.path)
 
-		if req.body != nil {
-			println(aurora.Bold("Request:").String())
-			println(string(body))
-		}
-
-		// try to bind error to struct and print it nicely
-		// otherwise print it as is
-		if responseContentType(resp) == ContentTypeJSON {
-			var respBody map[string]any
-
-			err = json.Unmarshal(resp.Body.Bytes(), &respBody)
-			if err == nil {
-				body2, err2 := json.MarshalIndent(respBody, "", "  ")
-				if err2 != nil {
-					t.Errorf("Response:\n%s", resp.Body.String())
-				} else {
-					t.Errorf("Response:\n%s", string(body2))
-				}
-			} else {
-				t.Errorf("Response:\n%s", resp.Body.String())
-			}
-		}
-
-		t.FailNow()
-		return resp
-	}
-
-	t.Logf(aurora.Green("(%d) %s %s").Bold().String(), resp.Code, req.method, req.path)
-
-	if responseContentType(resp) == ContentTypeJSON {
-		err = json.Unmarshal(resp.Body.Bytes(), &req.bindResponse)
-		if err != nil {
-			t.Log(resp.Body.String())
-			t.Fatal(err)
-		}
-	}
-
-	return resp
+	return handleResponse(t, req, resp, body)
 }
 
 func responseContentType(resp *httptest.ResponseRecorder) string {
@@ -170,94 +131,81 @@ func responseContentType(resp *httptest.ResponseRecorder) string {
 	return frags[0]
 }
 
-// POST is a wrapper for Do.
-func POST(t *testing.T, req Request) *httptest.ResponseRecorder {
-	t.Helper()
-	req.method = http.MethodPost
-	return Do(t, req)
-}
-
-// PUT is a wrapper for Do.
-func PUT(t *testing.T, req Request) *httptest.ResponseRecorder {
+// CREATE makes "create" POST request that expects 201.
+func CREATE(t *testing.T, path string, body, response any) *httptest.ResponseRecorder {
 	t.Helper()
 
-	req.method = http.MethodPut
-	return Do(t, req)
-}
-
-// PATCH is a wrapper for Do.
-func PATCH(t *testing.T, req Request) *httptest.ResponseRecorder {
-	t.Helper()
-	req.method = http.MethodPatch
-	return Do(t, req)
-}
-
-// DELETE is a wrapper for Do.
-func DELETE(t *testing.T, req Request) *httptest.ResponseRecorder {
-	t.Helper()
-	req.method = http.MethodDelete
-	return Do(t, req)
-}
-
-// GET is a wrapper for Do.
-func GET(t *testing.T, req Request) *httptest.ResponseRecorder {
-	t.Helper()
-
-	req.method = http.MethodGet
-	return Do(t, req)
-}
-
-// testCREATE makes "create" POST request that expects response type of response arg and 201 status code.
-func testCREATE(t *testing.T, path string, body, response any) *httptest.ResponseRecorder {
-	t.Helper()
-
-	req := Request{
+	req := RequestArgs{
 		path:         path,
 		body:         body,
 		bindResponse: response,
 		assertStatus: http.StatusCreated,
+		method:       http.MethodPost,
 	}
 
-	return POST(t, req)
+	return Request(t, req)
 }
 
-// testUPDATE makes "update" request.
-func testUPDATE(t *testing.T, path string, body, response any) *httptest.ResponseRecorder {
+// POST makes POST request that expects 200 by default.
+func POST(t *testing.T, path string, body, response any, assertStatusOpt ...int) *httptest.ResponseRecorder {
 	t.Helper()
 
-	req := Request{
+	assertStatus := http.StatusOK
+	if len(assertStatusOpt) == 1 {
+		assertStatus = assertStatusOpt[0]
+	}
+
+	req := RequestArgs{
+		path:         path,
+		body:         body,
+		bindResponse: response,
+		assertStatus: assertStatus,
+		method:       http.MethodPost,
+	}
+
+	return Request(t, req)
+}
+
+// UPDATE makes "PUT" request.
+func UPDATE(t *testing.T, path string, body, response any) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := RequestArgs{
 		path:         path,
 		body:         body,
 		bindResponse: response,
 		assertStatus: http.StatusOK,
+		method:       http.MethodPut,
 	}
 
-	return PUT(t, req)
+	return Request(t, req)
 }
 
-// testDELETE makes "delete" request.
-func testDELETE(t *testing.T, path string, response any) *httptest.ResponseRecorder {
+// DELETE makes "delete" request with expected defaults.
+func DELETE(t *testing.T, path string, response any) *httptest.ResponseRecorder {
 	t.Helper()
-	req := Request{
+	req := RequestArgs{
 		path:         path,
 		bindResponse: response,
 		assertStatus: http.StatusOK,
+		method:       http.MethodDelete,
 	}
 
-	return DELETE(t, req)
+	return Request(t, req)
 }
 
-// testGET makes simple "get" request.
-func testGET(t *testing.T, path string, response any) *httptest.ResponseRecorder {
+// GET makes simple "get" request that should return "response" and 200.
+func GET(t *testing.T, path string, response any) *httptest.ResponseRecorder {
 	t.Helper()
 
-	req := Request{
+	req := RequestArgs{
 		path:         path,
 		bindResponse: response,
 		assertStatus: http.StatusOK,
+		method:       http.MethodGet,
 	}
 
-	return GET(t, req)
+	return Request(t, req)
 }
 
 // testQuery makes "get" request with query params.
@@ -274,13 +222,14 @@ func testQuery(t *testing.T, path string, request, response any) *httptest.Respo
 		path += "?" + query
 	}
 
-	req := Request{
+	req := RequestArgs{
 		path:         path,
 		bindResponse: response,
 		assertStatus: http.StatusOK,
+		method:       http.MethodGet,
 	}
 
-	return GET(t, req)
+	return Request(t, req)
 }
 
 func login(t *testing.T) *ds.User {
@@ -312,8 +261,134 @@ func loginAs(t *testing.T, u *ds.User) (token string) {
 	return token
 }
 
-// Shortcut to fmt.Sprint
-// Hey, this is not laziness, this is speed ^^.
-func f(s string, args ...any) string {
-	return fmt.Sprintf(s, args...)
+type fileForm struct {
+	fields      map[string]string
+	fileField   string
+	purpose     ds.FilePurpose
+	filename    string
+	contentType string
+	file        io.Reader
+}
+
+// UploadFile sends a multipart/form-data request containing a file.
+// Since we currently have only one file upload endpoint,
+// most required params are hardcoded.
+func UploadFile(t *testing.T, form fileForm) *ds.File {
+	t.Helper()
+
+	var fileResponse ds.File
+	r := RequestArgs{
+		method:       http.MethodPost,
+		path:         "/api/files/",
+		bindResponse: &fileResponse,
+		assertStatus: http.StatusCreated,
+	}
+
+	if form.fileField == "" {
+		form.fileField = "file"
+	}
+	if form.filename == "" {
+		form.filename = "lets-test-this-out.dev"
+	}
+	if form.contentType == "" {
+		form.contentType = "application/octet-stream"
+	}
+
+	if !strings.HasSuffix(r.path, "/") {
+		r.path += "/"
+	}
+
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+
+	if form.purpose != "" {
+		if form.fields == nil {
+			form.fields = map[string]string{}
+		}
+		form.fields["purpose"] = string(form.purpose)
+	}
+
+	for k, v := range form.fields {
+		err := mw.WriteField(k, v)
+		test.CheckErr(t, err)
+	}
+
+	if form.file != nil {
+		fw, err := mw.CreateFormFile(form.fileField, form.filename)
+		test.CheckErr(t, err)
+
+		_, err = io.Copy(fw, form.file)
+		test.CheckErr(t, err)
+	}
+
+	err := mw.Close()
+	test.CheckErr(t, err)
+
+	req, err := http.NewRequestWithContext(context.Background(), r.method, r.path, &buf)
+	test.CheckErr(t, err)
+
+	boundaryCT := "multipart/form-data; boundary=" + mw.Boundary()
+	req.Header.Set("Content-Type", boundaryCT)
+	req.Header.Set("Accept", ContentTypeJSON)
+
+	for k, v := range r.headers {
+		req.Header.Set(k, v)
+	}
+
+	token := authToken
+	if r.authToken != "" {
+		token = r.authToken
+	}
+	if token != "" {
+		req.AddCookie(handler.NewSessionCookie(token))
+	}
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	_ = handleResponse(t, r, w, nil)
+
+	return &fileResponse
+}
+
+func handleResponse(t *testing.T, req RequestArgs, w *httptest.ResponseRecorder, body []byte) *httptest.ResponseRecorder {
+	t.Helper()
+
+	if w.Code != req.assertStatus {
+		t.Errorf(aur.Red("(%d) %s %s").Bold().String(), w.Code, req.method, req.path)
+
+		if len(body) > 0 {
+			println(aur.Bold("RequestArgs:").String())
+			println(string(body))
+		}
+
+		if responseContentType(w) == ContentTypeJSON {
+			var respBody map[string]any
+			err := json.Unmarshal(w.Body.Bytes(), &respBody)
+			if err == nil {
+				body2, err2 := json.MarshalIndent(respBody, "", "  ")
+				if err2 == nil {
+					t.Errorf("Response:\n%s", string(body2))
+					t.FailNow()
+					return w
+				}
+			}
+		}
+
+		t.Errorf("Response:\n%s", w.Body.String())
+		t.FailNow()
+		return w
+	}
+
+	t.Logf(aur.Green("(%d) %s %s").Bold().String(), w.Code, req.method, req.path)
+
+	if req.bindResponse != nil && responseContentType(w) == ContentTypeJSON {
+		err := json.Unmarshal(w.Body.Bytes(), req.bindResponse)
+		if err != nil {
+			t.Log(w.Body.String())
+			t.Fatal(err)
+		}
+	}
+
+	return w
 }

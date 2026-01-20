@@ -10,18 +10,21 @@ import (
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/trace"
 	"github.com/gopl-dev/server/worker/cleanup_change_email_requests"
-	cleanupdeletedusers "github.com/gopl-dev/server/worker/cleanup_deleted_users"
+	"github.com/gopl-dev/server/worker/cleanup_deleted_users"
 	"github.com/gopl-dev/server/worker/cleanup_expired_password_change_requests"
 	"github.com/gopl-dev/server/worker/cleanup_expired_user_sessions"
-	deleteunconfirmedusers "github.com/gopl-dev/server/worker/delete_unconfirmed_users"
+	"github.com/gopl-dev/server/worker/delete_temp_files"
+	"github.com/gopl-dev/server/worker/delete_unconfirmed_users"
 )
 
+// Even this junior worker has lots of jobs and I can’t land one (yet).
 var jobs = []Job{
-	cleanupexpiredpasswordchangerequests.Job{},
-	cleanupchangeemailrequests.Job{},
-	deleteunconfirmedusers.Job{},
-	cleanupexpiredusersessions.Job{},
-	cleanupdeletedusers.Job{},
+	cleanupexpiredpasswordchangerequests.NewJob(),
+	cleanupchangeemailrequests.NewJob(),
+	deleteunconfirmedusers.NewJob(),
+	cleanupexpiredusersessions.NewJob(),
+	cleanupdeletedusers.NewJob(),
+	deletetempfiles.NewJob(),
 }
 
 // Job defines the interface for a background worker job.

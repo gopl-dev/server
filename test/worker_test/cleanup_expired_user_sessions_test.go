@@ -18,7 +18,7 @@ func TestCleanupExpiredUserSessions(t *testing.T) {
 		ExpiresAt: time.Now().Add(-time.Hour),
 	})
 
-	runJob(t, cleanupexpiredusersessions.Job{})
+	runJob(t, cleanupexpiredusersessions.NewJob())
 
 	test.AssertNotInDB(t, tt.DB, "user_sessions", test.Data{
 		"user_id": user.ID,
@@ -27,7 +27,7 @@ func TestCleanupExpiredUserSessions(t *testing.T) {
 	// this one should not be deleted
 	session := tt.Factory.CreateUserSession(t)
 
-	runJob(t, cleanupchangeemailrequests.Job{})
+	runJob(t, cleanupchangeemailrequests.NewJob())
 
 	test.AssertInDB(t, tt.DB, "user_sessions", test.Data{"id": session.ID})
 }

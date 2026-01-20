@@ -13,8 +13,15 @@ templ CreateBookForm() {
                 author_link: '',
                 homepage: '',
                 release_date: '',
-                cover_image: '',
+                cover_file_id: '',
                 visibility: 'public',
+            },
+
+            // Cover upload UI state
+            coverUpload: {
+                uploading: false,
+                error: '',
+                fileName: '',
             },
 
             success: false,
@@ -26,8 +33,78 @@ templ CreateBookForm() {
                 author_link: '',
                 homepage: '',
                 release_date: '',
-                cover_image: '',
+                cover_file_id: '',
                 visibility: '',
+            },
+
+            get coverPreviewURL() {
+                if (!this.form.cover_file_id) return ''
+                return `/files/${this.form.cover_file_id}/?preview`
+            },
+
+            async uploadCover(e) {
+                this.coverUpload.error = ''
+                const file = e?.target?.files?.[0]
+                if (!file) return
+
+                this.coverUpload.uploading = true
+                this.coverUpload.fileName = file.name
+
+                try {
+                    const fd = new FormData()
+                    fd.append('file', file)
+                    fd.append('purpose', 'book-cover')
+
+                    const resp = await fetch('/api/files/', {
+                        method: 'POST',
+                        body: fd,
+                    })
+
+                    const data = await resp.json()
+
+                    if (resp.status !== 201) {
+                        this.form.cover_file_id = ''
+                        this.coverUpload.error = data?.error || 'Cover upload failed'
+                        return
+                    }
+
+                    // expects { id: "..." }
+                    this.form.cover_file_id = data.id
+                } catch (err) {
+                    this.form.cover_file_id = ''
+                    this.coverUpload.error = 'Cover upload failed'
+                } finally {
+                    this.coverUpload.uploading = false
+                }
+            },
+
+            async removeCover() {
+                this.coverUpload.error = ''
+
+                const id = this.form.cover_file_id
+                if (!id) return
+
+                try {
+                    const resp = await fetch('/api/files/'+id+'/', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+
+                    if (resp.status !== 200 && resp.status !== 204) {
+                        let msg = 'Remove failed'
+                        try {
+                            const data = await resp.json()
+                            if (data?.error) msg = data.error
+                        } catch (_) {}
+                        this.coverUpload.error = msg
+                        return
+                    }
+
+                    this.form.cover_file_id = ''
+                    this.coverUpload.fileName = ''
+                } catch (err) {
+                    this.coverUpload.error = 'Remove failed'
+                }
             },
 
             submitForm() {
@@ -39,7 +116,7 @@ templ CreateBookForm() {
                     author_link: '',
                     homepage: '',
                     release_date: '',
-                    cover_image: '',
+                    cover_file_id: '',
                     visibility: '',
                 }
 
@@ -81,8 +158,8 @@ templ CreateBookForm() {
                             if ("release_date" in ie) {
                                 this.errors.release_date = ie.release_date
                             }
-                            if ("cover_image" in ie) {
-                                this.errors.cover_image = ie.cover_image
+                            if ("cover_file_id" in ie) {
+                                this.errors.cover_file_id = ie.cover_file_id
                             }
                             if ("visibility" in ie) {
                                 this.errors.visibility = ie.visibility
@@ -95,6 +172,7 @@ templ CreateBookForm() {
         }
     }
 </script>
+
 <div class="flex flex-row justify-center">
     <div class="w-full lg:w-1/2">
         <h1 class="text-3xl pb-4">Add Book</h1>
@@ -109,66 +187,112 @@ templ CreateBookForm() {
                               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span>Book created successfully!
-                    <!-- TODO: add links: view book | add another one | my books | all books -->
+                        <!-- TODO: add links: view book | add another one | my books | all books -->
                     </span>
 
                 </div>
                 <div x-show="!success">
                     <fieldset class="fieldset">
+
+                        <!-- Cover upload -->
+                        <div class="p-2">
+                            <label class="label">
+                                <span class="label-text">Cover file</span>
+                            </label>
+
+                            <input
+                                    type="file"
+                                    accept="image/*"
+                                    class="file-input file-input-bordered w-full"
+                                    @change="uploadCover($event)"
+                                    :disabled="coverUpload.uploading"
+                            />
+
+                            <div class="text-sm opacity-70 mt-1" x-show="coverUpload.fileName !== ''">
+                                Selected: <span x-text="coverUpload.fileName"></span>
+                            </div>
+
+                            <div class="text-sm mt-1" x-show="coverUpload.uploading">
+                                Uploading...
+                            </div>
+
+                            <p class="text-red-500 mt-1" x-show="coverUpload.error !== ''" x-text="coverUpload.error"></p>
+
+                            <!-- Preview (GET /files/{id}/) -->
+                            <div class="mt-3" x-show="form.cover_file_id !== ''">
+                                <div class="text-sm opacity-70 mb-2">
+                                    Uploaded. cover_file_id: <span x-text="form.cover_file_id"></span>
+                                </div>
+
+                                <img
+                                        class="rounded-lg max-h-64"
+                                        :src="coverPreviewURL"
+                                        alt="Cover preview"
+                                />
+
+                                <div class="mt-2">
+                                    <button
+                                            type="button"
+                                            class="btn btn-outline btn-sm"
+                                            @click="removeCover()"
+                                            :disabled="coverUpload.uploading"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+
+                            <input type="hidden" name="cover_file_id" :value="form.cover_file_id">
+                        </div>
+
                         @Input(InputParams{
-                            ID: "title",
-                            Label: "Title",
-                            Model: "form.title",
-                            ErrorModel: "errors.title",
+                        ID: "title",
+                        Label: "Title",
+                        Model: "form.title",
+                        ErrorModel: "errors.title",
                         })
                         @Textarea(InputParams{
-                            ID: "description",
-                            Label: "Description",
-                            Model: "form.description",
-                            ErrorModel: "errors.description",
-                            Type: "textarea",
+                        ID: "description",
+                        Label: "Description",
+                        Model: "form.description",
+                        ErrorModel: "errors.description",
+                        Type: "textarea",
                         })
                         @Input(InputParams{
-                            ID: "author_name",
-                            Label: "Author Name",
-                            Model: "form.author_name",
-                            ErrorModel: "errors.author_name",
+                        ID: "author_name",
+                        Label: "Author Name",
+                        Model: "form.author_name",
+                        ErrorModel: "errors.author_name",
                         })
                         @Input(InputParams{
-                            ID: "author_link",
-                            Label: "Author Link",
-                            Model: "form.author_link",
-                            ErrorModel: "errors.author_link",
+                        ID: "author_link",
+                        Label: "Author Link",
+                        Model: "form.author_link",
+                        ErrorModel: "errors.author_link",
                         })
                         @Input(InputParams{
-                            ID: "homepage",
-                            Label: "Homepage",
-                            Model: "form.homepage",
-                            ErrorModel: "errors.homepage",
-                            Description: "Where to find more information about this book",
+                        ID: "homepage",
+                        Label: "Homepage",
+                        Model: "form.homepage",
+                        ErrorModel: "errors.homepage",
+                        Description: "Where to find more information about this book",
                         })
                         @Input(InputParams{
-                            ID: "release_date",
-                            Label: "Release Date",
-                            Model: "form.release_date",
-                            ErrorModel: "errors.release_date",
-                        })
-                        @Input(InputParams{
-                            ID: "cover_image",
-                            Label: "Cover Image URL",
-                            Model: "form.cover_image",
-                            ErrorModel: "errors.cover_image",
+                        ID: "release_date",
+                        Label: "Release Date",
+                        Model: "form.release_date",
+                        ErrorModel: "errors.release_date",
                         })
 
                         @Radio(RadioParams{
-                            Label: "Visibility",
-                            Model: "form.visibility",
-                            ErrorModel: "errors.visibility",
-                            Items: []RadioItem{
-                                {Label: "Public", Value: "public", Description: "Visible to everyone and indexed"},
-                                {Label: "Private", Value: "private", Description: "Visible only to you"},
-                                {Label: "Unlisted", Value: "unlisted", Description: "Accessible only via direct link"},
-                            },
+                        Label: "Visibility",
+                        Model: "form.visibility",
+                        ErrorModel: "errors.visibility",
+                        Items: []RadioItem{
+                        {Label: "Public", Value: "public", Description: "Visible to everyone and indexed"},
+                        {Label: "Private", Value: "private", Description: "Visible only to you"},
+                        {Label: "Unlisted", Value: "unlisted", Description: "Accessible only via direct link"},
+                        },
                         })
 
                         <div class="p-2">

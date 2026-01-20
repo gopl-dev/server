@@ -91,7 +91,7 @@ func (a *App) Run(name string, args ...string) error {
 	if !ok {
 		alias, ok := a.aliases[name]
 		if !ok {
-			Err("Handler '%s' not found", name)
+			Err("Command '%s' not found", name)
 			a.printSimilarCommands(name)
 			return nil
 		}
@@ -109,7 +109,8 @@ func (a *App) Run(name string, args ...string) error {
 // PromptOrRun executes the CLI either from provided command-line arguments or starts interactive mode.
 // If arguments are provided (beyond the binary name), it runs the specified command.
 // Otherwise, it enters the interactive mode.
-func (a *App) PromptOrRun(args []string) {
+func (a *App) PromptOrRun() {
+	args := os.Args
 	if len(args) > 1 {
 		// args[0] is the program name.
 		// args[1] is the command name.

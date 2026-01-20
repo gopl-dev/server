@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gopl-dev/server/app"
-	"github.com/gopl-dev/server/server/endpoint"
+	"github.com/gopl-dev/server/server/handler"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -41,7 +41,7 @@ func (rec *StatusRecorder) Write(b []byte) (int, error) {
 }
 
 // Tracing creates a new span and injects it into the request's context to propagate down the chain.
-func (mw *Middleware) Tracing(next endpoint.Handler) endpoint.Handler {
+func (mw *Middleware) Tracing(next handler.Fn) handler.Fn {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if app.Config().TracingDisabled() {
 			next(w, r)

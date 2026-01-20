@@ -12,6 +12,7 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/email"
@@ -71,6 +72,10 @@ type Data map[string]any
 // notNull is an unexported type used as a marker value within the Data map
 // to check if a database column contains a non-NULL value.
 type notNull bool
+
+func (nn notNull) String() string {
+	return "NOT NULL"
+}
 
 // NotNull is the exported constant marker value to assert that a database column
 // must not be NULL. Use it as a value in a Data map: Data{"column_name": test.NotNull}.
@@ -189,7 +194,7 @@ func AssertInDB(t *testing.T, db *app.DB, table string, data Data) {
 		println(aurora.Bold(aurora.Red("❌ Table '" + table + "' missing row with data:")).String())
 
 		for k, v := range data {
-			println("\t" + k + ": " + fmt.Sprintf("%+v", v))
+			println("\t" + k + "=" + aurora.Blue(fmt.Sprintf("%+v", v)).String())
 		}
 	}
 }
@@ -207,4 +212,14 @@ func AssertNotInDB(t *testing.T, db *app.DB, table string, data Data) {
 			println("\t" + k + ": " + fmt.Sprintf("%+v", v))
 		}
 	}
+}
+
+// AssertDeleted asserts that row with "deleted_at" is not null.
+func AssertDeleted(t *testing.T, db *app.DB, table string, id ds.ID) {
+	t.Helper()
+
+	AssertInDB(t, db, table, Data{
+		"id":         id,
+		"deleted_at": NotNull,
+	})
 }

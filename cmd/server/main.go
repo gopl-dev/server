@@ -12,12 +12,14 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/service"
+	"github.com/gopl-dev/server/file"
 	"github.com/gopl-dev/server/server"
 	"github.com/gopl-dev/server/trace"
 	"github.com/gopl-dev/server/worker"
 )
 
 func main() {
+	_ = file.Storage()
 	conf := app.Config()
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	tracer, err := trace.New(ctx)

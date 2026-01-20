@@ -12,6 +12,11 @@ import (
 // Job implements the worker.Job interface for cleaning up users with unconfirmed emails.
 type Job struct{}
 
+// NewJob ...
+func NewJob() *Job {
+	return &Job{}
+}
+
 // Name returns the unique name of the job.
 func (w Job) Name() string {
 	return "DELETE:UNCONFIRMED_USERS"

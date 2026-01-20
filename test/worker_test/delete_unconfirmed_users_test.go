@@ -15,7 +15,7 @@ func TestDeleteUnconfirmedUsers(t *testing.T) {
 		CreatedAt:      time.Now().Add(-25 * time.Hour),
 	})
 
-	runJob(t, deleteunconfirmedusers.Job{})
+	runJob(t, deleteunconfirmedusers.NewJob())
 
 	test.AssertInDB(t, tt.DB, "users", test.Data{
 		"id":              user.ID,

@@ -14,4 +14,8 @@ func (r *Router) PublicAPIEndpoints() {
 	// r.Group("books").
 	// GET("/", r.handler.FilterBooks).
 	// GET("{book_id}/", r.handler.GetBookByID)
+
+	// files
+	r.Group("files").
+		GET("{id}/", r.handler.GetFileMetadata)
 }

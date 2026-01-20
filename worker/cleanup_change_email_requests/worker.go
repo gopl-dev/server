@@ -12,6 +12,11 @@ import (
 // Job implements the worker.Job interface for cleaning up expired email change requests.
 type Job struct{}
 
+// NewJob ...
+func NewJob() *Job {
+	return &Job{}
+}
+
 // Name returns the unique name of the job.
 func (w Job) Name() string {
 	return "CLEANUP:EXPIRED_EMAIL_CHANGE_REQUESTS"

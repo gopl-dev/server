@@ -25,8 +25,8 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 	defer span.End()
 
 	in := &ConfirmEmailInput{Code: code}
-	err = Normalize(in); if
-	err != nil {
+	err = Normalize(in)
+	if err != nil {
 		return
 	}
 

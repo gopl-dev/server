@@ -17,7 +17,7 @@ func TestCleanupChangeEmailRequests(t *testing.T) {
 		ExpiresAt: time.Now().Add(-time.Hour),
 	})
 
-	runJob(t, cleanupchangeemailrequests.Job{})
+	runJob(t, cleanupchangeemailrequests.NewJob())
 
 	test.AssertNotInDB(t, tt.DB, "change_email_requests", test.Data{
 		"user_id": user.ID,

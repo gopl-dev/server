@@ -2,7 +2,11 @@
 package random
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"math/rand/v2"
 	"strings"
 
@@ -125,4 +129,50 @@ func Element[T any](slice []T) T {
 // It constructs a URL in the format: https://{10 chars}.{2 chars}/{10 chars}/.
 func URL() string {
 	return "https://" + String(10) + "." + String(2) + "/" + String(10) + "/" //nolint:mnd
+}
+
+// ImagePNG generates an in-memory PNG image and returns its encoded bytes.
+// By default, it creates a square image with random size between 100 and 500 pixels.
+// Optional arguments allow overriding the dimensions:
+//   - no arguments: random square image (w == h)
+//   - one argument: square image with given width/height
+//   - two arguments: image with explicit width and height
+//
+// The image content is a simple deterministic color gradient based on pixel
+// coordinates, useful for tests, placeholders, or fixtures.
+func ImagePNG(whOpt ...int) ([]byte, error) {
+	var w, h = Int(100, 500), Int(100, 500) //nolint:mnd
+	if len(whOpt) > 0 {
+		w = whOpt[0]
+		h = w
+		if len(whOpt) == 2 { //nolint:mnd
+			h = whOpt[1]
+		}
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+
+	for y := range h {
+		for x := range w {
+			img.Set(x, y, color.RGBA{
+				R: uint8(x % 256),       //nolint:gosec,mnd
+				G: uint8(y % 256),       //nolint:gosec,mnd
+				B: uint8((x + y) % 256), //nolint:gosec,mnd
+				A: 255,                  //nolint:mnd
+			})
+		}
+	}
+
+	var buf bytes.Buffer
+	err := png.Encode(&buf, img)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// Bool returns a pseudo-random boolean value.
+func Bool() bool {
+	return rand.IntN(2) == 1 //nolint:gosec,mnd
 }

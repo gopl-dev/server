@@ -110,8 +110,8 @@ func ErrInternal(message string) error {
 
 // ErrBadRequest is a convenience function to create a new Error with
 // the CodeBadRequest (HTTP 400) status.
-func ErrBadRequest(message string) error {
-	return NewError(CodeBadRequest, message)
+func ErrBadRequest(message string, args ...any) error {
+	return NewError(CodeBadRequest, message, args...)
 }
 
 // ErrUnauthorized is a convenience function to create a new Error with

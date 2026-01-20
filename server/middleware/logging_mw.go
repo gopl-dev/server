@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gopl-dev/server/server/endpoint"
+	"github.com/gopl-dev/server/server/handler"
 )
 
 // Logging is a middleware that logs the start time, HTTP method, and path of an incoming request,
 // and then logs the completion time and total duration after the next handler has executed.
-func (mw *Middleware) Logging(next endpoint.Handler) endpoint.Handler {
+func (mw *Middleware) Logging(next handler.Fn) handler.Fn {
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
