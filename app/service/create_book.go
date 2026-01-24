@@ -50,7 +50,7 @@ func (s *Service) CreateBook(ctx context.Context, book *ds.Book) error {
 	}
 
 	return s.db.WithTx(ctx, func(ctx context.Context) (err error) {
-		err = s.CreateEntity(ctx, &book.Entity)
+		err = s.CreateEntity(ctx, book.Entity)
 		if err != nil {
 			return
 		}

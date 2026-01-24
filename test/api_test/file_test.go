@@ -56,7 +56,8 @@ func TestUploadFile(t *testing.T) {
 }
 
 func TestGetFileMetadata(t *testing.T) {
-	f := tt.Factory.CreateFile(t)
+	f := create[ds.File](t)
+
 	var resp ds.File
 	path := fmt.Sprintf("/files/%s/", f.ID)
 	GET(t, path, &resp)
@@ -93,7 +94,7 @@ func TestDeleteFile(t *testing.T) {
 	})
 
 	t.Run("ownership violation", func(t *testing.T) {
-		f := tt.Factory.CreateFile(t) // file belongs to another (new) user
+		f := create[ds.File](t)
 		path := fmt.Sprintf("/files/%s/", f.ID)
 		var resp handler.Error
 		Request(t, RequestArgs{

@@ -51,5 +51,7 @@ func (r *Repo) CreateEntity(ctx context.Context, e *ds.Entity) error {
 		"visibility":      e.Visibility,
 		"status":          e.Status,
 		"created_at":      e.CreatedAt,
+		"updated_at":      e.UpdatedAt,
+		"deleted_at":      e.DeletedAt,
 	})
 }

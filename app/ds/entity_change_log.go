@@ -26,10 +26,15 @@ const (
 
 // EntityChangeLog records a history of actions performed on an entity for auditing purposes.
 type EntityChangeLog struct {
-	ID        ID             `json:"id"`
-	EntityID  ID             `json:"entity_id"`
-	UserID    ID             `json:"user_id"`
-	Action    Action         `json:"action"`
+	ID       ID     `json:"id"`
+	EntityID ID     `json:"entity_id"`
+	UserID   ID     `json:"user_id"`
+	Action   Action `json:"action"`
+	// Rendered action for display purpose,
+	// like "Book created", "book deleted"
+	// if few changes were made, will to be explicit:
+	// "Description of book updated", "Name and author of book was updated"
+	Name      string         `json:"name"`
 	Diff      map[string]any `json:"metadata,omitempty"`
 	CreatedAt time.Time      `json:"created_at"`
 }

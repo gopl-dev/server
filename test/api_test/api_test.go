@@ -63,10 +63,7 @@ func makeRequest(t *testing.T, r RequestArgs) *httptest.ResponseRecorder {
 	)
 	test.CheckErr(t, err)
 
-	if r.method == http.MethodPost || r.method == http.MethodPut {
-		req.Header.Set("Content-Type", ContentTypeJSON)
-	}
-
+	req.Header.Set("Content-Type", ContentTypeJSON)
 	req.Header.Set("Accept", ContentTypeJSON)
 
 	for k, v := range r.headers {
@@ -239,7 +236,7 @@ func login(t *testing.T) *ds.User {
 		return authUser
 	}
 
-	authUser = tt.Factory.CreateUser(t)
+	authUser = create[ds.User](t)
 	authToken = loginAs(t, authUser)
 
 	return authUser
@@ -396,4 +393,10 @@ func handleResponse(t *testing.T, req RequestArgs, w *httptest.ResponseRecorder,
 	}
 
 	return w
+}
+
+func create[T any](t *testing.T, override ...T) *T {
+	t.Helper()
+
+	return test.Create[T](t, tt.Factory, override...)
 }

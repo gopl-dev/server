@@ -3,6 +3,7 @@ package middleware
 import (
 	"log"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/gopl-dev/server/server/handler"
 )
@@ -15,6 +16,7 @@ func (mw *Middleware) Recovery(next handler.Fn) handler.Fn {
 			if err := recover(); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.Printf("[%s %s] Recovered from panic: %s", r.Method, r.URL.Path, err)
+				log.Println(string(debug.Stack()))
 			}
 		}()
 

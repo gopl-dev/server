@@ -83,6 +83,7 @@ func (r *Repo) CreateUser(ctx context.Context, u *ds.User) (err error) {
 		"email_confirmed": u.EmailConfirmed,
 		"password":        u.Password,
 		"created_at":      u.CreatedAt,
+		"updated_at":      u.UpdatedAt,
 		"deleted_at":      u.DeletedAt,
 	})
 

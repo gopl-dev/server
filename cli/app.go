@@ -22,7 +22,7 @@ const usageText = `
 %s CLI (Env: %s; Host: %s)
 
 Enter help to list all available commands
-Enter help [command] to show description of given command
+Enter help [command] to show description of given [command]
 `
 
 // App represents the main CLI application structure.
@@ -229,7 +229,7 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	for _, ar := range cmd.args {
 		n := ar.name
 		if !ar.required {
-			n = "[" + n + "]"
+			n = "[" + aur.Blue(n).String() + "]"
 		}
 
 		switch {

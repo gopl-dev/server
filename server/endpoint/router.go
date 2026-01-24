@@ -43,12 +43,13 @@ func NewRouter(mw *middleware.Middleware, h *handler.Handler) *Router {
 
 // Group creates a new Router instance with a base path appended to the current router's base path.
 // The new router shares the underlying http.ServeMux and middleware stack.
-func (r *Router) Group(pattern string) *Router {
+func (r *Router) Group(pattern string, mws ...middleware.Fn) *Router {
 	return &Router{
 		basePath:    path.Join(r.basePath, pattern),
 		mux:         r.mux,
 		handler:     r.handler,
-		middlewares: r.middlewares,
+		mw:          r.mw,
+		middlewares: append(r.middlewares, mws...),
 	}
 }
 

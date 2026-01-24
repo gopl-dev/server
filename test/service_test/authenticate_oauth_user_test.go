@@ -73,7 +73,7 @@ func TestAuthenticateOAuthUser(t *testing.T) {
 	// 2. New auth session should be created
 	t.Run("existing user without oauth account", func(t *testing.T) {
 		oauthUser := newUser()
-		user := tt.Factory.CreateUser(t)
+		user := create[ds.User](t)
 
 		// make sure account doesn't exist yet
 		test.AssertNotInDB(t, tt.DB, "oauth_user_accounts", test.Data{
@@ -103,8 +103,9 @@ func TestAuthenticateOAuthUser(t *testing.T) {
 	// Case: We have a user and account
 	t.Run("existing user and account", func(t *testing.T) {
 		oauthUser := newUser()
-		user := tt.Factory.CreateUser(t)
-		_ = tt.Factory.CreateOAuthUserAccount(t, ds.OAuthUserAccount{
+		user := create[ds.User](t)
+
+		create(t, ds.OAuthUserAccount{
 			UserID:         user.ID,
 			Provider:       provider.New(oauthUser.Provider),
 			ProviderUserID: oauthUser.UserID,

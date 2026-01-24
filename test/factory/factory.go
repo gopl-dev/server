@@ -2,13 +2,19 @@
 package factory
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"reflect"
-	"testing"
 	"time"
 
 	"dario.cat/mergo"
+	sq "github.com/Masterminds/squirrel"
+	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gopl-dev/server/app"
+	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
+	"github.com/jackc/pgx/v5"
 )
 
 // Factory holds dependencies required by factory methods.
@@ -22,15 +28,15 @@ func New(r *repo.Repo) *Factory {
 }
 
 func merge(dst, src any) {
-	err := mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(timeTransformer{}))
+	err := mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(mergeTransformer{}))
 	if err != nil {
 		panic(fmt.Sprintf("Unable to merge %T with %T", dst, src))
 	}
 }
 
-type timeTransformer struct{}
+type mergeTransformer struct{}
 
-func (t timeTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+func (t mergeTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
 	if typ == reflect.TypeFor[time.Time]() {
 		return func(dst, src reflect.Value) error {
 			if src.CanInterface() {
@@ -44,55 +50,89 @@ func (t timeTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Val
 			return nil
 		}
 	}
+
+	if typ == reflect.TypeFor[ds.ID]() {
+		return func(dst, src reflect.Value) error {
+			if src.CanInterface() {
+				id, ok := src.Interface().(ds.ID)
+				if ok && !id.IsNil() {
+					if dst.CanSet() {
+						dst.Set(src)
+					}
+				}
+			}
+			return nil
+		}
+	}
+
 	return nil
 }
 
-// X is a function that repeatedly executes a data creation function ('fn')
+// Batch is a function that repeatedly executes a data creation function ('createFn')
 // a specified number of times and returns a slice of pointers to the created objects.
 //
 // T is the type of the struct being created (e.g., ds.User).
 // fn is the function that creates a single instance of T (e.g., CreateUser).
 // override allows passing custom field values to override defaults in the created instances.
-func X[T any](t *testing.T, times int, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
-	t.Helper()
-
-	data := make([]*T, times)
+func Batch[T any](size int, createFn func(m ...T) (*T, error), override ...T) ([]*T, error) {
+	data := make([]*T, size)
 	for i := range data {
-		data[i] = fn(t, override...)
+		var err error
+		data[i], err = createFn(override...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return data
+	return data, nil
 }
 
 // Two is a convenience function to create exactly two instances of a data structure T.
-// It is a wrapper around X with times=2.
-func Two[T any](t *testing.T, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
-	t.Helper()
-
-	return X(t, 2, fn, override...) //nolint:mnd
+// It is a wrapper around Batch with size=2.
+func Two[T any](fn func(m ...T) (*T, error), override ...T) ([]*T, error) {
+	return Batch(2, fn, override...) //nolint:mnd
 }
 
 // Five is a convenience function to create exactly five instances of a data structure T.
-// It is a wrapper around X with times=5.
-func Five[T any](t *testing.T, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
-	t.Helper()
-
-	return X(t, 5, fn, override...) //nolint:mnd
+// It is a wrapper around Batch with size=5.
+func Five[T any](fn func(m ...T) (*T, error), override ...T) ([]*T, error) {
+	return Batch(5, fn, override...) //nolint:mnd
 }
 
 // Ten is a convenience function to create exactly ten instances of a data structure T.
-// It is a wrapper around X with times=10.
-func Ten[T any](t *testing.T, fn func(t *testing.T, m ...T) *T, override ...T) []*T {
-	t.Helper()
-
-	return X(t, 10, fn, override...) //nolint:mnd
+// It is a wrapper around Batch with size=10.
+func Ten[T any](fn func(m ...T) (*T, error), override ...T) ([]*T, error) {
+	return Batch(10, fn, override...) //nolint:mnd
 }
 
-// checkErr is a test helper function that fails the test immediately if the provided error is not nil.
-func checkErr(t *testing.T, err error) {
-	t.Helper()
+// LookupIUnique tries to find a unique value in the given table.column by repeatedly
+// querying the database with a transformed version of the input value.
+//
+// The transformFn is expected to deterministically produce a new candidate value
+// (for example, by appending a suffix or incrementing a counter) and must eventually
+// lead to a value that does not exist in the database, otherwise the function will
+// recurse indefinitely (angry emoji).
+func LookupIUnique[T any](ctx context.Context, db *app.DB,
+	table, column string, value T,
+	transformFn func(T) T) (T, error) {
+	res := new(T)
 
+	q, _, err := sq.Select(column).
+		From(table).
+		Where(sq.Eq{column: value}).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
 	if err != nil {
-		t.Fatal(err)
+		return value, err
 	}
+
+	err = pgxscan.Get(ctx, db, res, q, value)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return value, nil
+	}
+	if err != nil {
+		return value, err
+	}
+
+	return LookupIUnique[T](ctx, db, table, column, transformFn(value), transformFn)
 }

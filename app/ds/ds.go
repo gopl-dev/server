@@ -17,6 +17,14 @@ const (
 	PerPageMax = 100
 )
 
+// DataProvider exposes entity data in a generic key-value form.
+//
+// It is used to extract mutable fields of an entity for diffing,
+// change requests, and edit workflows.
+type DataProvider interface {
+	Data() map[string]any
+}
+
 // FilterDT ...
 type FilterDT struct {
 	DT   *time.Time

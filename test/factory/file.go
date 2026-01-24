@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
@@ -13,7 +12,7 @@ import (
 // NewFile ...
 func (f *Factory) NewFile(overrideOpt ...ds.File) (m *ds.File) {
 	m = &ds.File{
-		ID:          ds.NilID,
+		ID:          ds.NewID(),
 		OwnerID:     ds.NilID,
 		Name:        random.String(),
 		Path:        random.String(),
@@ -36,9 +35,7 @@ func (f *Factory) NewFile(overrideOpt ...ds.File) (m *ds.File) {
 }
 
 // CreateFile ...
-func (f *Factory) CreateFile(t *testing.T, overrideOpt ...ds.File) (m *ds.File) {
-	t.Helper()
-
+func (f *Factory) CreateFile(overrideOpt ...ds.File) (m *ds.File, err error) {
 	m = f.NewFile(overrideOpt...)
 
 	if m.ID.IsNil() {
@@ -46,11 +43,14 @@ func (f *Factory) CreateFile(t *testing.T, overrideOpt ...ds.File) (m *ds.File) 
 	}
 
 	if m.OwnerID.IsNil() {
-		m.OwnerID = f.CreateUser(t).ID
+		u, err := f.CreateUser()
+		if err != nil {
+			return nil, err
+		}
+
+		m.OwnerID = u.ID
 	}
 
-	err := f.repo.CreateFile(context.Background(), m)
-	checkErr(t, err)
-
+	err = f.repo.CreateFile(context.Background(), m)
 	return
 }

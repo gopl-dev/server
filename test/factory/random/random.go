@@ -193,3 +193,34 @@ func ImagePNG(whOpt ...int) ([]byte, error) {
 func Bool() bool {
 	return rand.IntN(2) == 1 //nolint:gosec,mnd
 }
+
+// ValOrNil returns a pointer to val or nil based on the given probability.
+// The probability is specified in percent (0–100) and defaults to 50% if omitted.
+//
+// Examples:
+//
+//	ValOrNil("hello")       // ~50% chance to return &"hello"
+//	ValOrNil("hello", 10)   // 10% chance to return &"hello"
+//	ValOrNil("hello", 100)  // always returns &"hello"
+//	ValOrNil("hello", 0)    // always returns nil
+//
+//nolint:mnd
+func ValOrNil[T any](val T, probabilityOpt ...int) *T {
+	probability := 50
+	if len(probabilityOpt) == 1 {
+		probability = probabilityOpt[0]
+	}
+
+	if probability <= 0 {
+		return nil
+	}
+	if probability >= 100 {
+		return &val
+	}
+
+	if rand.IntN(100) < probability { //nolint:gosec
+		return &val
+	}
+
+	return nil
+}

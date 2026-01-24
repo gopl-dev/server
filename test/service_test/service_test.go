@@ -17,3 +17,9 @@ func TestMain(m *testing.M) {
 	tt.Shutdown()
 	os.Exit(code)
 }
+
+func create[T any](t *testing.T, override ...T) *T {
+	t.Helper()
+
+	return test.Create[T](t, tt.Factory, override...)
+}

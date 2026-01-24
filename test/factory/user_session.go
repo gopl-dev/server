@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
@@ -26,16 +25,17 @@ func (f *Factory) NewUserSession(overrideOpt ...ds.UserSession) (m *ds.UserSessi
 }
 
 // CreateUserSession ...
-func (f *Factory) CreateUserSession(t *testing.T, overrideOpt ...ds.UserSession) (m *ds.UserSession) {
-	t.Helper()
-
+func (f *Factory) CreateUserSession(overrideOpt ...ds.UserSession) (m *ds.UserSession, err error) {
 	m = f.NewUserSession(overrideOpt...)
 	if m.UserID.IsNil() {
-		m.UserID = f.CreateUser(t).ID
+		u, err := f.CreateUser()
+		if err != nil {
+			return nil, err
+		}
+
+		m.UserID = u.ID
 	}
 
-	err := f.repo.CreateUserSession(context.Background(), m)
-	checkErr(t, err)
-
+	err = f.repo.CreateUserSession(context.Background(), m)
 	return
 }

@@ -17,12 +17,14 @@ import (
 func NewSampleCommandWithFeaturesCmd() Command {
 	return Command{
 		Name: "how_to_features",
+
 		// Alias is a shorter alternative name for the command.
 		Alias: "htf",
+
 		// Help is a list of lines shown in the help output.
 		//
-		// Framework conventions used here:
-		// - Lines before the first "{argName}:" entry describe the command.
+		// Conventions used here:
+		// - Lines before the first "{argName}:" entry describe the command itself.
 		// - A line starting with "{argName}:" begins the description for that argument.
 		// - Subsequent lines continue the same argument’s description until another "{argName}:" line appears.
 		Help: []string{

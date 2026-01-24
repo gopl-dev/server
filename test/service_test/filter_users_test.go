@@ -9,7 +9,7 @@ import (
 )
 
 func TestFilterUsers(t *testing.T) {
-	_ = tt.Factory.CreateUser(t)
+	create[ds.User](t)
 
 	_, _, err := tt.Service.FilterUsers(context.Background(), ds.UsersFilter{})
 	test.CheckErr(t, err)

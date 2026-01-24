@@ -11,6 +11,8 @@ func (r *Router) ProtectedAPIEndpoints() {
 
 	// books
 	r.POST("/books/", r.handler.CreateBook)
+	r.Group("/books/{id}/", r.mw.RequestBook).
+		GET("/edit/", r.handler.GetBookEditState)
 
 	// r.Group("/books/{book_id}/").
 	//	Use(r.mw.RequestBook)

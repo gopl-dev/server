@@ -10,17 +10,25 @@ import (
 )
 
 func TestHardDeleteUser(t *testing.T) {
-	user := tt.Factory.CreateUser(t)
-	// user sessions
-	factory.Five(t, tt.Factory.CreateUserSession, ds.UserSession{UserID: user.ID})
-	// email confirmations
-	factory.Five(t, tt.Factory.CreateEmailConfirmation, ds.EmailConfirmation{UserID: user.ID})
-	// password resets
-	factory.Five(t, tt.Factory.CreatePasswordResetToken, ds.PasswordResetToken{UserID: user.ID})
-	// change email requests
-	factory.Five(t, tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{UserID: user.ID})
+	user := create[ds.User](t)
 
-	err := tt.Service.HardDeleteUser(context.Background(), user.ID)
+	// user sessions
+	_, err := factory.Five(tt.Factory.CreateUserSession, ds.UserSession{UserID: user.ID})
+	test.CheckErr(t, err)
+
+	// email confirmations
+	_, err = factory.Five(tt.Factory.CreateEmailConfirmation, ds.EmailConfirmation{UserID: user.ID})
+	test.CheckErr(t, err)
+
+	// password resets
+	_, err = factory.Five(tt.Factory.CreatePasswordResetToken, ds.PasswordResetToken{UserID: user.ID})
+	test.CheckErr(t, err)
+
+	// change email requests
+	_, err = factory.Five(tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{UserID: user.ID})
+	test.CheckErr(t, err)
+
+	err = tt.Service.HardDeleteUser(context.Background(), user.ID)
 	test.CheckErr(t, err)
 
 	test.AssertNotInDB(t, tt.DB, "user_sessions", test.Data{"user_id": user.ID})

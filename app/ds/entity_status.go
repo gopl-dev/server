@@ -13,3 +13,10 @@ const (
 	// EntityStatusRejected means the entity failed moderation.
 	EntityStatusRejected EntityStatus = "rejected"
 )
+
+// EntityStatuses defines the list of valid entity statuses.
+var EntityStatuses = []EntityStatus{
+	EntityStatusUnderReview,
+	EntityStatusApproved,
+	EntityStatusRejected,
+}

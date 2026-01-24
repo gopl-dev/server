@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
@@ -28,17 +27,18 @@ func (f *Factory) NewEmailConfirmation(overrideOpt ...ds.EmailConfirmation) (m *
 }
 
 // CreateEmailConfirmation ...
-func (f *Factory) CreateEmailConfirmation(t *testing.T, overrideOpt ...ds.EmailConfirmation) (m *ds.EmailConfirmation) {
-	t.Helper()
-
+func (f *Factory) CreateEmailConfirmation(overrideOpt ...ds.EmailConfirmation) (m *ds.EmailConfirmation, err error) {
 	m = f.NewEmailConfirmation(overrideOpt...)
 
 	if m.UserID.IsNil() {
-		m.UserID = f.CreateUser(t).ID
+		u, err := f.CreateUser()
+		if err != nil {
+			return nil, err
+		}
+
+		m.UserID = u.ID
 	}
 
-	err := f.repo.CreateEmailConfirmation(context.Background(), m)
-	checkErr(t, err)
-
+	err = f.repo.CreateEmailConfirmation(context.Background(), m)
 	return
 }

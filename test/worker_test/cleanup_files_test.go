@@ -42,7 +42,7 @@ func TestCleanupFiles(t *testing.T) {
 			test.CheckErr(t, err)
 		}
 
-		f := tt.Factory.CreateFile(t, ds.File{
+		f := create(t, ds.File{
 			Path:        filePath,
 			PreviewPath: previewPath,
 			DeletedAt:   &deletedAt,

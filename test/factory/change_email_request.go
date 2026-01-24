@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
@@ -28,18 +27,19 @@ func (f *Factory) NewChangeEmailRequest(overrideOpt ...ds.ChangeEmailRequest) (m
 }
 
 // CreateChangeEmailRequest ...
-func (f *Factory) CreateChangeEmailRequest(t *testing.T, overrideOpt ...ds.ChangeEmailRequest) (
-	m *ds.ChangeEmailRequest) {
-	t.Helper()
-
+func (f *Factory) CreateChangeEmailRequest(overrideOpt ...ds.ChangeEmailRequest) (
+	m *ds.ChangeEmailRequest, err error) {
 	m = f.NewChangeEmailRequest(overrideOpt...)
 
 	if m.UserID.IsNil() {
-		m.UserID = f.CreateUser(t).ID
+		u, err := f.CreateUser()
+		if err != nil {
+			return nil, err
+		}
+
+		m.UserID = u.ID
 	}
 
-	err := f.repo.CreateChangeEmailRequest(context.Background(), m)
-	checkErr(t, err)
-
+	err = f.repo.CreateChangeEmailRequest(context.Background(), m)
 	return
 }

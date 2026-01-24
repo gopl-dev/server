@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
@@ -27,18 +26,19 @@ func (f *Factory) NewPasswordResetToken(overrideOpt ...ds.PasswordResetToken) (m
 }
 
 // CreatePasswordResetToken ...
-func (f *Factory) CreatePasswordResetToken(t *testing.T, overrideOpt ...ds.PasswordResetToken) (
-	m *ds.PasswordResetToken) {
-	t.Helper()
-
+func (f *Factory) CreatePasswordResetToken(overrideOpt ...ds.PasswordResetToken) (
+	m *ds.PasswordResetToken, err error) {
 	m = f.NewPasswordResetToken(overrideOpt...)
 
 	if m.UserID.IsNil() {
-		m.UserID = f.CreateUser(t).ID
+		u, err := f.CreateUser()
+		if err != nil {
+			return nil, err
+		}
+
+		m.UserID = u.ID
 	}
 
-	err := f.repo.CreatePasswordResetToken(context.Background(), m)
-	checkErr(t, err)
-
+	err = f.repo.CreatePasswordResetToken(context.Background(), m)
 	return
 }

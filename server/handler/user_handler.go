@@ -420,7 +420,7 @@ func (h *Handler) OAuthStart(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		token, err := h.service.AuthenticateOAuthUser(ctx, oauthUser)
 		if err != nil {
-			Abort(w, err)
+			Abort(w, r, err)
 			return
 		}
 
@@ -440,13 +440,13 @@ func (h *Handler) OAuthComplete(w http.ResponseWriter, r *http.Request) {
 
 	oauthUser, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 
 	token, err := h.service.AuthenticateOAuthUser(ctx, oauthUser)
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 

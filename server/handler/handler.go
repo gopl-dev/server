@@ -4,7 +4,6 @@
 package handler
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -25,6 +24,7 @@ import (
 	"github.com/gopl-dev/server/frontend"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
+	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -178,7 +178,7 @@ func (h *Request) AbortUnauthorized() {
 // Abort flags the request as aborted and writes the provided error to the response.
 func (h *Request) Abort(err error) {
 	h.aborted = true
-	Abort(h.Response, err)
+	Abort(h.Response, h.Request, err)
 }
 
 // Aborted returns true if the request lifecycle has been stopped due to an error.
@@ -334,21 +334,9 @@ func idFromPath(r *http.Request, paramNameOpt ...string) (ds.ID, error) {
 	return ds.ParseID(r.PathValue(name))
 }
 
-// copyRequestBody reads the entire request body into a byte slice,
-// and then resets the request's Body reader so it can be read again later.
-func copyRequestBody(r *http.Request) (body []byte, err error) {
-	body, err = io.ReadAll(r.Body)
-	if err != nil {
-		return
-	}
-
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
-	return
-}
-
 // Abort serializes and writes an application error (app.Error or app.InputError)
 // to the client, handling appropriate HTTP status codes and logging internal errors.
-func Abort(w http.ResponseWriter, err error) {
+func Abort(w http.ResponseWriter, r *http.Request, err error) {
 	resp := Error{
 		Code: app.CodeInternal,
 	}
@@ -375,10 +363,36 @@ func Abort(w http.ResponseWriter, err error) {
 		log.Println(string(debug.Stack()))
 	}
 
-	err = writeJSON(w, resp, resp.Code)
-	if err != nil {
-		log.Println(err)
+	if request.IsJSON(r) {
+		err = writeJSON(w, resp, resp.Code)
+		if err != nil {
+			log.Println(err)
+		}
+
+		return
 	}
+
+	var (
+		body  templ.Component
+		title string
+	)
+
+	switch resp.Code {
+	case app.CodeUnprocessable:
+		body = page.Err422(resp.Error)
+		title = "422 Unprocessable Entity"
+	case app.CodeNotFound:
+		body = page.Err404(resp.Error)
+		title = "404 Not Found"
+	default:
+		body = page.Err500(resp.Error)
+		title = "500 Internal Server Error"
+	}
+
+	renderDefaultLayout(r.Context(), w, layout.Data{
+		Title: title,
+		Body:  body,
+	})
 }
 
 // Error is the structure used for serializing and returning structured JSON error responses

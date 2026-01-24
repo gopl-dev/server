@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
@@ -28,18 +27,19 @@ func (f *Factory) NewOAuthUserAccount(overrideOpt ...ds.OAuthUserAccount) (m *ds
 }
 
 // CreateOAuthUserAccount ...
-func (f *Factory) CreateOAuthUserAccount(t *testing.T, overrideOpt ...ds.OAuthUserAccount) (
-	m *ds.OAuthUserAccount) {
-	t.Helper()
-
+func (f *Factory) CreateOAuthUserAccount(overrideOpt ...ds.OAuthUserAccount) (
+	m *ds.OAuthUserAccount, err error) {
 	m = f.NewOAuthUserAccount(overrideOpt...)
 
 	if m.UserID.IsNil() {
-		m.UserID = f.CreateUser(t).ID
+		u, err := f.CreateUser()
+		if err != nil {
+			return nil, err
+		}
+
+		m.UserID = u.ID
 	}
 
-	err := f.repo.CreateOAuthUserAccount(context.Background(), m)
-	checkErr(t, err)
-
+	err = f.repo.CreateOAuthUserAccount(context.Background(), m)
 	return
 }

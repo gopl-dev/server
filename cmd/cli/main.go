@@ -29,6 +29,7 @@ func main() {
 	if !conf.IsProductionEnv() {
 		err = cliApp.Register(
 			commands.NewResetDevEnvCmd(),
+			commands.NewSeedDataCmd(),
 		)
 		if err != nil {
 			log.Fatal(err)

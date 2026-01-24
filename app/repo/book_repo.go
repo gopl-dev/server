@@ -2,16 +2,16 @@ package repo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
 
 var (
 	// ErrBookNotFound is a sentinel error returned when book not found.
-	ErrBookNotFound = errors.New("book not found")
+	ErrBookNotFound = app.ErrNotFound("book not found")
 )
 
 // CreateBook inserts a new book record into the database.
@@ -56,10 +56,7 @@ func (r *Repo) GetBookByPublicID(ctx context.Context, publicID string) (*ds.Book
 	defer span.End()
 
 	book := new(ds.Book)
-	const query = `
-		SELECT * FROM entities e
-		JOIN books b ON e.id = b.id
-		WHERE e.public_id = $1 AND e.deleted_at IS NULL`
+	const query = `SELECT * FROM entities e JOIN books b USING (id) WHERE e.public_id = $1 AND e.deleted_at IS NULL`
 
 	err := pgxscan.Get(ctx, r.getDB(ctx), book, query, publicID)
 	if noRows(err) {

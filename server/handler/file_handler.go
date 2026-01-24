@@ -34,7 +34,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	user := ds.UserFromContext(ctx)
 	if user == nil {
-		Abort(w, app.ErrUnauthorized())
+		Abort(w, r, app.ErrUnauthorized())
 		return
 	}
 
@@ -44,16 +44,16 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(maxSize << 20) //nolint:mnd
 	if err != nil {
 		if errors.Is(err, multipart.ErrMessageTooLarge) {
-			Abort(w, app.ErrBadRequest("File too large. Max is %dMB", maxSize))
+			Abort(w, r, app.ErrBadRequest("File too large. Max is %dMB", maxSize))
 			return
 		}
-		Abort(w, app.ErrBadRequest("Invalid multipart form: %v", err))
+		Abort(w, r, app.ErrBadRequest("Invalid multipart form: %v", err))
 		return
 	}
 
 	src, header, err := r.FormFile("file")
 	if err != nil {
-		Abort(w, app.ErrBadRequest("Invalid file"))
+		Abort(w, r, app.ErrBadRequest("Invalid file"))
 		return
 	}
 	defer func() {
@@ -71,7 +71,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		File:    src,
 	})
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 //	@Success	200		{object}	response.Status
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
-//	@Router		/files/{id}/ [post]
+//	@Router		/files/{id}/ [delete]
 //	@Security	ApiKeyAuth
 func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "DeleteFile")
@@ -97,13 +97,13 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 
 	id, err := idFromPath(r)
 	if err != nil {
-		Abort(w, app.ErrBadRequest("Invalid file ID"))
+		Abort(w, r, app.ErrBadRequest("Invalid file ID"))
 		return
 	}
 
 	err = h.service.DeleteFile(ctx, id)
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 
@@ -129,13 +129,13 @@ func (h *Handler) GetFileMetadata(w http.ResponseWriter, r *http.Request) {
 
 	id, err := idFromPath(r)
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 
 	f, err := h.service.GetFileByID(ctx, id)
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 
@@ -172,13 +172,13 @@ func (h *Handler) RenderFile(w http.ResponseWriter, r *http.Request) {
 
 	id, err := idFromPath(r)
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 
 	f, err := h.service.GetFileByID(ctx, id)
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 
@@ -213,7 +213,7 @@ func (h *Handler) RenderFile(w http.ResponseWriter, r *http.Request) {
 		fh, size, err = file.Open(ctx, filePath)
 	}
 	if err != nil {
-		Abort(w, err)
+		Abort(w, r, err)
 		return
 	}
 	defer func() {

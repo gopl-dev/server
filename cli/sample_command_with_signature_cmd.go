@@ -31,39 +31,39 @@ type SampleCommandWithSignatureCmd struct {
 
 // Handle executes the command logic.
 func (cmd *SampleCommandWithSignatureCmd) Handle(_ context.Context) (err error) {
-	var a int
+	var age int
 	if cmd.Age != nil {
-		a = *cmd.Age
+		age = *cmd.Age
 	} else {
-		a = rand.Intn(121) //nolint:gosec
+		age = rand.Intn(121) //nolint:gosec
 	}
 
 	var trait string
 
 	switch {
-	case a < 0:
+	case age < 0:
 		trait = "Edge-Case-Enthusiast"
-	case a == 0:
+	case age == 0:
 		trait = "Still-Downloading"
-	case a == 1:
+	case age == 1:
 		trait = "Initial-Commit"
-	case a < 3:
+	case age < 3:
 		trait = "Unstable-Beta"
-	case a < 6:
+	case age < 6:
 		trait = "Non-Stop-Notification"
-	case a < 12:
+	case age < 12:
 		trait = "Feature-Request-Machine"
-	case a < 19:
+	case age < 19:
 		trait = "Edgy-Front-End-Framework"
-	case a < 30:
+	case age < 30:
 		trait = "Full-Stack-Dreamer"
-	case a < 50:
+	case age < 50:
 		trait = "Pure-Source-Code"
-	case a < 100:
+	case age < 100:
 		trait = "Legendary-Artifact"
-	case a < 120:
+	case age < 120:
 		trait = "Legacy-System-Maintainer"
-	case a == time.Now().Year():
+	case age == time.Now().Year():
 		trait = "Professional-QA-Boundary-Tester"
 	default:
 		trait = "Vampire-In-Disguise"

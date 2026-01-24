@@ -101,8 +101,8 @@ func TestUserSignUp(t *testing.T) {
 }
 
 func TestUserConfirmEmail(t *testing.T) {
-	ec := tt.Factory.CreateEmailConfirmation(t)
-	log := tt.Factory.CreateUserActivityLog(t, ds.UserActivityLog{
+	ec := create[ds.EmailConfirmation](t)
+	log := create(t, ds.UserActivityLog{
 		UserID:     ec.UserID,
 		ActionType: useractivity.UserRegistered,
 	})
@@ -139,7 +139,7 @@ func TestUserConfirmEmail(t *testing.T) {
 
 func TestUserSignIn(t *testing.T) {
 	password := random.String()
-	user := tt.Factory.CreateUser(t, ds.User{
+	user := create(t, ds.User{
 		Password: password,
 	})
 
@@ -162,7 +162,7 @@ func TestChangePassword(t *testing.T) {
 	oldPassword := random.String(10)
 	newPassword := random.String(10)
 
-	user := tt.Factory.CreateUser(t, ds.User{Password: oldPassword})
+	user := create(t, ds.User{Password: oldPassword})
 
 	_, token, err := tt.Service.AuthenticateUser(context.Background(), user.Email, oldPassword)
 	if err != nil {
@@ -232,7 +232,7 @@ func TestChangePassword(t *testing.T) {
 }
 
 func TestPasswordReset(t *testing.T) {
-	user := tt.Factory.CreateUser(t)
+	user := create[ds.User](t)
 
 	// 1. RequestArgs password reset
 	var reqResetResp response.Status
@@ -296,9 +296,10 @@ func TestPasswordReset(t *testing.T) {
 	})
 
 	t.Run("reset with password too short", func(t *testing.T) {
-		prt := tt.Factory.CreatePasswordResetToken(t, ds.PasswordResetToken{
+		prt := create(t, ds.PasswordResetToken{
 			UserID: user.ID,
 		})
+
 		var errorResp handler.Error
 		Request(t, RequestArgs{
 			method: http.MethodPost,
@@ -315,10 +316,9 @@ func TestPasswordReset(t *testing.T) {
 }
 
 func TestChangeEmail(t *testing.T) {
-	user := tt.Factory.CreateUser(t)
+	user := create[ds.User](t)
 	token := loginAs(t, user)
 
-	// RequestArgs email change
 	newEmail := random.Email()
 	var reqEmailChangeResp response.Status
 	Request(t, RequestArgs{
@@ -379,7 +379,8 @@ func TestChangeEmail(t *testing.T) {
 
 func TestChangeUsername(t *testing.T) {
 	password := random.String(10)
-	user := tt.Factory.CreateUser(t, ds.User{Password: password})
+	user := create(t, ds.User{Password: password})
+
 	token := loginAs(t, user)
 	newUsername := random.String(10)
 
@@ -425,7 +426,7 @@ func TestChangeUsername(t *testing.T) {
 	})
 
 	t.Run("username already taken", func(t *testing.T) {
-		otherUser := tt.Factory.CreateUser(t)
+		otherUser := create[ds.User](t)
 		req := request.ChangeUsername{
 			Username: otherUser.Username,
 			Password: password,
@@ -447,7 +448,8 @@ func TestChangeUsername(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	password := random.String(10)
-	user := tt.Factory.CreateUser(t, ds.User{Password: password})
+	user := create(t, ds.User{Password: password})
+
 	token := loginAs(t, user)
 
 	req := request.DeleteUser{

@@ -10,6 +10,7 @@ import (
 )
 
 // NewSampleCommandWithFlagsCmd creates a new command instance demonstrating flag usage.
+// Usage: how_to_flags [env] [-v] [-y].
 func NewSampleCommandWithFlagsCmd() Command {
 	return Command{
 		Name: "how_to_flags",

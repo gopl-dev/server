@@ -27,3 +27,9 @@ func runJob(t *testing.T, j worker.Job) {
 	err := j.Do(context.Background(), tt.Service, tt.DB)
 	test.CheckErr(t, err)
 }
+
+func create[T any](t *testing.T, override ...T) *T {
+	t.Helper()
+
+	return test.Create[T](t, tt.Factory, override...)
+}

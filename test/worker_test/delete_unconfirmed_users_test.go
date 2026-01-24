@@ -10,7 +10,7 @@ import (
 )
 
 func TestDeleteUnconfirmedUsers(t *testing.T) {
-	user := tt.Factory.CreateUser(t, ds.User{
+	user := create(t, ds.User{
 		EmailConfirmed: false,
 		CreatedAt:      time.Now().Add(-25 * time.Hour),
 	})

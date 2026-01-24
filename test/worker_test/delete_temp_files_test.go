@@ -11,10 +11,11 @@ import (
 )
 
 func TestDeleteTempFiles(t *testing.T) {
-	files := factory.Ten(t, tt.Factory.CreateFile, ds.File{
+	files, err := factory.Ten(tt.Factory.CreateFile, ds.File{
 		Temp:      true,
 		CreatedAt: time.Now().AddDate(0, 0, -(ds.DeleteTempFilesAfterDays + 1)),
 	})
+	test.CheckErr(t, err)
 
 	runJob(t, deletetempfiles.NewJob())
 

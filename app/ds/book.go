@@ -10,7 +10,7 @@ var bookCtxKey ctxKey = "book"
 
 // Book defines the data structure for a book.
 type Book struct {
-	Entity
+	*Entity
 
 	CoverFileID ID     `json:"cover_file_id"`
 	Description string `json:"description"`
@@ -18,6 +18,19 @@ type Book struct {
 	AuthorLink  string `json:"author_link"`
 	Homepage    string `json:"homepage"`
 	ReleaseDate string `json:"release_date"`
+}
+
+// Data returns the editable fields of the Book as a key-value map.
+func (b *Book) Data() map[string]any {
+	return map[string]any{
+		"visibility":    b.Visibility,
+		"cover_file_id": b.CoverFileID,
+		"description":   b.Description,
+		"author_name":   b.AuthorName,
+		"author_link":   b.AuthorLink,
+		"homepage":      b.Homepage,
+		"release_date":  b.ReleaseDate,
+	}
 }
 
 // CreateRules provides the validation map used when saving a new book.

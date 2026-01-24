@@ -128,3 +128,24 @@ CREATE TABLE books
     release_date  TEXT             NOT NULL,
     cover_file_id uuid REFERENCES files (id)
 );
+
+CREATE TABLE entity_change_requests
+(
+    id          UUID PRIMARY KEY NOT NULL,
+    entity_id   UUID          NOT NULL REFERENCES entities(id),
+    user_id     UUID          NOT NULL REFERENCES users(id),
+    diff        JSONB         NOT NULL,
+    message     TEXT,
+    status      TEXT NOT NULL,
+
+    reviewer_id UUID REFERENCES users(id),
+    reviewed_at TIMESTAMPTZ,
+    review_note TEXT,
+
+    created_at  TIMESTAMPTZ   NOT NULL,
+    updated_at  TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX uidx_entity_change_requests_one_pending
+    ON entity_change_requests (entity_id, user_id)
+    WHERE status = 'pending';

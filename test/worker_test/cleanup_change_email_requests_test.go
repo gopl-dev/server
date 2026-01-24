@@ -11,11 +11,13 @@ import (
 )
 
 func TestCleanupChangeEmailRequests(t *testing.T) {
-	user := tt.Factory.CreateUser(t)
-	factory.Ten(t, tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{
+	user := create[ds.User](t)
+
+	_, err := factory.Ten(tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{
 		UserID:    user.ID,
 		ExpiresAt: time.Now().Add(-time.Hour),
 	})
+	test.CheckErr(t, err)
 
 	runJob(t, cleanupchangeemailrequests.NewJob())
 
@@ -23,7 +25,7 @@ func TestCleanupChangeEmailRequests(t *testing.T) {
 		"user_id": user.ID,
 	})
 
-	req := tt.Factory.CreateChangeEmailRequest(t)
+	req := create[ds.ChangeEmailRequest](t)
 
 	runJob(t, cleanupchangeemailrequests.Job{})
 

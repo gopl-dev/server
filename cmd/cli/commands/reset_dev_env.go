@@ -37,12 +37,14 @@ func NewResetDevEnvCmd() cli.Command {
 			"-u: Username for new user",
 			"-e: Email for new user",
 			"-p: Password for new user",
+			"-ns: Do not seed data",
 		},
 		Handler: &resetDevEnvCmd{},
 	}
 }
 
 type resetDevEnvCmd struct {
+	NoSeed   bool    `arg:"-ns"`
 	Username *string `arg:"-u" default:"ognev.dev"`
 	Email    *string `arg:"-e" default:"mail@ognev.dev"`
 	Password *string `arg:"-p" default:"1"`
@@ -176,9 +178,22 @@ func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
 		return fmt.Errorf("update admins in config: %w", err)
 	}
 
-	// 5. Drop & create test DB
+	// Drop & create test DB
 	if testConf != nil {
 		err = recreateDB(testDbName)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Seed data
+	if !cmd.NoSeed {
+		fmt.Println("Seeding data...")
+		seedCmd := seedDataCmd{
+			Data:  app.Pointer("all"),
+			Count: app.Pointer(100), //nolint:mnd
+		}
+		err = seedCmd.Handle(ctx)
 		if err != nil {
 			return err
 		}

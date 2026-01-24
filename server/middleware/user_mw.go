@@ -30,7 +30,7 @@ func (mw *Middleware) ResolveUserFromCookie(next handler.Fn) handler.Fn {
 
 			err = mw.service.ProlongUserSession(ctx, session.ID)
 			if err != nil {
-				handler.Abort(w, err)
+				handler.Abort(w, r, err)
 				return
 			}
 
@@ -49,7 +49,7 @@ func (mw *Middleware) UserAuth(next handler.Fn) handler.Fn {
 		user := ds.UserFromContext(r.Context())
 		if user == nil {
 			if request.IsJSON(r) {
-				handler.Abort(w, app.ErrUnauthorized())
+				handler.Abort(w, r, app.ErrUnauthorized())
 				return
 			}
 

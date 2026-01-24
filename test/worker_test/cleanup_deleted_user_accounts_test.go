@@ -12,14 +12,21 @@ import (
 )
 
 func TestCleanupDeletedUserAccounts(t *testing.T) {
-	user := tt.Factory.CreateUser(t, ds.User{
+	user := create(t, ds.User{
 		DeletedAt: app.Pointer(time.Now().Add(-(ds.CleanupDeletedUserAfter + time.Hour))),
 	})
 
-	factory.Five(t, tt.Factory.CreateUserSession, ds.UserSession{UserID: user.ID})
-	factory.Five(t, tt.Factory.CreatePasswordResetToken, ds.PasswordResetToken{UserID: user.ID})
-	factory.Five(t, tt.Factory.CreateEmailConfirmation, ds.EmailConfirmation{UserID: user.ID})
-	factory.Five(t, tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{UserID: user.ID})
+	_, err := factory.Five(tt.Factory.CreateUserSession, ds.UserSession{UserID: user.ID})
+	test.CheckErr(t, err)
+
+	_, err = factory.Five(tt.Factory.CreatePasswordResetToken, ds.PasswordResetToken{UserID: user.ID})
+	test.CheckErr(t, err)
+
+	_, err = factory.Five(tt.Factory.CreateEmailConfirmation, ds.EmailConfirmation{UserID: user.ID})
+	test.CheckErr(t, err)
+
+	_, err = factory.Five(tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{UserID: user.ID})
+	test.CheckErr(t, err)
 
 	runJob(t, cleanupdeletedusers.NewJob())
 

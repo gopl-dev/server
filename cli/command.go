@@ -82,7 +82,7 @@ func (c *Command) cacheReflection() {
 			a.required = true
 		}
 
-		// default from tag
+		// default from tag, not required anymore
 		if def := f.Tag.Get("default"); def != "" {
 			a.defaultVal = def
 			a.required = false
@@ -110,7 +110,7 @@ func (c *Command) prepareHelp() error {
 	}
 
 	var commandLines []string
-	var currentArg *arg
+	var curArg *arg
 
 iterateHelp:
 	for _, line := range c.Help {
@@ -122,19 +122,19 @@ iterateHelp:
 		for name, ar := range argMap {
 			prefix := name + ":"
 			if strings.HasPrefix(line, prefix) {
-				currentArg = ar
-				currentArg.description = strings.TrimSpace(strings.TrimPrefix(line, prefix))
-				currentArg.help = make([]string, 0)
+				curArg = ar
+				curArg.description = strings.TrimSpace(strings.TrimPrefix(line, prefix))
+				curArg.help = make([]string, 0)
 				continue iterateHelp
 			}
 		}
 
-		if currentArg == nil {
+		if curArg == nil {
 			commandLines = append(commandLines, line)
 			continue
 		}
 
-		currentArg.help = append(currentArg.help, line)
+		curArg.help = append(curArg.help, line)
 	}
 
 	for _, a := range c.args {

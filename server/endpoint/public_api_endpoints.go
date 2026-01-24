@@ -4,6 +4,7 @@ package endpoint
 func (r *Router) PublicAPIEndpoints() {
 	r.GET("status/", r.handler.ServerStatus)
 
+	// users
 	r.Group("users").
 		POST("sign-up/", r.handler.UserSignUp).
 		POST("sign-in/", r.handler.UserSignIn).
@@ -11,9 +12,11 @@ func (r *Router) PublicAPIEndpoints() {
 		POST("password-reset-request/", r.handler.PasswordResetRequest).
 		POST("password-reset/", r.handler.PasswordResetConfirm)
 
-	// r.Group("books").
-	// GET("/", r.handler.FilterBooks).
-	// GET("{book_id}/", r.handler.GetBookByID)
+	// books
+	r.Group("books").
+		// GET("/", r.handler.FilterBooks).
+		Use(r.mw.RequestBook).
+		GET("{id}/", r.handler.GetBook)
 
 	// files
 	r.Group("files").

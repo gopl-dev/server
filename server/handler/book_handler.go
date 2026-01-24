@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
@@ -35,7 +36,7 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	book := &ds.Book{
-		Entity: ds.Entity{
+		Entity: &ds.Entity{
 			ID:            ds.NewID(),
 			OwnerID:       user.ID,
 			PreviewFileID: req.CoverFileID,
@@ -66,6 +67,68 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	res.jsonCreated(book)
 }
 
+// GetBook handles the API request for creating a new book.
+//
+//	@ID			GetBook
+//	@Summary	Get book
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		string	true	"Book ID"
+//	@Success	201		{object}	ds.Book
+//	@Failure	400		{object}	Error
+//	@Failure	401		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/{id}/ [get]
+//	@Security	ApiKeyAuth
+func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "CreateBook")
+	defer span.End()
+
+	book := ds.BookFromContext(ctx)
+	if book == nil {
+		Abort(w, r, app.ErrBadRequest("book is missing from context"))
+		return
+	}
+
+	jsonOK(w, book)
+}
+
+// GetBookEditState handles the API request for creating a new book.
+//
+//	@ID			GetBook
+//	@Summary	Get book
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		string	true	"Book ID"
+//	@Success	201		{object}	ds.Book
+//	@Failure	400		{object}	Error
+//	@Failure	401		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/{id}/ [get]
+//	@Security	ApiKeyAuth
+//
+// TODO complete this handler.
+func (h *Handler) GetBookEditState(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "GetEntityChangeRequest")
+	defer span.End()
+
+	book := ds.BookFromContext(ctx)
+	if book == nil {
+		Abort(w, r, app.ErrBadRequest("book is missing from context"))
+		return
+	}
+
+	state, err := h.service.GetEntityChangeState(ctx, book.ID, book)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	jsonOK(w, state)
+}
+
 // CreateBookView renders the static HTML page with the form for creating a new book.
 func (h *Handler) CreateBookView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "CreateBookView")
@@ -74,5 +137,22 @@ func (h *Handler) CreateBookView(w http.ResponseWriter, r *http.Request) {
 	renderDefaultLayout(ctx, w, layout.Data{
 		Title: "Add book",
 		Body:  page.CreateBookForm(),
+	})
+}
+
+// EditBookView renders the static HTML page with the form for editing existing book.
+func (h *Handler) EditBookView(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "EditBookView")
+	defer span.End()
+
+	book := ds.BookFromContext(ctx)
+	if book == nil {
+		Abort(w, r, app.ErrBadRequest("book is missing from context"))
+		return
+	}
+
+	renderDefaultLayout(ctx, w, layout.Data{
+		Title: "Edit book",
+		Body:  page.EditBookForm(book.ID.String()),
 	})
 }

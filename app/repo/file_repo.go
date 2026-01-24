@@ -62,7 +62,7 @@ func (r *Repo) GetFileByHash(ctx context.Context, hash string) (*ds.File, error)
 	ctx, span := r.tracer.Start(ctx, "GetFileByHash")
 	defer span.End()
 
-	const query = `SELECT * FROM files WHERE hash = $1 AND deleted_at IS NULL`
+	const query = `SELECT * FROM files WHERE hash = $1 AND deleted_at IS NULL LIMIT 1`
 
 	file := new(ds.File)
 	err := pgxscan.Get(ctx, r.getDB(ctx), file, query, hash)

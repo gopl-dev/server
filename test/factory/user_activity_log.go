@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app/ds"
@@ -27,13 +26,9 @@ func (f *Factory) NewUserActivityLog(overrideOpt ...ds.UserActivityLog) (m *ds.U
 }
 
 // CreateUserActivityLog ...
-func (f *Factory) CreateUserActivityLog(t *testing.T, overrideOpt ...ds.UserActivityLog) (m *ds.UserActivityLog) {
-	t.Helper()
-
+func (f *Factory) CreateUserActivityLog(overrideOpt ...ds.UserActivityLog) (m *ds.UserActivityLog, err error) {
 	m = f.NewUserActivityLog(overrideOpt...)
-
-	err := f.repo.CreateUserActivityLog(context.Background(), m)
-	checkErr(t, err)
+	err = f.repo.CreateUserActivityLog(context.Background(), m)
 
 	return
 }

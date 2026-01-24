@@ -2,7 +2,6 @@ package factory
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/gopl-dev/server/app"
@@ -14,7 +13,7 @@ import (
 // NewUser ...
 func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 	m = &ds.User{
-		ID:             ds.NilID,
+		ID:             ds.NewID(),
 		Username:       random.String(),
 		Email:          random.Email(),
 		EmailConfirmed: false,
@@ -32,9 +31,7 @@ func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 }
 
 // CreateUser ...
-func (f *Factory) CreateUser(t *testing.T, overrideOpt ...ds.User) (m *ds.User) {
-	t.Helper()
-
+func (f *Factory) CreateUser(overrideOpt ...ds.User) (m *ds.User, err error) {
 	m = f.NewUser(overrideOpt...)
 
 	password := m.Password
@@ -43,12 +40,12 @@ func (f *Factory) CreateUser(t *testing.T, overrideOpt ...ds.User) (m *ds.User) 
 	}
 
 	passwordHashBytes, err := bcrypt.GenerateFromPassword([]byte(password), app.DefaultBCryptCost)
-	checkErr(t, err)
+	if err != nil {
+		return
+	}
 
 	m.Password = string(passwordHashBytes)
 
 	err = f.repo.CreateUser(context.Background(), m)
-	checkErr(t, err)
-
 	return
 }

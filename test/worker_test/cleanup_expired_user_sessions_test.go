@@ -12,11 +12,13 @@ import (
 )
 
 func TestCleanupExpiredUserSessions(t *testing.T) {
-	user := tt.Factory.CreateUser(t)
-	factory.Ten(t, tt.Factory.CreateUserSession, ds.UserSession{
+	user := create[ds.User](t)
+
+	_, err := factory.Ten(tt.Factory.CreateUserSession, ds.UserSession{
 		UserID:    user.ID,
 		ExpiresAt: time.Now().Add(-time.Hour),
 	})
+	test.CheckErr(t, err)
 
 	runJob(t, cleanupexpiredusersessions.NewJob())
 
@@ -25,7 +27,7 @@ func TestCleanupExpiredUserSessions(t *testing.T) {
 	})
 
 	// this one should not be deleted
-	session := tt.Factory.CreateUserSession(t)
+	session := create[ds.UserSession](t)
 
 	runJob(t, cleanupchangeemailrequests.NewJob())
 
