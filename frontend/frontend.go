@@ -17,6 +17,7 @@ var AssetsFs embed.FS
 type User struct {
 	ID       ds.ID
 	Username string
+	IsAdmin  bool
 }
 
 // NewUser creates new User instance.
@@ -28,5 +29,6 @@ func NewUser(u *ds.User) *User {
 	return &User{
 		ID:       u.ID,
 		Username: u.Username,
+		IsAdmin:  u.IsAdmin,
 	}
 }

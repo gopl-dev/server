@@ -18,8 +18,8 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 	status := random.Element(ds.EntityStatuses)
 	if status == ds.EntityStatusApproved {
 		publishedAt = &createdAt
-		updatedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
-		deletedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
+		updatedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 50)
+		deletedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 25)
 	}
 
 	m = &ds.Entity{
@@ -30,7 +30,7 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 		Type:          random.Element(ds.EntityTypes),
 		Title:         fake.BookTitle(),
 		Visibility:    random.Element(ds.EntityVisibilities),
-		Status:        random.Element(ds.EntityStatuses),
+		Status:        status,
 		PublishedAt:   publishedAt,
 		CreatedAt:     createdAt,
 		UpdatedAt:     updatedAt,

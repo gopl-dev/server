@@ -60,3 +60,13 @@ func DtBetween(from, to time.Time) *FilterDT {
 		To:   &to,
 	}
 }
+
+type FilterString struct {
+	NotNull     *bool
+	NotEmpty    *bool
+	ExactMatch  *string
+	Contains    *string
+	NotContains *string
+	StartsWith  *string
+	EndsWith    *string
+}

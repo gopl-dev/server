@@ -23,4 +23,9 @@ https://github.com/swaggo/swag
 `go run ./cmd/cli/main.go rde`  
 Reset dev environment (recreate DB, apply migrations & create default user). Useful during active development when you messed with the DB or need a clean state.
 
+`go run ./cmd/cli/main.go sd`  
+Will seed data to the database. By default, it seeds all available data. You can specify an entity and a count, for example:
+`go run ./cmd/cli/main.go sd users 1000`.
+Run `go run ./cmd/cli/main.go ? sd` to see available options and a detailed description.
+
 

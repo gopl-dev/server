@@ -1,0 +1,311 @@
+package page
+
+templ FilterBooksPage() {
+<script>
+    function booksPage() {
+        return {
+            books: [],
+            loading: false,
+            error: '',
+            page: 1,
+            perPage: 10,
+            total: 0,
+            loadedOnce: false,
+
+            coverURL(fileID) {
+                return '/files/' + fileID + '/?preview'
+            },
+
+            get totalPages() {
+                return Math.max(1, Math.ceil(this.total / this.perPage))
+            },
+
+            readFromURL() {
+                const url = new URL(window.location.href)
+                const p = parseInt(url.searchParams.get('page') || '', 10)
+                if (Number.isFinite(p) && p > 0) this.page = p
+            },
+
+            writeToURL() {
+                const url = new URL(window.location.href)
+                if (this.page === 1) {
+                    url.searchParams.delete('page')
+                } else {
+                    url.searchParams.set('page', String(this.page))
+                }
+                window.history.replaceState({}, '', url.toString())
+            },
+
+            onPopState() {
+                this.readFromURL()
+                this.load(this.page, { syncURL: false, scrollTop: true })
+            },
+
+            init() {
+                this.readFromURL()
+                window.addEventListener('popstate', () => this.onPopState())
+                this.load(this.page, { syncURL: false, scrollTop: false })
+            },
+
+            scrollToTop() {
+                if (window.scrollY > 80) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                }
+            },
+
+            // ---- page buttons ----
+
+            get pageButtons() {
+                const max = this.totalPages
+                const cur = this.page
+
+                const start = Math.max(2, cur - 3)
+                const end = Math.min(max - 1, cur + 3)
+
+                const btns = []
+                for (let p = start; p <= end; p++) btns.push(p)
+                return btns
+            },
+
+            get showLeftDots() {
+                return this.pageButtons.length > 0 && this.pageButtons[0] > 2
+            },
+
+            get showRightDots() {
+                const btns = this.pageButtons
+                return btns.length > 0 && btns[btns.length - 1] < this.totalPages - 1
+            },
+
+            gotoPage(p) {
+                if (p < 1) p = 1
+                // here totalPages is already known (loadedOnce true), so clamping is fine
+                if (p > this.totalPages) p = this.totalPages
+                if (p === this.page) return
+                this.load(p, { syncURL: true, scrollTop: true })
+            },
+
+            // ---- loading ----
+
+            async load(pageOpt, opt) {
+                const options = opt || { syncURL: true, scrollTop: true }
+                if (pageOpt) this.page = pageOpt
+
+                // always clamp lower bound
+                if (this.page < 1) this.page = 1
+
+                // IMPORTANT: don't clamp upper bound before first response
+                if (this.loadedOnce && this.page > this.totalPages) {
+                    this.page = this.totalPages
+                }
+
+                if (options.scrollTop) this.scrollToTo()
+
+                this.loading = true
+                this.error = ''
+
+                try {
+                    const qs = new URLSearchParams({
+                        page: String(this.page),
+                        per_page: String(this.perPage),
+                    })
+
+                    const resp = await fetch('/api/books/?' + qs.toString(), {
+                        headers: { 'Accept': 'application/json' },
+                    })
+                    if (!resp.ok) {
+                        let msg = 'Failed to load books'
+                        try {
+                            const data = await resp.json()
+                            if (data && (data.error || data.message)) msg = data.error || data.message
+                        } catch (_) {}
+                        throw new Error(msg)
+                    }
+
+                    const payload = await resp.json()
+                    this.books = payload?.data ?? []
+                    this.total = payload?.count ?? 0
+                    this.loadedOnce = true
+
+                    // Now we can validate upper bound safely.
+                    if (this.page > this.totalPages) {
+                        this.page = this.totalPages
+                        if (options.syncURL) this.writeToURL()
+                        // reload last existing page, but don't scroll again / don't sync again
+                        return await this.load(this.page, { syncURL: false, scrollTop: false })
+                    }
+
+                    if (options.syncURL) this.writeToURL()
+                } catch (e) {
+                    this.error = e?.message ?? String(e)
+                } finally {
+                    this.loading = false
+                }
+            },
+        }
+    }
+</script>
+
+<div
+        x-data="booksPage()"
+        class="p-4"
+>
+    <div class="flex items-center justify-between pb-4">
+        <h1 class="text-3xl">Books</h1>
+        <a class="btn btn-info" href="/add-book/">Add book</a>
+    </div>
+
+    <!-- Top pagination -->
+    <div class="flex items-center justify-between mb-4">
+        <div class="text-sm text-gray-500">
+            <span x-text="'Total: ' + total"></span>
+            <span class="mx-2">•</span>
+            <span x-text="'Page ' + page + ' of ' + totalPages"></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button
+                    class="btn btn-sm"
+                    :class="page === 1 ? 'btn-active' : ''"
+                    :disabled="loading"
+                    @click="gotoPage(1)"
+            >
+                1
+            </button>
+
+            <template x-if="showLeftDots">
+                <span class="px-1 select-none">...</span>
+            </template>
+
+            <template x-for="p in pageButtons" :key="p">
+                <button
+                        class="btn btn-sm"
+                        :class="p === page ? 'btn-active' : ''"
+                        :disabled="loading"
+                        @click="gotoPage(p)"
+                        x-text="p"
+                ></button>
+            </template>
+
+            <template x-if="showRightDots">
+                <span class="px-1 select-none">...</span>
+            </template>
+
+            <template x-if="totalPages > 1">
+                <button
+                        class="btn btn-sm"
+                        :class="page === totalPages ? 'btn-active' : ''"
+                        :disabled="loading"
+                        @click="gotoPage(totalPages)"
+                        x-text="totalPages"
+                ></button>
+            </template>
+        </div>
+    </div>
+
+    <template x-if="loading">
+        <div>Loading…</div>
+    </template>
+
+    <template x-if="error">
+        <div class="text-red-600" x-text="error"></div>
+    </template>
+
+    <template x-for="b in books" :key="b.id">
+        <div class="card card-side bg-base-100 shadow-sm mb-2">
+            <template x-if="b.cover_file_id">
+                <figure>
+                    <img
+                            class="w-20 h-28 object-cover rounded bg-gray-100 shrink-0"
+                            :src="coverURL(b.cover_file_id)"
+                            :alt="b.title"
+                            width="200"
+                            loading="lazy"
+                    />
+                </figure>
+            </template>
+
+            <div class="card-body">
+                <h2 class="card-title">
+                    <a
+                            class="hover:underline link-info"
+                            :href="'/books/' + b.public_id + '/'"
+                            x-text="b.title"
+                    ></a>
+                </h2>
+
+                <span>
+						by&nbsp;
+						<template x-if="b.author_link">
+							<a
+                                    class="hover:underline"
+                                    :href="b.author_link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    x-text="b.author_name"
+                            ></a>
+						</template>
+						<template x-if="!b.author_link">
+							<span x-text="b.author_name"></span>
+						</template>
+					</span>
+
+                <template x-if="b.description">
+                    <p x-text="b.description"></p>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <template x-if="!loading && books.length === 0 && !error">
+        <div>No books found</div>
+    </template>
+
+    <!-- Bottom pagination -->
+    <div class="flex items-center justify-between mt-4">
+        <div class="text-sm text-gray-500">
+            <span x-text="'Total: ' + total"></span>
+            <span class="mx-2">•</span>
+            <span x-text="'Page ' + page + ' of ' + totalPages"></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button
+                    class="btn btn-sm"
+                    :class="page === 1 ? 'btn-active' : ''"
+                    :disabled="loading"
+                    @click="gotoPage(1)"
+            >
+                1
+            </button>
+
+            <template x-if="showLeftDots">
+                <span class="px-1 select-none">...</span>
+            </template>
+
+            <template x-for="p in pageButtons" :key="p">
+                <button
+                        class="btn btn-sm"
+                        :class="p === page ? 'btn-active' : ''"
+                        :disabled="loading"
+                        @click="gotoPage(p)"
+                        x-text="p"
+                ></button>
+            </template>
+
+            <template x-if="showRightDots">
+                <span class="px-1 select-none">...</span>
+            </template>
+
+            <template x-if="totalPages > 1">
+                <button
+                        class="btn btn-sm"
+                        :class="page === totalPages ? 'btn-active' : ''"
+                        :disabled="loading"
+                        @click="gotoPage(totalPages)"
+                        x-text="totalPages"
+                ></button>
+            </template>
+        </div>
+    </div>
+</div>
+}

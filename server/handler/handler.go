@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"reflect"
 	"runtime/debug"
 	"strconv"
@@ -405,32 +406,85 @@ type Error struct {
 }
 
 // bindQuery binds URL query parameters to fields in the 'to' struct based on the struct's 'q' tags.
+// 'to' must be a non-nil pointer to a struct.
 func bindQuery(r *http.Request, to any) {
-	query := r.URL.Query()
+	if to == nil {
+		return
+	}
 
-	val := reflect.ValueOf(to).Elem()
-	typ := val.Type()
+	v := reflect.ValueOf(to)
+	if v.Kind() != reflect.Ptr || v.IsNil() {
+		panic("bindQuery: 'to' must be a non-nil pointer to a struct")
+	}
 
-	for i := range typ.NumField() {
-		field := typ.Field(i)
+	v = v.Elem()
+	if v.Kind() != reflect.Struct {
+		panic("bindQuery: 'to' must point to a struct")
+	}
 
-		tag := field.Tag.Get("q")
+	q := r.URL.Query()
+	bindQueryToStruct(q, v)
+}
+
+// bindQueryToStruct recursively binds URL query parameters to fields of the given struct value.
+//
+// It walks all fields, and when it encounters an embedded (anonymous) struct (or pointer to struct),
+// it recurses into it. All other fields are bound by their `q` tags.
+func bindQueryToStruct(q url.Values, v reflect.Value) {
+	t := v.Type()
+
+	for i := 0; i < t.NumField(); i++ {
+		sf := t.Field(i)
+		fv := v.Field(i)
+
+		if sf.Anonymous {
+			if fv.Kind() == reflect.Struct {
+				bindQueryToStruct(q, fv)
+				continue
+			}
+
+			if fv.Kind() == reflect.Ptr && fv.Type().Elem().Kind() == reflect.Struct {
+				if fv.IsNil() {
+					if fv.CanSet() {
+						fv.Set(reflect.New(fv.Type().Elem()))
+					} else {
+						continue
+					}
+				}
+				bindQueryToStruct(q, fv.Elem())
+				continue
+			}
+
+			// If it's anonymous but not struct/*struct (can happen), treat it as a normal field below.
+		}
+
+		tag := sf.Tag.Get("q")
 		if tag == "" {
 			continue
 		}
 
-		if value, ok := query[tag]; ok && len(value) > 0 {
-			fieldVal := val.Field(i)
-			// TODO handle more types (when needed)
-			switch fieldVal.Kind() {
-			case reflect.Int:
-				intVal, err := strconv.Atoi(value[0])
-				if err == nil {
-					fieldVal.SetInt(int64(intVal))
-				}
-			case reflect.String:
-				fieldVal.SetString(value[0])
+		vals, ok := q[tag]
+		if !ok || len(vals) == 0 {
+			continue
+		}
+		s := vals[0]
+
+		if !fv.CanSet() {
+			continue
+		}
+
+		switch fv.Kind() {
+		case reflect.Int:
+			if n, err := strconv.Atoi(s); err == nil {
+				fv.SetInt(int64(n))
 			}
+		case reflect.String:
+			fv.SetString(s)
+		case reflect.Ptr:
+			if fv.Type().Elem().Kind() == reflect.String {
+				fv.Set(reflect.ValueOf(&s))
+			}
+			// TODO add more types when needed
 		}
 	}
 }

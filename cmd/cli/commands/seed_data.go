@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/cli"
@@ -26,7 +27,7 @@ func NewSeedDataCmd() cli.Command {
 		Help: []string{
 			"Seeds DB with test data",
 			"data: Data to seed",
-			fmt.Sprintf("Options: %v", seedAvailableData),
+			fmt.Sprintf("Options: %s", strings.Join(seedAvailableData, ", ")),
 			"count: Amount of data to seed",
 		},
 		Handler: &seedDataCmd{},

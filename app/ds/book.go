@@ -65,3 +65,8 @@ func BookFromContext(ctx context.Context) *Book {
 
 	return nil
 }
+
+// BooksFilter is used to filter and paginate user queries.
+type BooksFilter struct {
+	EntitiesFilter
+}

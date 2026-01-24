@@ -143,6 +143,12 @@ func (b *filterBuilder) columns(columns ...string) *filterBuilder { //nolint:unp
 	return b
 }
 
+func (b *filterBuilder) join(clause string, args ...any) *filterBuilder {
+	b.qb = b.qb.JoinClause(clause, args...)
+
+	return b
+}
+
 func (b *filterBuilder) paginate(page, perPage int) *filterBuilder {
 	if perPage <= 0 {
 		perPage = ds.PerPageDefault
@@ -234,6 +240,13 @@ func (b *filterBuilder) order(column string, direction string) *filterBuilder {
 	}
 
 	b.qb = b.qb.OrderBy(column + " " + direction)
+
+	return b
+}
+
+func (b *filterBuilder) where(column string, val any) *filterBuilder {
+	b.qb = b.qb.Where(sq.Eq{column: val})
+
 	return b
 }
 
@@ -276,6 +289,14 @@ func (b *filterBuilder) countSQL() (sql string, args []any, err error) {
 
 	lb.qb = lb.qb.RemoveColumns()
 	lb.columns("COUNT(*)")
+
+	if !lb.whereDeletedAt {
+		if lb.whereDeleted {
+			lb.qb = lb.qb.Where("deleted_at IS NOT NULL")
+		} else {
+			lb.qb = lb.qb.Where("deleted_at IS NULL")
+		}
+	}
 
 	return lb.qb.
 		RemoveLimit().

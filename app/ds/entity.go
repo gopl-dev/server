@@ -64,3 +64,18 @@ func (e *Entity) SetPublicID() {
 		e.PublicID = string(e.Type) + "_" + shortuuid.New()
 	}
 }
+
+// EntitiesFilter is used to filter entities.
+type EntitiesFilter struct {
+	Page           int
+	PerPage        int
+	WithCount      bool
+	CreatedAt      *FilterDT
+	DeletedAt      *FilterDT
+	Deleted        bool
+	Title          *FilterString
+	Visibility     []EntityVisibility
+	Status         []EntityStatus
+	OrderBy        string
+	OrderDirection string
+}

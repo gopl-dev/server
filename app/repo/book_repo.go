@@ -93,3 +93,23 @@ func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 
 	return nil
 }
+
+// FilterBooks ...
+func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Book, count int, err error) {
+	_, span := r.tracer.Start(ctx, "FilterBooks")
+	defer span.End()
+
+	count, err = r.filter("entities e").
+		join("JOIN books b USING (id)").
+		paginate(f.Page, f.PerPage).
+		createdAt(f.CreatedAt).
+		deletedAt(f.DeletedAt).
+		deleted(f.Deleted).
+		order(f.OrderBy, f.OrderDirection).
+		where("status", f.Status).
+		where("visibility", f.Visibility).
+		withCount(f.WithCount).
+		scan(ctx, &books)
+
+	return
+}

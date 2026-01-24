@@ -16,6 +16,9 @@ func (r *Router) PublicWebEndpoints() {
 	r.GET("/auth/{provider}/", r.handler.OAuthStart)
 	r.GET("/auth/{provider}/callback/", r.handler.OAuthComplete)
 
+	// books
+	r.GET("/books/", r.handler.FilterBooksView)
+
 	// files
 	r.Group("files/{id}").
 		GET("/", r.handler.RenderFile)

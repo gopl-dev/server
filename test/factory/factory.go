@@ -120,6 +120,7 @@ func LookupIUnique[T any](ctx context.Context, db *app.DB,
 	q, _, err := sq.Select(column).
 		From(table).
 		Where(sq.Eq{column: value}).
+		Limit(1).
 		PlaceholderFormat(sq.Dollar).
 		ToSql()
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/request"
+	"github.com/gopl-dev/server/server/response"
 )
 
 // CreateBook handles the API request for creating a new book.
@@ -92,6 +93,57 @@ func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonOK(w, book)
+}
+
+// FilterBooks handles the API request for creating a new book.
+//
+//	@ID			FilterBooks
+//	@Summary	Filter books
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		string	true	"Book ID"
+//	@Success	201		{object}	ds.Book
+//	@Failure	400		{object}	Error
+//	@Failure	401		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/ [get]
+//	@Security	ApiKeyAuth
+func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "FilterBooks")
+	defer span.End()
+
+	var req request.FilterBooks
+	bindQuery(r, &req)
+
+	books, count, err := h.service.FilterBooks(ctx, ds.BooksFilter{
+		EntitiesFilter: ds.EntitiesFilter{
+			Page:       req.Page,
+			PerPage:    req.PerPage,
+			WithCount:  true,
+			Status:     []ds.EntityStatus{ds.EntityStatusApproved},
+			Visibility: []ds.EntityVisibility{ds.EntityVisibilityPublic},
+		},
+	})
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	jsonOK(w, response.FilterBooks{
+		Data:  books,
+		Count: count,
+	})
+}
+
+func (h *Handler) FilterBooksView(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "FilterBooksView")
+	defer span.End()
+
+	renderDefaultLayout(ctx, w, layout.Data{
+		Title: "Books",
+		Body:  page.FilterBooksPage(),
+	})
 }
 
 // GetBookEditState handles the API request for creating a new book.
