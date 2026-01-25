@@ -53,7 +53,7 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 
 	// API endpoints
 	api := common.Group(conf.APIBasePath)
-	api.Use()
+	api.Use(mw.ServeJSON)
 
 	api.PublicAPIEndpoints()
 	api.Use(mw.UserAuth)

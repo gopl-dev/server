@@ -3,10 +3,8 @@ package test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -88,38 +86,6 @@ func CheckErr(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-// StructToQueryString converts a flat Go struct into a standard URL query string (key=value&...).
-func StructToQueryString(in any) (out string, err error) {
-	jsonBytes, err := json.Marshal(in)
-	if err != nil {
-		return
-	}
-
-	data := map[string]any{}
-
-	err = json.Unmarshal(jsonBytes, &data)
-	if err != nil {
-		return
-	}
-
-	vals := url.Values{}
-
-	for key, v := range data {
-		vSlice, ok := v.([]any)
-		if ok {
-			for _, s := range vSlice {
-				vals.Add(key, fmt.Sprintf("%v", s))
-			}
-
-			continue
-		}
-
-		vals.Add(key, fmt.Sprintf("%v", v))
-	}
-
-	return vals.Encode(), nil
 }
 
 // LoadEmailVars retrieves the template variables from the most recent email sent to the given recipient

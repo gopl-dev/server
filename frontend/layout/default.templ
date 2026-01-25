@@ -15,17 +15,21 @@ templ Default(d Data) {
 		</head>
 		<body class="bg-gray-100 font-sans w-full">
 			<div class="navbar bg-neutral text-neutral-content shadow-sm">
-				<div class="flex-1 pl-10">
-					<a class="text-white no-underline " href="/">
-						<img src="/assets/gopl.svg" alt="gopl.dev" width="60"/>
-					</a>
-				</div>
-                <div>
+                <div class="flex-none pl-10">
+                    <a class="text-white no-underline" href="/">
+                        <img src="/assets/gopl.svg" alt="gopl.dev" width="60"/>
+                    </a>
+                </div>
+
+                <div class="absolute left-1/2 -translate-x-1/2">
                     <ul class="menu menu-horizontal px-1">
-                        <li><a href="/books/">Books</a></li>
+                        <li><a href="/community/" class="border-b-2 rounded-none">COMMUNITY</a></li>
+                        <li><a href="/books/" class="border-b-2 rounded-none link-info border-info font-bold">BOOKS</a></li>
+                        <li><a href="/jobs/" class="border-b-2 rounded-none">JOBS</a></li>
                     </ul>
                 </div>
-				<div class="flex-none">
+
+                <div class="flex-none ml-auto">
 					<ul class="menu menu-horizontal px-1">
 						if d.User == nil {
 							<li><a href="/users/sign-in/">Sign in</a></li>

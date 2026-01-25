@@ -2,6 +2,8 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/server/handler"
 	"go.opentelemetry.io/otel/trace"
@@ -21,5 +23,15 @@ func New(service *service.Service, t trace.Tracer) *Middleware {
 	return &Middleware{
 		service: service,
 		tracer:  t,
+	}
+}
+
+// ServeJSON forces JSON responses for all handlers in the chain.
+// It sets the response Content-Type and marks the request context.
+func (mw *Middleware) ServeJSON(next handler.Fn) handler.Fn {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		next(w, handler.SetServerJSON(r))
 	}
 }

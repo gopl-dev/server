@@ -8,9 +8,11 @@ for simplicity, I keep todo list and progress here for now
   - [ ] review changes: accept|reject
   - [ ] view book
   - [ ] delete book
-  - [ ] list books
+  - [x] list books
 
 
+- [ ] Add topics to entities
+- [ ] Add price to book
 - [ ] Maybe group services by entity not by action (Ask opinions)
 - [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
 - [x] Make tools to seed data
@@ -37,3 +39,4 @@ Nice to have:
 - [ ] If user could see his connected AOuth accounts, connect other accounts and disconnect them
 - [ ] Rework workers so it is possible to display a list of workers, enable/disable them, see run status, last run time, logs, etc.
 - [ ] Tests for frontend
+- [ ] Render initial data on the backend (for example, when the books page is requested, render it fully and return it, instead of letting the frontend fetch data via the API).

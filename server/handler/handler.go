@@ -25,7 +25,6 @@ import (
 	"github.com/gopl-dev/server/frontend"
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
-	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -364,7 +363,7 @@ func Abort(w http.ResponseWriter, r *http.Request, err error) {
 		log.Println(string(debug.Stack()))
 	}
 
-	if request.IsJSON(r) {
+	if ShouldServeJSON(r) {
 		err = writeJSON(w, resp, resp.Code)
 		if err != nil {
 			log.Println(err)
@@ -405,7 +404,7 @@ type Error struct {
 	InputErrors map[string]string `json:"input_errors,omitempty"`
 }
 
-// bindQuery binds URL query parameters to fields in the 'to' struct based on the struct's 'q' tags.
+// bindQuery binds URL query parameters to fields in the 'to' struct based on the struct's 'url' tags.
 // 'to' must be a non-nil pointer to a struct.
 func bindQuery(r *http.Request, to any) {
 	if to == nil {
@@ -433,7 +432,7 @@ func bindQuery(r *http.Request, to any) {
 func bindQueryToStruct(q url.Values, v reflect.Value) {
 	t := v.Type()
 
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		sf := t.Field(i)
 		fv := v.Field(i)
 
@@ -454,11 +453,10 @@ func bindQueryToStruct(q url.Values, v reflect.Value) {
 				bindQueryToStruct(q, fv.Elem())
 				continue
 			}
-
-			// If it's anonymous but not struct/*struct (can happen), treat it as a normal field below.
 		}
 
-		tag := sf.Tag.Get("q")
+		tag := sf.Tag.Get("url")
+		tag = strings.Replace(tag, ",omitempty", "", 1)
 		if tag == "" {
 			continue
 		}
@@ -475,7 +473,8 @@ func bindQueryToStruct(q url.Values, v reflect.Value) {
 
 		switch fv.Kind() {
 		case reflect.Int:
-			if n, err := strconv.Atoi(s); err == nil {
+			n, err := strconv.Atoi(s)
+			if err == nil {
 				fv.SetInt(int64(n))
 			}
 		case reflect.String:
@@ -532,4 +531,20 @@ func GetSessionFromCookie(r *http.Request) string {
 	}
 
 	return ""
+}
+
+type ctxKey int
+
+const ctxServerJSON ctxKey = iota
+
+// SetServerJSON marks request context to indicate the response must be JSON.
+func SetServerJSON(r *http.Request) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), ctxServerJSON, true))
+}
+
+// ShouldServeJSON reports whether the current request must be served as JSON.
+func ShouldServeJSON(r *http.Request) bool {
+	v, ok := r.Context().Value(ctxServerJSON).(bool)
+
+	return ok && v
 }

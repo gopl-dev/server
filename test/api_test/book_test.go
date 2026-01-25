@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/server/request"
+	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
+	"github.com/gopl-dev/server/test/factory"
 	"github.com/gopl-dev/server/test/factory/random"
 )
 
@@ -102,5 +105,41 @@ func TestCreateBook_WithCover(t *testing.T) {
 	test.AssertInDB(t, tt.DB, "files", test.Data{
 		"id":   cover.ID,
 		"temp": false,
+	})
+}
+
+func TestFilterBooks(t *testing.T) {
+	login(t)
+
+	_, err := factory.Ten(tt.Factory.CreateBook, ds.Book{
+		Entity: &ds.Entity{
+			Status:     ds.EntityStatusApproved,
+			Visibility: ds.EntityVisibilityPublic,
+			DeletedAt:  nil,
+		},
+	})
+	test.CheckErr(t, err)
+
+	req := Query{
+		Path: "books",
+		Params: request.FilterEntities{
+			Page:    1,
+			PerPage: 2,
+		},
+	}
+
+	var resp response.FilterBooks
+	GET(t, req, &resp)
+
+	assert.Equal(t, 2, len(resp.Data))
+
+	t.Run("pagination", func(t *testing.T) {
+		req.Params = request.FilterEntities{
+			Page:    2,
+			PerPage: 3,
+		}
+
+		GET(t, req, &resp)
+		assert.Equal(t, 3, len(resp.Data))
 	})
 }

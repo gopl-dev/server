@@ -8,8 +8,6 @@ package component
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-// https://heroicons.com/solid
-
 var icons = map[string]templ.Component{
 	"bug":      IconBug(),
 	"user":     IconUser(),

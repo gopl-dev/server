@@ -7,7 +7,6 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/server/handler"
-	"github.com/gopl-dev/server/server/request"
 )
 
 // ResolveUserFromCookie is a middleware that attempts to find a user's session token
@@ -48,7 +47,7 @@ func (mw *Middleware) UserAuth(next handler.Fn) handler.Fn {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ds.UserFromContext(r.Context())
 		if user == nil {
-			if request.IsJSON(r) {
+			if handler.ShouldServeJSON(r) {
 				handler.Abort(w, r, app.ErrUnauthorized())
 				return
 			}

@@ -15,12 +15,7 @@ type CreateBook struct {
 	Visibility ds.EntityVisibility `json:"visibility"`
 }
 
-type FilterEntities struct {
-	Page    int     `json:"page" q:"page"`
-	PerPage int     `json:"per_page" q:"per_page"`
-	Search  *string `json:"search" q:"search"`
-}
-
+// FilterBooks defines filtering options specific to books.
 type FilterBooks struct {
 	FilterEntities
 }

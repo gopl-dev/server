@@ -48,6 +48,15 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 func (f *Factory) CreateEntity(overrideOpt ...ds.Entity) (m *ds.Entity, err error) {
 	m = f.NewEntity(overrideOpt...)
 
+	if m.OwnerID.IsNil() {
+		_, err := f.CreateUser()
+		if err != nil {
+			return nil, err
+		}
+
+		m.OwnerID = m.ID
+	}
+
 	err = f.repo.CreateEntity(context.Background(), m)
 	return
 }

@@ -125,6 +125,7 @@ type filterBuilder struct {
 	whereDeleted   bool
 	whereDeletedAt bool
 	selectCount    bool
+	orderBy        string
 }
 
 func (r *Repo) filter(table string) *filterBuilder {
@@ -239,8 +240,7 @@ func (b *filterBuilder) order(column string, direction string) *filterBuilder {
 		direction = "DESC"
 	}
 
-	b.qb = b.qb.OrderBy(column + " " + direction)
-
+	b.orderBy = column + " " + direction
 	return b
 }
 
@@ -257,8 +257,8 @@ func (b *filterBuilder) apply(filters ...filterFn) *filterBuilder {
 	return b
 }
 
-func (b *filterBuilder) withCount(flag bool) *filterBuilder {
-	b.selectCount = flag
+func (b *filterBuilder) withCount(ok bool) *filterBuilder {
+	b.selectCount = ok
 	return b
 }
 
@@ -268,12 +268,10 @@ func (b *filterBuilder) sql() (sql string, args []any, err error) {
 		lb.columns("*")
 	}
 
-	if !lb.whereDeletedAt {
-		if lb.whereDeleted {
-			lb.qb = lb.qb.Where("deleted_at IS NOT NULL")
-		} else {
-			lb.qb = lb.qb.Where("deleted_at IS NULL")
-		}
+	lb.applyDeletedFilter()
+
+	if lb.orderBy != "" {
+		lb.qb = lb.qb.OrderBy(b.orderBy)
 	}
 
 	sql, args, err = lb.qb.ToSql()
@@ -290,19 +288,31 @@ func (b *filterBuilder) countSQL() (sql string, args []any, err error) {
 	lb.qb = lb.qb.RemoveColumns()
 	lb.columns("COUNT(*)")
 
-	if !lb.whereDeletedAt {
-		if lb.whereDeleted {
-			lb.qb = lb.qb.Where("deleted_at IS NOT NULL")
-		} else {
-			lb.qb = lb.qb.Where("deleted_at IS NULL")
-		}
-	}
+	lb.applyDeletedFilter()
 
 	return lb.qb.
 		RemoveLimit().
 		RemoveOffset().
-		OrderBy().
 		ToSql()
+}
+
+// applyDeletedFilter applies a default soft-delete condition.
+//
+// If no explicit `deleted_at` condition was added earlier, it applies a filter
+// based on the `whereDeleted` flag:
+//   - when `whereDeleted` is true, only soft-deleted records are selected
+//     (`deleted_at IS NOT NULL`);
+//   - otherwise, only non-deleted records are selected
+//     (`deleted_at IS NULL`).
+func (b *filterBuilder) applyDeletedFilter() {
+	if !b.whereDeletedAt {
+		if b.whereDeleted {
+			b.qb = b.qb.Where("deleted_at IS NOT NULL")
+			return
+		}
+
+		b.qb = b.qb.Where("deleted_at IS NULL")
+	}
 }
 
 func (b *filterBuilder) scan(ctx context.Context, desc any) (count int, err error) {

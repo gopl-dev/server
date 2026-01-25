@@ -102,10 +102,10 @@ func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		string	true	"Book ID"
-//	@Success	201		{object}	ds.Book
+//	@Param		params	query		request.FilterBooks			false	"Query parameters"
+//	@Success	200		{object}	response.FilterBooks
 //	@Failure	400		{object}	Error
-//	@Failure	401		{object}	Error
+//	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
 //	@Router		/books/ [get]
 //	@Security	ApiKeyAuth
@@ -118,11 +118,13 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 
 	books, count, err := h.service.FilterBooks(ctx, ds.BooksFilter{
 		EntitiesFilter: ds.EntitiesFilter{
-			Page:       req.Page,
-			PerPage:    req.PerPage,
-			WithCount:  true,
-			Status:     []ds.EntityStatus{ds.EntityStatusApproved},
-			Visibility: []ds.EntityVisibility{ds.EntityVisibilityPublic},
+			Page:           req.Page,
+			PerPage:        req.PerPage,
+			WithCount:      true,
+			Status:         []ds.EntityStatus{ds.EntityStatusApproved},
+			Visibility:     []ds.EntityVisibility{ds.EntityVisibilityPublic},
+			OrderBy:        "created_at",
+			OrderDirection: "desc",
 		},
 	})
 	if err != nil {
@@ -136,6 +138,7 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// FilterBooksView ...
 func (h *Handler) FilterBooksView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "FilterBooksView")
 	defer span.End()

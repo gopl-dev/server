@@ -121,7 +121,7 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 //	@Success	200		{object}	ds.File
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
-//	@Router		/files/{id}/ [post]
+//	@Router		/files/{id}/ [get]
 //	@Security	ApiKeyAuth
 func (h *Handler) GetFileMetadata(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "GetFileMetadata")

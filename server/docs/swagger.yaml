@@ -180,6 +180,15 @@ definitions:
       username:
         type: string
     type: object
+  response.FilterBooks:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/ds.Book'
+        type: array
+    type: object
   response.Status:
     properties:
       success:
@@ -198,6 +207,44 @@ info:
   contact: {}
 paths:
   /books/:
+    get:
+      consumes:
+      - application/json
+      operationId: FilterBooks
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: per_page
+        type: integer
+      - in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.FilterBooks'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Filter books
+      tags:
+      - books
     post:
       consumes:
       - application/json
@@ -231,6 +278,41 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Create a new book
+      tags:
+      - books
+  /books/{id}/:
+    get:
+      consumes:
+      - application/json
+      operationId: GetBook
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ds.Book'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get book
       tags:
       - books
   /files/:
@@ -274,6 +356,36 @@ paths:
       tags:
       - files
   /files/{id}/:
+    delete:
+      consumes:
+      - application/json
+      operationId: DeleteFile
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Status'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete file
+      tags:
+      - files
     post:
       consumes:
       - application/json

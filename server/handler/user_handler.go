@@ -161,7 +161,7 @@ func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if request.IsJSON(r) {
+	if ShouldServeJSON(r) {
 		jsonOK(w, response.Success)
 		return
 	}

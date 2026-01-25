@@ -81,7 +81,7 @@ func Default(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></head><body class=\"bg-gray-100 font-sans w-full\"><div class=\"navbar bg-neutral text-neutral-content shadow-sm\"><div class=\"flex-1 pl-10\"><a class=\"text-white no-underline \" href=\"/\"><img src=\"/assets/gopl.svg\" alt=\"gopl.dev\" width=\"60\"></a></div><div><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/books/\">Books</a></li></ul></div><div class=\"flex-none\"><ul class=\"menu menu-horizontal px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></head><body class=\"bg-gray-100 font-sans w-full\"><div class=\"navbar bg-neutral text-neutral-content shadow-sm\"><div class=\"flex-none pl-10\"><a class=\"text-white no-underline\" href=\"/\"><img src=\"/assets/gopl.svg\" alt=\"gopl.dev\" width=\"60\"></a></div><div class=\"absolute left-1/2 -translate-x-1/2\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/community/\" class=\"border-b-2 rounded-none\">COMMUNITY</a></li><li><a href=\"/books/\" class=\"border-b-2 rounded-none link-info border-info font-bold\">BOOKS</a></li><li><a href=\"/jobs/\" class=\"border-b-2 rounded-none\">JOBS</a></li></ul></div><div class=\"flex-none ml-auto\"><ul class=\"menu menu-horizontal px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -98,7 +98,7 @@ func Default(d Data) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(d.User.Username)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/layout/default.templ`, Line: 40, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/layout/default.templ`, Line: 44, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {

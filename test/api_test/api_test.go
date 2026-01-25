@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-querystring/query"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/session"
 	"github.com/gopl-dev/server/server"
@@ -192,35 +193,21 @@ func DELETE(t *testing.T, path string, response any) *httptest.ResponseRecorder 
 }
 
 // GET makes simple "get" request that should return "response" and 200.
-func GET(t *testing.T, path string, response any) *httptest.ResponseRecorder {
+func GET(t *testing.T, path any, response any) *httptest.ResponseRecorder {
 	t.Helper()
 
-	req := RequestArgs{
-		path:         path,
-		bindResponse: response,
-		assertStatus: http.StatusOK,
-		method:       http.MethodGet,
-	}
-
-	return Request(t, req)
-}
-
-// testQuery makes "get" request with query params.
-func testQuery(t *testing.T, path string, request, response any) *httptest.ResponseRecorder {
-	t.Helper()
-	query, err := test.StructToQueryString(request)
-	test.CheckErr(t, err)
-
-	if !strings.HasSuffix(path, "/") {
-		path += "/"
-	}
-
-	if query != "" {
-		path += "?" + query
+	var url string
+	switch v := path.(type) {
+	case string:
+		url = v
+	case Query:
+		url = v.String(t)
+	default:
+		t.Fatalf("unknown path type: %T", v)
 	}
 
 	req := RequestArgs{
-		path:         path,
+		path:         url,
 		bindResponse: response,
 		assertStatus: http.StatusOK,
 		method:       http.MethodGet,
@@ -399,4 +386,29 @@ func create[T any](t *testing.T, override ...T) *T {
 	t.Helper()
 
 	return test.Create[T](t, tt.Factory, override...)
+}
+
+type Query struct {
+	Path   string
+	Params any
+}
+
+func (q Query) String(t *testing.T) string {
+	t.Helper()
+
+	v, err := query.Values(q.Params)
+	test.CheckErr(t, err)
+
+	res := q.Path
+	params := v.Encode()
+
+	if !strings.HasSuffix(res, "/") {
+		res += "/"
+	}
+
+	if params != "" {
+		res += "?" + params
+	}
+
+	return res
 }

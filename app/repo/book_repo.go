@@ -39,7 +39,7 @@ func (r *Repo) GetBookByID(ctx context.Context, id ds.ID) (*ds.Book, error) {
 	book := new(ds.Book)
 	const query = `
 		SELECT * FROM entities e
-		JOIN books b ON e.id = b.id
+		JOIN books b USING (id)
 		WHERE e.id = $1 AND e.deleted_at IS NULL`
 
 	err := pgxscan.Get(ctx, r.getDB(ctx), book, query, id)

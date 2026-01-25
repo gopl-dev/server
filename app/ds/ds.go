@@ -61,6 +61,7 @@ func DtBetween(from, to time.Time) *FilterDT {
 	}
 }
 
+// FilterString defines options for filtering string-type data.
 type FilterString struct {
 	NotNull     *bool
 	NotEmpty    *bool

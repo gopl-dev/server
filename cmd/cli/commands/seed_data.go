@@ -27,7 +27,7 @@ func NewSeedDataCmd() cli.Command {
 		Help: []string{
 			"Seeds DB with test data",
 			"data: Data to seed",
-			fmt.Sprintf("Options: %s", strings.Join(seedAvailableData, ", ")),
+			"Options: " + strings.Join(seedAvailableData, ", "),
 			"count: Amount of data to seed",
 		},
 		Handler: &seedDataCmd{},
