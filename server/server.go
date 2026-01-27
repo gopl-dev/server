@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/server/endpoint"
@@ -66,24 +64,6 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 		ReadTimeout:  RWTimeout,
 		WriteTimeout: RWTimeout,
 	}
-}
-
-func corsConfig() gin.HandlerFunc { // TODO review
-	conf := cors.Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders: []string{
-			"Origin",
-			"Content-Length",
-			"Content-Type",
-			"Authorization",
-			"X-Client",
-		},
-		AllowCredentials: false,
-		// MaxAge:           24 * time.Hour,
-	}
-
-	return cors.New(conf)
 }
 
 func registerOAuthProviders() {

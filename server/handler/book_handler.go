@@ -171,6 +171,23 @@ func (h *Handler) FilterBooksView(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetBookView ...
+func (h *Handler) GetBookView(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "GetBookView")
+	defer span.End()
+
+	book := ds.BookFromContext(ctx)
+	if book == nil {
+		Abort(w, r, app.ErrBadRequest("book is missing from context"))
+		return
+	}
+
+	renderDefaultLayout(ctx, w, layout.Data{
+		Title: book.Title,
+		Body:  page.ViewBookPage(book),
+	})
+}
+
 // GetBookEditState return state of book changes for current user
 //
 //	@ID			GetBookEditState

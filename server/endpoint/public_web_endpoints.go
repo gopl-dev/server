@@ -18,6 +18,8 @@ func (r *Router) PublicWebEndpoints() {
 
 	// books
 	r.GET("/books/", r.handler.FilterBooksView)
+	r.Group("/books/{id}/", r.mw.RequestBook).
+		GET("/", r.handler.GetBookView)
 
 	// files
 	r.Group("files/{id}").

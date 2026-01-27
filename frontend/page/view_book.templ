@@ -1,0 +1,47 @@
+package page
+
+import "github.com/gopl-dev/server/app/ds"
+
+templ ViewBookPage(book *ds.Book) {
+<div class="max-w-6xl mx-auto px-4">
+    <div class="flex flex-col md:flex-row gap-8">
+
+        <!-- основной контент -->
+        <div class="flex-1 prose">
+            <h1>{ book.Title }</h1>
+
+            <h3 class="text-2xl">
+                by
+                if book.AuthorLink != "" {
+                <a href={book.AuthorLink}>{ book.AuthorName }</a>
+                } else {
+                { book.AuthorName }
+                }
+            </h3>
+
+            <div class="grid grid-cols-2 gap-4 not-prose">
+                <h4>Published { book.ReleaseDate }</h4>
+
+                if book.Homepage != "" {
+                <h4 class="text-right">
+                    <a href={book.Homepage} class="link link-primary">Homepage</a>
+                </h4>
+                }
+            </div>
+
+            <p>{ book.Description }</p>
+            <p><a href={ "/edit-book/" + book.PublicID } class="link-info">Edit ...</a></p>
+        </div>
+
+        <!-- обложка справа -->
+        if !book.CoverFileID.IsNil() {
+        <div class="shrink-0">
+            <img
+                    src={ "/files/" + book.CoverFileID.String() }
+            width="300"
+            />
+        </div>
+        }
+    </div>
+</div>
+}
