@@ -19,7 +19,6 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 	if status == ds.EntityStatusApproved {
 		publishedAt = &createdAt
 		updatedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 50)
-		deletedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 25)
 	}
 
 	m = &ds.Entity{

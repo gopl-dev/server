@@ -80,6 +80,20 @@ func (r *Repo) insert(ctx context.Context, table string, values data) (err error
 	return
 }
 
+func (r *Repo) update(ctx context.Context, id ds.ID, table string, values data) (err error) {
+	sql, args, err := sq.Update(table).
+		SetMap(values).
+		Where("id = ?", id).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+	if err != nil {
+		return
+	}
+
+	_, err = r.getDB(ctx).Exec(ctx, sql, args...)
+	return
+}
+
 // delete performs a soft delete by setting the deleted_at timestamp to the current time.
 // It marks a record as deleted without actually removing it from the database.
 func (r *Repo) delete(ctx context.Context, table string, id ds.ID) (err error) {

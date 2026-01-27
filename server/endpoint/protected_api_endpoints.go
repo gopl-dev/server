@@ -12,6 +12,7 @@ func (r *Router) ProtectedAPIEndpoints() {
 	// books
 	r.POST("/books/", r.handler.CreateBook)
 	r.Group("/books/{id}/", r.mw.RequestBook).
+		PUT("/", r.handler.UpdateBook).
 		GET("/edit/", r.handler.GetBookEditState)
 
 	// files

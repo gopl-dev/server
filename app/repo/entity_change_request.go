@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app/ds"
@@ -21,4 +22,48 @@ func (r *Repo) FindPendingEntityChangeRequest(ctx context.Context, entityID, use
 	}
 
 	return req, err
+}
+
+// CreateEntityChangeRequest creates a new entity change request record.
+func (r *Repo) CreateEntityChangeRequest(ctx context.Context, m *ds.EntityChangeRequest) error {
+	ctx, span := r.tracer.Start(ctx, "CreateEntityChangeRequest")
+	defer span.End()
+
+	err := r.insert(ctx, "entity_change_requests", data{
+		"id":          m.ID,
+		"entity_id":   m.EntityID,
+		"user_id":     m.UserID,
+		"status":      m.Status,
+		"diff":        m.Diff,
+		"message":     m.Message,
+		"revision":    m.Revision,
+		"reviewer_id": m.ReviewerID,
+		"reviewed_at": m.ReviewedAt,
+		"review_note": m.ReviewNote,
+		"created_at":  m.CreatedAt,
+		"updated_at":  m.UpdatedAt,
+	})
+	if err != nil {
+		return fmt.Errorf("create entity change request: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateEntityChangeRequest updates an existing entity change request record.
+func (r *Repo) UpdateEntityChangeRequest(ctx context.Context, m *ds.EntityChangeRequest) error {
+	ctx, span := r.tracer.Start(ctx, "UpdateEntityChangeRequest")
+	defer span.End()
+
+	err := r.update(ctx, m.ID, "entity_change_requests", data{
+		"diff":       m.Diff,
+		"message":    m.Message,
+		"revision":   m.Revision,
+		"updated_at": m.UpdatedAt,
+	})
+	if err != nil {
+		return fmt.Errorf("update entity change request: %w", err)
+	}
+
+	return nil
 }

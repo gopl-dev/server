@@ -28,6 +28,7 @@ import (
 	"github.com/gopl-dev/server/test/factory"
 	"github.com/gopl-dev/server/test/factory/random"
 	"github.com/gopl-dev/server/trace"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var (
@@ -193,4 +194,18 @@ func (s *Seed) bucket(key string) *idBucket {
 	}
 
 	return b
+}
+
+func isUniqueViolation(err error) (column string, ok bool) {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return
+	}
+
+	// 23505 = unique_violation
+	if pgErr.Code != "23505" {
+		return
+	}
+
+	return pgErr.ColumnName, true
 }

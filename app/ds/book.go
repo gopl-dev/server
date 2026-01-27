@@ -23,6 +23,7 @@ type Book struct {
 // Data returns the editable fields of the Book as a key-value map.
 func (b *Book) Data() map[string]any {
 	return map[string]any{
+		"title":         b.Title,
 		"visibility":    b.Visibility,
 		"cover_file_id": b.CoverFileID,
 		"description":   b.Description,

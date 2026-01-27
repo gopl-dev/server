@@ -108,7 +108,7 @@ func Ten[T any](fn func(m ...T) (*T, error), override ...T) ([]*T, error) {
 // LookupIUnique tries to find a unique value in the given table.column by repeatedly
 // querying the database with a transformed version of the input value.
 //
-// The transformFn is expected to deterministically produce a new candidate value
+// The transformFn is expected to produce a new candidate value
 // (for example, by appending a suffix or incrementing a counter) and must eventually
 // lead to a value that does not exist in the database, otherwise the function will
 // recurse indefinitely (angry emoji).

@@ -85,7 +85,7 @@ func createMethodFor[T any]() (reflect.Method, error) {
 }
 
 // Create invokes the corresponding Create{Model} method on factory.Factory,
-// where Model is inferred from the generic type T.
+// where Model is inferred from T.
 //
 // Optional overrideOpt values are forwarded as variadic arguments to the
 // underlying factory method. The test fails immediately on any error.

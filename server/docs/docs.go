@@ -77,6 +77,61 @@ const docTemplate = `{
                     }
                 }
             },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Update book",
+                "operationId": "UpdateBook",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateBook"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.UpdateBook"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -188,6 +243,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/books/{id}/edit/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Get book for editing",
+                "operationId": "GetBookEditState",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/service.EntityChange"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/files/": {
             "post": {
                 "security": [
@@ -252,7 +362,7 @@ const docTemplate = `{
             }
         },
         "/files/{id}/": {
-            "post": {
+            "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -1116,6 +1226,35 @@ const docTemplate = `{
                 }
             }
         },
+        "request.UpdateBook": {
+            "type": "object",
+            "properties": {
+                "author_link": {
+                    "type": "string"
+                },
+                "author_name": {
+                    "type": "string"
+                },
+                "cover_file_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "release_date": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/ds.EntityVisibility"
+                }
+            }
+        },
         "request.UserSignIn": {
             "type": "object",
             "properties": {
@@ -1145,9 +1284,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "count": {
+                    "description": "Count is the total number of matching books.",
                     "type": "integer"
                 },
                 "data": {
+                    "description": "Data is the list of books for the current page.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ds.Book"
@@ -1163,6 +1304,14 @@ const docTemplate = `{
                 }
             }
         },
+        "response.UpdateBook": {
+            "type": "object",
+            "properties": {
+                "revision": {
+                    "type": "integer"
+                }
+            }
+        },
         "response.UserSignIn": {
             "type": "object",
             "properties": {
@@ -1173,6 +1322,24 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.EntityChange": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "id": {
+                    "type": "string"
+                },
+                "revision": {
+                    "type": "integer"
+                },
+                "revision_date": {
                     "type": "string"
                 }
             }

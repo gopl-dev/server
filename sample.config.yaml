@@ -19,11 +19,6 @@ app:
   # - release: Production environment where the app is live and handling real operations.
   env: dev
 
-content:
-  clone_url: "https://github.com/gopl-dev/content.git"
-  repo_secret: "abc"
-  local_dir: "~/projects/gopl-content"
-
 # Server configuration
 server:
   # Hostname or IP address the server will bind to.

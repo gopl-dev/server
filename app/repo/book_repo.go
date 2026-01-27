@@ -71,22 +71,14 @@ func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 	_, span := r.tracer.Start(ctx, "UpdateBook")
 	defer span.End()
 
-	const updateEntitySQL = `
-		UPDATE entities 
-		SET public_id = $1, title = $2, visibility = $3, updated_at = NOW() 
-		WHERE id = $4`
-
-	const updateBookSQL = `
-		UPDATE books 
-		SET description = $1, author_name = $2 
-		WHERE id = $3`
-
-	err := r.exec(ctx, updateEntitySQL, b.PublicID, b.Title, b.Visibility, b.ID)
-	if err != nil {
-		return fmt.Errorf("update entity: %w", err)
-	}
-
-	err = r.exec(ctx, updateBookSQL, b.Description, b.AuthorName)
+	err := r.update(ctx, b.ID, "books", data{
+		"cover_file_id": b.CoverFileID,
+		"description":   b.Description,
+		"author_name":   b.AuthorName,
+		"author_link":   b.AuthorLink,
+		"homepage":      b.Homepage,
+		"release_date":  b.ReleaseDate,
+	})
 	if err != nil {
 		return fmt.Errorf("update book: %w", err)
 	}

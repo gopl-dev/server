@@ -164,6 +164,25 @@ definitions:
       email:
         type: string
     type: object
+  request.UpdateBook:
+    properties:
+      author_link:
+        type: string
+      author_name:
+        type: string
+      cover_file_id:
+        type: string
+      description:
+        type: string
+      homepage:
+        type: string
+      release_date:
+        type: string
+      title:
+        type: string
+      visibility:
+        $ref: '#/definitions/ds.EntityVisibility'
+    type: object
   request.UserSignIn:
     properties:
       email:
@@ -183,8 +202,10 @@ definitions:
   response.FilterBooks:
     properties:
       count:
+        description: Count is the total number of matching books.
         type: integer
       data:
+        description: Data is the list of books for the current page.
         items:
           $ref: '#/definitions/ds.Book'
         type: array
@@ -194,6 +215,11 @@ definitions:
       success:
         type: boolean
     type: object
+  response.UpdateBook:
+    properties:
+      revision:
+        type: integer
+    type: object
   response.UserSignIn:
     properties:
       id:
@@ -201,6 +227,18 @@ definitions:
       token:
         type: string
       username:
+        type: string
+    type: object
+  service.EntityChange:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      revision:
+        type: integer
+      revision_date:
         type: string
     type: object
 info:
@@ -280,6 +318,41 @@ paths:
       summary: Create a new book
       tags:
       - books
+    put:
+      consumes:
+      - application/json
+      operationId: UpdateBook
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateBook'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UpdateBook'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update book
+      tags:
+      - books
   /books/{id}/:
     get:
       consumes:
@@ -313,6 +386,41 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get book
+      tags:
+      - books
+  /books/{id}/edit/:
+    get:
+      consumes:
+      - application/json
+      operationId: GetBookEditState
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/service.EntityChange'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get book for editing
       tags:
       - books
   /files/:
@@ -386,7 +494,7 @@ paths:
       summary: Delete file
       tags:
       - files
-    post:
+    get:
       consumes:
       - application/json
       operationId: GetFileMetadata

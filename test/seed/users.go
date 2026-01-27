@@ -10,6 +10,7 @@ import (
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/test/factory"
 	"github.com/gopl-dev/server/test/factory/random"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,14 +23,14 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 		return fmt.Errorf("seed users: %w", ErrInvalidCount)
 	}
 
-	uniqueUsername := func() (string, error) {
-		return factory.LookupIUnique(ctx, s.db, "users", "username", fake.Username(), func(s string) string {
+	uniqueUsername := func(from string) (string, error) {
+		return factory.LookupIUnique(ctx, s.db, "users", "username", from, func(s string) string {
 			return s + "." + random.String(5)
 		})
 	}
 
-	uniqueEmail := func() (string, error) {
-		return factory.LookupIUnique(ctx, s.db, "users", "email", fake.Email(), func(s string) string {
+	uniqueEmail := func(from string) (string, error) {
+		return factory.LookupIUnique(ctx, s.db, "users", "email", from, func(s string) string {
 			return random.String(5) + "." + s
 		})
 	}
@@ -38,32 +39,59 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 
 	for range count {
 		eg.Go(func() error {
-			email, err := uniqueEmail()
-			if err != nil {
-				return err
-			}
-
-			username, err := uniqueUsername()
-			if err != nil {
-				return err
-			}
-
 			createdAt := fake.DateRange(time.Now().AddDate(0, -12, 0), time.Now())
 			updatedAt := random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
 			deletedAt := random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
 
-			_, err = s.factory.CreateUser(ds.User{
-				Username:       username,
-				Email:          email,
+			u := ds.User{
+				Username:       fake.Username(),
+				Email:          fake.Email(),
 				EmailConfirmed: random.Bool(),
 				CreatedAt:      createdAt,
 				UpdatedAt:      updatedAt,
 				DeletedAt:      deletedAt,
-			})
+			}
+
+		createUser:
+			_, err = s.factory.CreateUser(u)
+			if column, ok := isUniqueViolation(err); ok {
+				switch column {
+				case "username":
+					u.Username, err = uniqueUsername(u.Username)
+					if err != nil {
+						return err
+					}
+				case "email":
+					u.Email, err = uniqueEmail(u.Email)
+					if err != nil {
+						return err
+					}
+				default:
+					return err
+				}
+
+				goto createUser
+			}
 
 			return err
 		})
 	}
 
-	return eg.Wait()
+	err = eg.Wait()
+	if err != nil {
+		return
+	}
+
+	// make sure one Book.PublicID is just "test",
+	// so we can easily do manual tests
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte("test"), bcrypt.MinCost)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(ctx, "UPDATE users SET username='test', email='test@test.com', email_confirmed=true, deleted_at=NULL, password=$1 WHERE id=(SELECT id FROM users ORDER BY RANDOM() LIMIT 1)", string(passwordHash))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

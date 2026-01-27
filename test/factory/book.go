@@ -20,8 +20,14 @@ func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 	}
 
 	if len(overrideOpt) == 1 {
-		merge(m, overrideOpt[0])
-		merge(m.Entity, overrideOpt[0].Entity)
+		o := overrideOpt[0]
+		merge(m, o)
+
+		if o.Entity == nil {
+			o.Entity = &ds.Entity{}
+		} else {
+			merge(m.Entity, o.Entity)
+		}
 	}
 
 	return

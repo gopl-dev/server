@@ -4,7 +4,7 @@ for simplicity, I keep todo list and progress here for now
 
 - [ ] books
   - [x] create book
-  - [ ] update book
+  - [x] update book
   - [ ] review changes: accept|reject
   - [ ] view book
   - [ ] delete book
@@ -23,12 +23,14 @@ for simplicity, I keep todo list and progress here for now
 ---
 
 NEXT:
+- [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
 - [ ] Jobs
 - [ ] Events
 - [ ] Improve user profile
-- [ ] Comments
-- [ ] Likes
+- [ ] Internal notifications
+- [ ] Entity comments
+- [ ] Entity likes
 - [ ] Offline mode
 
 

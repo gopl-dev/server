@@ -11,6 +11,7 @@ import (
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/file"
 	"github.com/gopl-dev/server/test/factory"
+	"github.com/gopl-dev/server/test/factory/random"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -24,8 +25,8 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 		return fmt.Errorf("seed books: %w", ErrInvalidCount)
 	}
 
-	uniqueSlug := func(name string) (string, error) {
-		return factory.LookupIUnique(ctx, s.db, "entities", "public_id", app.Slug(name), func(s string) string {
+	uniqueSlug := func(from string) (string, error) {
+		return factory.LookupIUnique(ctx, s.db, "entities", "public_id", from, func(s string) string {
 			return s + "-" + fake.UrlSlug(1)
 		})
 	}
@@ -35,11 +36,6 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 	for range count {
 		eg.Go(func() error {
 			title := fake.BookTitle()
-
-			slug, err := uniqueSlug(title)
-			if err != nil {
-				return err
-			}
 
 			ownerID, err := s.RandomUserID(ctx)
 			if err != nil {
@@ -65,15 +61,26 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 
 			e := s.factory.NewEntity(ds.Entity{
 				Title:         title,
-				PublicID:      slug,
+				PublicID:      app.Slug(title),
 				OwnerID:       ownerID,
 				PreviewFileID: cover.ID,
+				DeletedAt:     random.ValOrNil(fake.DateRange(time.Now().AddDate(0, -12, -25), time.Now()), 20),
 			})
 
+		createBook:
 			_, err = s.factory.CreateBook(ds.Book{
 				Entity:      e,
 				CoverFileID: cover.ID,
 			})
+			if _, ok := isUniqueViolation(err); ok {
+				newID, err := uniqueSlug(e.PublicID)
+				if err != nil {
+					return err
+				}
+				e.PublicID = newID
+				goto createBook
+			}
+
 			return err
 		})
 	}

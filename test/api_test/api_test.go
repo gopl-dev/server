@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -345,6 +346,7 @@ func handleResponse(t *testing.T, req RequestArgs, w *httptest.ResponseRecorder,
 
 	if w.Code != req.assertStatus {
 		t.Errorf(aur.Red("(%d) %s %s").Bold().String(), w.Code, req.method, req.path)
+		t.Errorf(aur.Red("Expecting %d got %d").String(), req.assertStatus, w.Code)
 
 		if len(body) > 0 {
 			println(aur.Bold("RequestArgs:").String())
@@ -411,4 +413,9 @@ func (q Query) String(t *testing.T) string {
 	}
 
 	return res
+}
+
+// forgive me, mother.
+func pf(path string, args ...any) string {
+	return fmt.Sprintf(path, args...)
 }

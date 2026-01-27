@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
@@ -36,28 +35,8 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book := &ds.Book{
-		Entity: &ds.Entity{
-			ID:            ds.NewID(),
-			OwnerID:       user.ID,
-			PreviewFileID: req.CoverFileID,
-			Type:          ds.EntityTypeBook,
-			PublicID:      "",
-			Title:         req.Title,
-			Visibility:    req.Visibility,
-			Status:        ds.EntityStatusUnderReview,
-			PublishedAt:   nil,
-			CreatedAt:     time.Now(),
-			UpdatedAt:     nil,
-			DeletedAt:     nil,
-		},
-		Description: req.Description,
-		AuthorName:  req.AuthorName,
-		AuthorLink:  req.AuthorLink,
-		Homepage:    req.Homepage,
-		ReleaseDate: req.ReleaseDate,
-		CoverFileID: req.CoverFileID,
-	}
+	book := req.ToBook()
+	book.OwnerID = user.ID
 
 	err := h.service.CreateBook(ctx, book)
 	if err != nil {
@@ -66,6 +45,49 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res.jsonCreated(book)
+}
+
+// UpdateBook handles the API request for updating book.
+//
+//	@ID			UpdateBook
+//	@Summary	Update book
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		request.UpdateBook	true	"Request body"
+//	@Success	200		{object}	response.UpdateBook
+//	@Failure	400		{object}	Error
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/ [put]
+//	@Security	ApiKeyAuth
+func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "UpdateBook")
+	defer span.End()
+
+	var req request.UpdateBook
+	_, res := handleAuthorizedJSON(w, r, &req)
+	if res.Aborted() {
+		return
+	}
+
+	id, err := idFromPath(r)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	book := req.ToBook()
+
+	revision, err := h.service.UpdateBook(ctx, id, book)
+	if err != nil {
+		res.Abort(err)
+		return
+	}
+
+	res.jsonOK(response.UpdateBook{
+		Revision: revision,
+	})
 }
 
 // GetBook handles the API request for creating a new book.
@@ -149,22 +171,20 @@ func (h *Handler) FilterBooksView(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetBookEditState handles the API request for creating a new book.
+// GetBookEditState return state of book changes for current user
 //
-//	@ID			GetBook
-//	@Summary	Get book
+//	@ID			GetBookEditState
+//	@Summary	Get book for editing
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
 //	@Param		id	path		string	true	"Book ID"
-//	@Success	201		{object}	ds.Book
+//	@Success	201		{object}	service.EntityChange
 //	@Failure	400		{object}	Error
 //	@Failure	401		{object}	Error
 //	@Failure	500		{object}	Error
-//	@Router		/books/{id}/ [get]
+//	@Router		/books/{id}/edit/ [get]
 //	@Security	ApiKeyAuth
-//
-// TODO complete this handler.
 func (h *Handler) GetBookEditState(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "GetEntityChangeRequest")
 	defer span.End()

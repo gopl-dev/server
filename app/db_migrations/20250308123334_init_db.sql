@@ -96,7 +96,7 @@ CREATE TABLE files
 CREATE TABLE entities
 (
     id              uuid PRIMARY KEY NOT NULL,
-    public_id       TEXT             NOT NULL,
+    public_id       TEXT  UNIQUE     NOT NULL,
     owner_id        UUID             NOT NULL,
     preview_file_id uuid REFERENCES files (id),
     title           TEXT,
@@ -132,17 +132,18 @@ CREATE TABLE books
 CREATE TABLE entity_change_requests
 (
     id          UUID PRIMARY KEY NOT NULL,
-    entity_id   UUID          NOT NULL REFERENCES entities(id),
-    user_id     UUID          NOT NULL REFERENCES users(id),
-    diff        JSONB         NOT NULL,
+    entity_id   UUID             NOT NULL REFERENCES entities (id),
+    user_id     UUID             NOT NULL REFERENCES users (id),
+    diff        JSONB            NOT NULL,
     message     TEXT,
-    status      TEXT NOT NULL,
+    status      TEXT             NOT NULL,
+    revision    INT,
 
-    reviewer_id UUID REFERENCES users(id),
+    reviewer_id UUID REFERENCES users (id),
     reviewed_at TIMESTAMPTZ,
     review_note TEXT,
 
-    created_at  TIMESTAMPTZ   NOT NULL,
+    created_at  TIMESTAMPTZ      NOT NULL,
     updated_at  TIMESTAMPTZ
 );
 

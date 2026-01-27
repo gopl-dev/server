@@ -11,8 +11,8 @@ const (
 	// ActionCreate indicates the initial creation of an entity.
 	ActionCreate Action = "create"
 
-	// ActionUpdate indicates a modification to an existing entity.
-	ActionUpdate Action = "update"
+	// ActionEdit indicates a modification to an existing entity.
+	ActionEdit Action = "update"
 
 	// ActionPublish indicates the entity was made publicly visible.
 	ActionPublish Action = "publish"

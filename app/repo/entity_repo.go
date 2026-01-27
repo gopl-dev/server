@@ -3,6 +3,8 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app/ds"
@@ -54,4 +56,22 @@ func (r *Repo) CreateEntity(ctx context.Context, e *ds.Entity) error {
 		"updated_at":      e.UpdatedAt,
 		"deleted_at":      e.DeletedAt,
 	})
+}
+
+// UpdateEntity updates both entity and book tables.
+func (r *Repo) UpdateEntity(ctx context.Context, e *ds.Entity) error {
+	_, span := r.tracer.Start(ctx, "UpdateBook")
+	defer span.End()
+
+	err := r.update(ctx, e.ID, "entities", data{
+		"title":           e.Title,
+		"preview_file_id": e.PreviewFileID,
+		"visibility":      e.Visibility,
+		"updated_at":      time.Now(),
+	})
+	if err != nil {
+		return fmt.Errorf("update entity: %w", err)
+	}
+
+	return nil
 }
