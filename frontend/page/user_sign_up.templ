@@ -35,53 +35,49 @@ templ UserSignUpForm() {
     }
 </script>
 
-<div class="flex flex-row justify-center">
-    <div class="w-full lg:w-1/2">
-        <h1 class="text-3xl pb-4">Sign Up</h1>
-        <div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-            <div class="card-body">
-                <div class="p-5 columns-2">
-                    <div>
-                        <a href="/auth/google/" class="link">Join using Google</a>
-                    </div>
-                    <div class="float-right">
-                        <a href="/auth/github/" class="link">Join using GitHub</a>
-                    </div>
+<div class="max-w-sm">
+    <h1 class="text-3xl pb-4">Sign Up</h1>
+    <div class="bg-base-100 card-body shadow-md">
+            <div class="p-5 columns-2">
+                <div>
+                    <a href="/auth/google/" class="link">Join using Google</a>
                 </div>
-
-                @Form("userSignUpForm") {
-                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
-
-                <fieldset class="fieldset" :disabled="submitting">
-                    @Input(InputParams{
-                    ID: "username",
-                    Label: "Username",
-                    Model: "form.username",
-                    ErrorModel: "errors.username",
-                    Description: "a-Z, 0-9, dot, underline, dash. Min 2; Max 30",
-                    })
-                    @Input(InputParams{
-                    ID: "email",
-                    Label: "E-mail",
-                    Model: "form.email",
-                    ErrorModel: "errors.email",
-                    })
-                    @Input(InputParams{
-                    ID: "password",
-                    Label: "Password",
-                    Model: "form.password",
-                    ErrorModel: "errors.password",
-                    Type: "password",
-                    Description: "Min. 6 characters",
-                    NoAutoFill: true,
-                    })
-                    <div class="p-2">
-                        @SubmitButton("Sign up")
-                    </div>
-                </fieldset>
-                }
+                <div class="float-right">
+                    <a href="/auth/github/" class="link">Join using GitHub</a>
+                </div>
             </div>
+
+            @Form("userSignUpForm") {
+            <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+
+            <fieldset class="fieldset" :disabled="submitting">
+                @Input(InputParams{
+                ID: "username",
+                Label: "Username",
+                Model: "form.username",
+                ErrorModel: "errors.username",
+                Description: "a-Z, 0-9, dot, underline, dash. Min 2; Max 30",
+                })
+                @Input(InputParams{
+                ID: "email",
+                Label: "E-mail",
+                Model: "form.email",
+                ErrorModel: "errors.email",
+                })
+                @Input(InputParams{
+                ID: "password",
+                Label: "Password",
+                Model: "form.password",
+                ErrorModel: "errors.password",
+                Type: "password",
+                Description: "Min. 6 characters",
+                NoAutoFill: true,
+                })
+                <div class="p-2">
+                    @SubmitButton("Sign up")
+                </div>
+            </fieldset>
+            }
         </div>
-    </div>
 </div>
 }

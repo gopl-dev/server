@@ -11,6 +11,8 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/frontend"
+	"github.com/gopl-dev/server/frontend/layout"
+	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/docs"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/middleware"
@@ -147,7 +149,11 @@ func (r *Router) HandleNotFound() *Router {
 
 	r.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		println(r.Method, r.RequestURI, "404 NOT FOUND")
-		http.NotFound(w, r)
+
+		handler.RenderDefaultLayout(r.Context(), w, layout.Data{
+			Title: "404 Not Found",
+			Body:  page.Err404("This page does not exist."),
+		})
 	})
 
 	return r

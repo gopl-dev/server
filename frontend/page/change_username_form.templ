@@ -31,47 +31,45 @@ templ ChangeUsernameForm() {
     }
 </script>
 
-<div class="flex flex-row justify-center">
-    <div class="w-full lg:w-1/2">
-        <h1 class="text-3xl pb-4">Change username</h1>
-        <div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-            <div class="card-body">
-                @Form("changeUsernameForm") {
-                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+<div>
+    <h1 class="text-3xl pb-4">Change username</h1>
+    <div class="bg-base-100 w-full max-w-sm shadow-sm">
+        <div class="card-body">
+            @Form("changeUsernameForm") {
+            <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
 
-                <div role="alert" class="alert alert-success" x-show="success" x-cloak>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>Your username has been successfully changed.</span>
-                </div>
-
-                <div x-show="!success">
-                    <fieldset class="fieldset" :disabled="submitting">
-                        @Input(InputParams{
-                        ID: "username",
-                        Label: "New username",
-                        Model: "form.username",
-                        ErrorModel: "errors.username",
-                        NoAutoFill: true,
-                        })
-                        @Input(InputParams{
-                        ID: "password",
-                        Label: "Current password",
-                        Model: "form.password",
-                        ErrorModel: "errors.password",
-                        Type: "password",
-                        NoAutoFill: true,
-                        })
-                        <div class="p-2">
-                            @SubmitButton("Change username")
-                        </div>
-                    </fieldset>
-                </div>
-                }
+            <div role="alert" class="alert alert-success" x-show="success" x-cloak>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Your username has been successfully changed.</span>
             </div>
+
+            <div x-show="!success">
+                <fieldset class="fieldset" :disabled="submitting">
+                    @Input(InputParams{
+                    ID: "username",
+                    Label: "New username",
+                    Model: "form.username",
+                    ErrorModel: "errors.username",
+                    NoAutoFill: true,
+                    })
+                    @Input(InputParams{
+                    ID: "password",
+                    Label: "Current password",
+                    Model: "form.password",
+                    ErrorModel: "errors.password",
+                    Type: "password",
+                    NoAutoFill: true,
+                    })
+                    <div class="p-2">
+                        @SubmitButton("Change username")
+                    </div>
+                </fieldset>
+            </div>
+            }
         </div>
     </div>
 </div>

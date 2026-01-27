@@ -5,14 +5,14 @@ const (
 )
 
 const (
-	LabelClass        = "mb-2 text-sm font-medium text-gray-900"
+	LabelClass        = "text-gray-900"
 	InputClassDefault = "input input-xl w-full"
 	TextareaClassDefault = "textarea textarea-xl w-full"
 	InputClassError   = "input-error"
 )
 
 templ Form(data string) {
-	<form x-data={ data } @submit.prevent="submitForm">
+	<form x-data={ data } @submit.prevent="submitForm" class="w-full">
 		{ children... }
 	</form>
 }
@@ -38,7 +38,7 @@ templ Input(p InputParams) {
 		{{ p.Class = InputClassDefault }}
 	}
 	<div class="p-2">
-		<label class="floating-label">
+		<label class="floating-label w-full block">
 			<span>{ p.Label }</span>
 			<input
 				type={ p.Type }
@@ -74,7 +74,7 @@ templ Textarea(p InputParams) {
 		{{ p.Class = TextareaClassDefault }}
 	}
 	<div class="p-2">
-		<label class="floating-label">
+		<label class="floating-label w-full block">
 			<span>{ p.Label }</span>
 			<textarea
 				id={ p.ID }

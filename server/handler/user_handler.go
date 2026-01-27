@@ -129,7 +129,7 @@ func (h *Handler) UserSignUpView(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Sign up",
 		Body:  page.UserSignUpForm(),
 	})
@@ -208,7 +208,7 @@ func (h *Handler) ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "ConfirmEmailView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Confirm email",
 		Body:  page.ConfirmEmailForm(),
 	})
@@ -220,7 +220,7 @@ func (h *Handler) UserSettingsView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "UserSettingsView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Settings",
 		Body:  page.UserSettings(),
 	})
@@ -232,7 +232,7 @@ func (h *Handler) ChangePasswordView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "ChangePasswordView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Change password",
 		Body:  page.ChangePasswordForm(),
 	})
@@ -243,7 +243,7 @@ func (h *Handler) RequestEmailChangeView(w http.ResponseWriter, r *http.Request)
 	ctx, span := h.tracer.Start(r.Context(), "RequestEmailChangeView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Change Email",
 		Body:  page.ChangeEmailForm(),
 	})
@@ -323,21 +323,21 @@ func (h *Handler) ConfirmEmailChangeView(w http.ResponseWriter, r *http.Request)
 	token := r.PathValue("token")
 	err := h.service.ConfirmEmailChange(ctx, token)
 	if errors.Is(err, service.ErrInvalidChangeEmailToken) {
-		renderDefaultLayout(ctx, w, layout.Data{
+		RenderDefaultLayout(ctx, w, layout.Data{
 			Title: "Change email",
 			Body:  page.Err422(err.Error()),
 		})
 		return
 	}
 	if err != nil {
-		renderDefaultLayout(ctx, w, layout.Data{
+		RenderDefaultLayout(ctx, w, layout.Data{
 			Title: "Change email",
 			Body:  page.Err500(err.Error()),
 		})
 		return
 	}
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Change email",
 		Body:  page.SuccessMessage("Your email successfully changed!"),
 	})
@@ -357,7 +357,7 @@ func (h *Handler) ChangeUsernameView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "ChangeUsernameView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Change Username",
 		Body:  page.ChangeUsernameForm(),
 	})
@@ -405,7 +405,7 @@ func (h *Handler) DeleteUserView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "DeleteUserView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Delete Account",
 		Body:  page.DeleteUserForm(),
 	})

@@ -165,7 +165,7 @@ func (h *Handler) FilterBooksView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "FilterBooksView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Books",
 		Body:  page.FilterBooksPage(),
 	})
@@ -182,7 +182,7 @@ func (h *Handler) GetBookView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: book.Title,
 		Body:  page.ViewBookPage(book),
 	})
@@ -226,7 +226,7 @@ func (h *Handler) CreateBookView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "CreateBookView")
 	defer span.End()
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Add book",
 		Body:  page.CreateBookForm(),
 	})
@@ -243,7 +243,7 @@ func (h *Handler) EditBookView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderDefaultLayout(ctx, w, layout.Data{
+	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Edit book",
 		Body:  page.EditBookForm(book.ID.String()),
 	})

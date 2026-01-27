@@ -31,7 +31,7 @@ func ConfirmEmailForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const CONFIRM_EMAIL_DEFAULTS = {\r\n        code: '',\r\n    }\r\n\r\n    function confirmEmailForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: CONFIRM_EMAIL_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.postJSON('/api/users/confirm-email/', this.form)\r\n\r\n                    if (data?.success === true || resp.status === 200) {\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) {\r\n                        this.error = (data?.code ? (data.code + ': ') : '') + data.error\r\n                    }\r\n\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n        }\r\n    }\r\n</script><div class=\"flex flex-row justify-center\"><div class=\"w-full lg:w-1/2\"><h1 class=\"text-3xl pb-4\">Confirm email</h1><div class=\"bg-base-100 w-full max-w-sm shrink-0 shadow-2xl\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const CONFIRM_EMAIL_DEFAULTS = {\r\n        code: '',\r\n    }\r\n\r\n    function confirmEmailForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: CONFIRM_EMAIL_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.postJSON('/api/users/confirm-email/', this.form)\r\n\r\n                    if (data?.success === true || resp.status === 200) {\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) {\r\n                        this.error = (data?.code ? (data.code + ': ') : '') + data.error\r\n                    }\r\n\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n        }\r\n    }\r\n</script><div><h1 class=\"text-3xl pb-4\">Confirm email</h1><div class=\"bg-base-100 w-full max-w-sm shadow-md\"><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -80,7 +80,7 @@ func ConfirmEmailForm() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -8,11 +8,13 @@ type EntityType string
 const (
 	// EntityTypeBook ...
 	EntityTypeBook EntityType = "book"
+	EntityTypePage EntityType = "page"
 )
 
 // EntityTypes ...
 var EntityTypes = []EntityType{
 	EntityTypeBook,
+	EntityTypePage,
 }
 
 // Valid ...

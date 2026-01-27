@@ -41,49 +41,47 @@ templ DeleteUserForm() {
     }
 </script>
 
-<div class="flex flex-row justify-center">
-    <div class="w-full lg:w-1/2">
-        <h1 class="text-3xl pb-4 text-red-600">Delete Account</h1>
-        <div class="bg-base-100 w-full max-w-sm shrink-0 shadow-2xl border-red-200 border-2">
-            <div class="card-body">
-                @Form("deleteUserForm") {
-                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+<div>
+    <h1 class="text-3xl pb-4 text-red-600">Delete Account</h1>
+    <div class="bg-base-100 w-full max-w-sm shadow-md border-red-200 border-2">
+        <div class="card-body">
+            @Form("deleteUserForm") {
+            <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
 
-                <div role="alert" class="alert alert-success" x-show="success" x-cloak>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>Your account has been deleted. Redirecting...</span>
-                </div>
-
-                <div x-show="!success">
-                    <p class="mb-4 text-gray-600">Please enter your password to confirm account deletion.</p>
-
-                    <fieldset class="fieldset" :disabled="submitting">
-                        @Input(InputParams{
-                        ID: "password",
-                        Label: "Password",
-                        Model: "form.password",
-                        ErrorModel: "errors.password",
-                        Type: "password",
-                        })
-
-                        <div class="p-2">
-                            <button
-                                    type="submit"
-                                    class="btn btn-error w-full text-white"
-                                    :disabled="submitting"
-                            >
-                                <span class="loading loading-spinner" x-show="submitting"></span>
-                                <span x-show="!submitting">Delete account</span>
-                            </button>
-                        </div>
-                    </fieldset>
-                </div>
-                }
+            <div role="alert" class="alert alert-success" x-show="success" x-cloak>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Your account has been deleted. Redirecting...</span>
             </div>
+
+            <div x-show="!success">
+                <p class="mb-4 text-gray-600">Please enter your password to confirm account deletion.</p>
+
+                <fieldset class="fieldset" :disabled="submitting">
+                    @Input(InputParams{
+                    ID: "password",
+                    Label: "Password",
+                    Model: "form.password",
+                    ErrorModel: "errors.password",
+                    Type: "password",
+                    })
+
+                    <div class="p-2">
+                        <button
+                                type="submit"
+                                class="btn btn-error w-full text-white"
+                                :disabled="submitting"
+                        >
+                            <span class="loading loading-spinner" x-show="submitting"></span>
+                            <span x-show="!submitting">Delete account</span>
+                        </button>
+                    </div>
+                </fieldset>
+            </div>
+            }
         </div>
     </div>
 </div>

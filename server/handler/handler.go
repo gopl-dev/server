@@ -298,8 +298,8 @@ func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) 
 	}
 }
 
-// renderDefaultLayout renders a default layout with provided data.
-func renderDefaultLayout(ctx context.Context, w http.ResponseWriter, data layout.Data) {
+// RenderDefaultLayout renders a default layout with provided data.
+func RenderDefaultLayout(ctx context.Context, w http.ResponseWriter, data layout.Data) {
 	data.User = frontend.NewUser(ds.UserFromContext(ctx))
 	t := layout.Default(data)
 
@@ -389,7 +389,7 @@ func Abort(w http.ResponseWriter, r *http.Request, err error) {
 		title = "500 Internal Server Error"
 	}
 
-	renderDefaultLayout(r.Context(), w, layout.Data{
+	RenderDefaultLayout(r.Context(), w, layout.Data{
 		Title: title,
 		Body:  body,
 	})

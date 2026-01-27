@@ -1,5 +1,7 @@
 package layout
 
+import "github.com/gopl-dev/server/frontend/component/icon"
+
 templ Default(d Data) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -13,8 +15,8 @@ templ Default(d Data) {
 			<meta name="description" content={ d.MetaDescription }/>
 			<meta name="keywords" content={ d.MetaKeywords }/>
 		</head>
-		<body class="bg-gray-100 font-sans w-full">
-			<div class="navbar bg-neutral text-neutral-content shadow-sm">
+		<body class="bg-gray-100 font-sans w-full min-h-screen flex flex-col">
+			<header class="navbar bg-gray-600 text-neutral-content shadow-sm">
                 <div class="flex-none pl-10">
                     <a class="text-white no-underline" href="/">
                         <img src="/assets/gopl.svg" alt="gopl.dev" width="60"/>
@@ -23,49 +25,73 @@ templ Default(d Data) {
 
                 <div class="absolute left-1/2 -translate-x-1/2">
                     <ul class="menu menu-horizontal px-1">
-                        <li><a href="/community/" class="border-b-2 rounded-none">COMMUNITY</a></li>
-                        <li><a href="/books/" class="border-b-2 rounded-none link-info border-info font-bold">BOOKS</a></li>
-                        <li><a href="/jobs/" class="border-b-2 rounded-none">JOBS</a></li>
+                        <li><a href="/community/" class="border-b-2 rounded-none">
+                            @icon.Users()  COMMUNITY</a></li>
+                        <li><a href="/jobs/" class="border-b-2 rounded-none">
+                            @icon.Pickaxe() JOBS</a></li>
+                        <li><a href="/books/" class="border-b-2 rounded-none link-info border-info font-bold">
+                            @icon.Library() BOOKS</a></li>
                     </ul>
                 </div>
 
                 <div class="flex-none ml-auto">
 					<ul class="menu menu-horizontal px-1">
 						if d.User == nil {
-							<li><a href="/users/sign-in/">Sign in</a></li>
-							<li><a href="/users/sign-up/">Sign up</a></li>
+							<li><a href="/users/sign-in/">
+                                @icon.LogIn()
+                                Sign in</a></li>
+							<li><a href="/users/sign-up/">
+                                @icon.UserPlus()
+                                Sign up</a></li>
 						} else {
 							<li>
-								<details>
-									<summary>
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                                      <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
-                                    </svg>
-									{ d.User.Username }</summary>
-									<ul class="bg-neutral rounded-t-none p-2">
-										<li><a href="/users/settings/">Settings</a></li>
-										<li><a href="/add-book/">Add book</a></li>
-										<li><a href="/users/sign-out/">Sign out</a></li>
-									</ul>
-								</details>
+                                <details class="dropdown dropdown-end">
+                                    <summary class="flex items-center gap-2">
+                                        @icon.User()
+                                        { d.User.Username }
+                                    </summary>
+                                    <ul class="dropdown-content  bg-gray-500  rounded-t-none p-2 min-w-40">
+                                        <li><a href="/users/settings/">
+                                            @icon.Settings()
+                                            Settings</a></li>
+                                        <li><a href="/add-book/">
+                                            @icon.CirclePlus()
+                                            Add book</a></li>
+                                        <hr class="my-1 border-neutral-content/30">
+                                        <li><a href="/users/sign-out/">
+                                            @icon.LogOut()
+                                            Sign out</a></li>
+                                    </ul>
+                                </details>
 							</li>
 						}
 					</ul>
 				</div>
-			</div>
-			<div class="container  p-6">
-				@d.Body
-			</div>
-			<div class="p-10 columns-2">
-				<div>
-					a classic footer right here
-				</div>
-				<div class="float-right">
-					link to github repo
-				</div>
-			</div>
-			<script>
-	</script>
+			</header>
+
+            <main class="flex-1 max-w-6xl mx-auto justify-center">
+                <div class="gap-8 p-4">
+                    @d.Body
+                </div>
+            </main>
+
+            <footer class="bg-gray-600 text-base-content gap-4 p-10 w-full">
+                <div class="grid grid-cols-3 max-w-6xl mx-auto text-neutral-content">
+                    <div>
+                        2026 <a href="/" class="link-info">gopl.dev</a>
+                    </div>
+                    <div class="text-center">
+                        <a href="/about/" class="link-info">
+                            @icon.Info("mr-1 w-5 h-5")
+                            About</a>
+                    </div>
+                    <div class="text-right">
+                        <a href="https://github.com/gopl-dev/server" class="link-info">
+                            @icon.GitHub("mr-1 w-5 h-5")
+                            Source</a>
+                    </div>
+                </div>
+            </footer>
 		</body>
 	</html>
 }

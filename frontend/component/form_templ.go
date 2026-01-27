@@ -13,7 +13,7 @@ const (
 )
 
 const (
-	LabelClass           = "mb-2 text-sm font-medium text-gray-900"
+	LabelClass           = "text-gray-900"
 	InputClassDefault    = "input input-xl w-full"
 	TextareaClassDefault = "textarea textarea-xl w-full"
 	InputClassError      = "input-error"
@@ -53,7 +53,7 @@ func Form(data string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" @submit.prevent=\"submitForm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" @submit.prevent=\"submitForm\" class=\"w-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -109,7 +109,7 @@ func Input(p InputParams) templ.Component {
 		if p.Class == "" {
 			p.Class = InputClassDefault
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"p-2\"><label class=\"floating-label\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"p-2\"><label class=\"floating-label w-full block\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -328,7 +328,7 @@ func Textarea(p InputParams) templ.Component {
 		if p.Class == "" {
 			p.Class = TextareaClassDefault
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"p-2\"><label class=\"floating-label\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"p-2\"><label class=\"floating-label w-full block\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

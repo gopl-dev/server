@@ -6,7 +6,7 @@ for simplicity, I keep todo list and progress here for now
   - [x] create book
   - [x] update book
   - [ ] review changes: accept|reject
-  - [ ] view book
+  - [x] view book
   - [ ] delete book
   - [x] list books
 
@@ -23,6 +23,7 @@ for simplicity, I keep todo list and progress here for now
 ---
 
 NEXT:
+- [ ] Pages
 - [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
 - [ ] Jobs
@@ -42,3 +43,4 @@ Nice to have:
 - [ ] Rework workers so it is possible to display a list of workers, enable/disable them, see run status, last run time, logs, etc.
 - [ ] Tests for frontend
 - [ ] Render initial data on the backend (for example, when the books page is requested, render it fully and return it, instead of letting the frontend fetch data via the API).
+- [ ] Add server version to frontend

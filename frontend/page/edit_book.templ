@@ -109,146 +109,153 @@ templ EditBookForm(bookID string) {
     }
 </script>
 
-<div class="flex flex-row justify-center">
-    <div class="w-full lg:w-1/2">
-        <h1 class="text-3xl pb-4">Edit Book</h1>
+<div class="flex-1">
+    <h1 class="text-3xl pb-4">Edit Book</h1>
 
-        <div class="bg-base-100 w-full shadow-2xl">
-            <div class="card-body">
-                @Form("editBookForm") {
-                <div x-init="init()"></div>
+    <div class="bg-base-100 w-full shadow-2xl">
+        <div class="card-body">
+            @Form("editBookForm") {
+            <div x-init="init()"></div>
 
-                <!-- Loading -->
-                <div x-show="loading">
-                    <span class="loading loading-spinner"></span>
-                    <span class="ml-2">Loading book...</span>
+            <!-- Loading -->
+            <div x-show="loading">
+                <span class="loading loading-spinner"></span>
+                <span class="ml-2">Loading book...</span>
+            </div>
+
+            <!-- Load error -->
+            <p class="text-red-500" x-text="loadError" x-show="!loading && loadError !== ''"></p>
+
+            <!-- Success: applied immediately -->
+            <div role="alert" class="alert alert-success"
+                 x-show="success && (saveRevision === 0)"
+                 x-cloak>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>Book updated successfully!</div>
+                <div x-show="bookURL !== ''">
+                    <a class="link" :href="bookURL">View book page</a>
                 </div>
+            </div>
 
-                <!-- Load error -->
-                <p class="text-red-500" x-text="loadError" x-show="!loading && loadError !== ''"></p>
-
-                <!-- Success: applied immediately -->
-                <div role="alert" class="alert alert-success"
-                     x-show="success && (saveRevision === 0)"
-                     x-cloak>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <div>Book updated successfully!</div>
+            <!-- Success: sent for review -->
+            <div role="alert" class="alert alert-info"
+                 x-show="success && (saveRevision !== null) && (saveRevision > 0)"
+                 x-cloak>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <div>Thank you for your contribution! Your changes will be reviewed shortly.</div>
+                    <div class="opacity-70">
+                        Revision <span x-text="saveRevision"></span> ·
+                        <span x-text="new Date().toLocaleString('en-US', {hour:'2-digit', minute:'2-digit', hour12:false, month:'short', day:'2-digit'})"></span>
+                    </div>
                     <div x-show="bookURL !== ''">
                         <a class="link" :href="bookURL">View book page</a>
                     </div>
                 </div>
 
-                <!-- Success: sent for review -->
-                <div role="alert" class="alert alert-info"
-                     x-show="success && (saveRevision !== null) && (saveRevision > 0)"
-                     x-cloak>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <div>
-                        <div>Thank you for your contribution! Your changes will be reviewed shortly.</div>
-                            <div class="opacity-70">
-                                Revision <span x-text="saveRevision"></span> ·
-                                <span x-text="new Date().toLocaleString('en-US', {hour:'2-digit', minute:'2-digit', hour12:false, month:'short', day:'2-digit'})"></span>
-                            </div>
-                        <div x-show="bookURL !== ''">
-                            <a class="link" :href="bookURL">View book page</a>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Form (only when loaded and no load error and not success) -->
-                <div x-show="!loading && loadError === '' && !success">
-                    <div role="alert" class="alert alert-warning" x-show="revision !== null && revision_date !== null" x-cloak>
-                        <div>
-                            <h3 class="font-bold flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg> <span>Note:</span></h3>
-                            <div>You’re working on changes you previously proposed that are still under review.<br/>
-                                Feel free to continue editing here, or wait until the review is complete before making new changes. Any updates you make now will be reviewed together.</div>
-                            <div class="font-bold  font-italic">Revision: <span x-text="revision"></span> at <span x-text="revisionDateFormatted"></span> by you</div>
-                            <!-- TODO: add Revert and View Changes links and implement their functionality -->
-                        </div>
-                    </div>
-
-                    <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
-
-                    <fieldset class="fieldset" :disabled="submitting">
-                        <!-- Cover upload (new component) -->
-                        <div x-show="upload !== null">
-                            @FileUploadInput(FileUploadInputParams{
-                            Label: "Cover file",
-                            // Purpose is configured in init() uploader; keep/remove in params depending on your struct.
-                            FileIDModel: "form.cover_file_id",
-                            Accept: "image/*",
-                            Preview: true,
-                            })
-                        </div>
-
-                        @Input(InputParams{
-                        ID: "title",
-                        Label: "Title",
-                        Model: "form.title",
-                        ErrorModel: "errors.title",
-                        })
-                        @Textarea(InputParams{
-                        ID: "description",
-                        Label: "Description",
-                        Model: "form.description",
-                        ErrorModel: "errors.description",
-                        Type: "textarea",
-                        })
-                        @Input(InputParams{
-                        ID: "author_name",
-                        Label: "Author Name",
-                        Model: "form.author_name",
-                        ErrorModel: "errors.author_name",
-                        })
-                        @Input(InputParams{
-                        ID: "author_link",
-                        Label: "Author Link",
-                        Model: "form.author_link",
-                        ErrorModel: "errors.author_link",
-                        })
-                        @Input(InputParams{
-                        ID: "homepage",
-                        Label: "Homepage",
-                        Model: "form.homepage",
-                        ErrorModel: "errors.homepage",
-                        Description: "Where to find more information about this book",
-                        })
-                        @Input(InputParams{
-                        ID: "release_date",
-                        Label: "Release Date",
-                        Model: "form.release_date",
-                        ErrorModel: "errors.release_date",
-                        })
-
-                        @Radio(RadioParams{
-                        Label: "Visibility",
-                        Model: "form.visibility",
-                        ErrorModel: "errors.visibility",
-                        Items: []RadioItem{
-                        {Label: "Public", Value: "public", Description: "Visible to everyone and indexed"},
-                        {Label: "Private", Value: "private", Description: "Visible only to you"},
-                        {Label: "Unlisted", Value: "unlisted", Description: "Accessible only via direct link"},
-                        },
-                        })
-
-                        <div class="p-2">
-                            @SubmitButton("Save changes")
-                        </div>
-                    </fieldset>
-                </div>
-                }
             </div>
+
+            <!-- Form (only when loaded and no load error and not success) -->
+            <div x-show="!loading && loadError === '' && !success">
+                <div role="alert" class="alert alert-warning" x-show="revision !== null && revision_date !== null"
+                     x-cloak>
+                    <div>
+                        <h3 class="font-bold flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <span>Note:</span></h3>
+                        <div>You’re working on changes you previously proposed that are still under review.<br/>
+                            Feel free to continue editing here, or wait until the review is complete before making new
+                            changes. Any updates you make now will be reviewed together.
+                        </div>
+                        <div class="font-bold  font-italic">Revision: <span x-text="revision"></span> at <span
+                                x-text="revisionDateFormatted"></span> by you
+                        </div>
+                        <!-- TODO: add Revert and View Changes links and implement their functionality -->
+                    </div>
+                </div>
+
+                <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+
+                <fieldset class="fieldset" :disabled="submitting">
+                    <!-- Cover upload (new component) -->
+                    <div x-show="upload !== null">
+                        @FileUploadInput(FileUploadInputParams{
+                        Label: "Cover file",
+                        // Purpose is configured in init() uploader; keep/remove in params depending on your struct.
+                        FileIDModel: "form.cover_file_id",
+                        Accept: "image/*",
+                        Preview: true,
+                        })
+                    </div>
+
+                    @Input(InputParams{
+                    ID: "title",
+                    Label: "Title",
+                    Model: "form.title",
+                    ErrorModel: "errors.title",
+                    })
+                    @Textarea(InputParams{
+                    ID: "description",
+                    Label: "Description",
+                    Model: "form.description",
+                    ErrorModel: "errors.description",
+                    Type: "textarea",
+                    })
+                    @Input(InputParams{
+                    ID: "author_name",
+                    Label: "Author Name",
+                    Model: "form.author_name",
+                    ErrorModel: "errors.author_name",
+                    })
+                    @Input(InputParams{
+                    ID: "author_link",
+                    Label: "Author Link",
+                    Model: "form.author_link",
+                    ErrorModel: "errors.author_link",
+                    })
+                    @Input(InputParams{
+                    ID: "homepage",
+                    Label: "Homepage",
+                    Model: "form.homepage",
+                    ErrorModel: "errors.homepage",
+                    Description: "Where to find more information about this book",
+                    })
+                    @Input(InputParams{
+                    ID: "release_date",
+                    Label: "Release Date",
+                    Model: "form.release_date",
+                    ErrorModel: "errors.release_date",
+                    })
+
+                    @Radio(RadioParams{
+                    Label: "Visibility",
+                    Model: "form.visibility",
+                    ErrorModel: "errors.visibility",
+                    Items: []RadioItem{
+                    {Label: "Public", Value: "public", Description: "Visible to everyone and indexed"},
+                    {Label: "Private", Value: "private", Description: "Visible only to you"},
+                    {Label: "Unlisted", Value: "unlisted", Description: "Accessible only via direct link"},
+                    },
+                    })
+
+                    <div class="p-2">
+                        @SubmitButton("Save changes")
+                    </div>
+                </fieldset>
+            </div>
+            }
         </div>
     </div>
 </div>
