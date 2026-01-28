@@ -36,17 +36,17 @@ func TestCreateBook_Basic(t *testing.T) {
 
 	// check entity created
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
-		"id":         resp.ID,
-		"public_id":  app.Slug(req.Title),
-		"title":      req.Title,
-		"owner_id":   user.ID,
-		"type":       ds.EntityTypeBook,
-		"visibility": req.Visibility,
+		"id":          resp.ID,
+		"public_id":   app.Slug(req.Title),
+		"title":       req.Title,
+		"description": req.Description,
+		"owner_id":    user.ID,
+		"type":        ds.EntityTypeBook,
+		"visibility":  req.Visibility,
 	})
 
 	// check book created
 	test.AssertInDB(t, tt.DB, "books", test.Data{
-		"description": req.Description,
 		"author_name": req.AuthorName,
 		"author_link": req.AuthorLink,
 		"homepage":    req.Homepage,
@@ -163,21 +163,21 @@ func TestUpdateBook_WithReview(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("%v", v), fmt.Sprintf("%v", resp.Data[k]))
 	}
 
-	// do update (change only title and description)
+	// do update (change only title and author)
 	updateReq := request.UpdateBook{
 		CreateBook: request.CreateBook{
-			Title:       random.Title(),
-			Description: random.String(),
+			Title:      random.Title(),
+			AuthorName: random.String(),
+
+			Description: book.Description,
 			ReleaseDate: book.ReleaseDate,
-			AuthorName:  book.AuthorName,
 			AuthorLink:  book.AuthorLink,
 			Homepage:    book.Homepage,
 			CoverFileID: book.CoverFileID,
-
-			Visibility: book.Visibility,
+			Visibility:  book.Visibility,
 		},
 	}
-	var updateResp response.UpdateBook
+	var updateResp response.UpdateRevision
 	UPDATE(t, pf("/books/%s/", book.ID), updateReq, &updateResp)
 
 	assert.Equal(t, 1, updateResp.Revision)
@@ -188,7 +188,7 @@ func TestUpdateBook_WithReview(t *testing.T) {
 		"entity_id": book.ID,
 		"status":    ds.EntityChangePending,
 		"revision":  1,
-		"diff":      map[string]any{"title": updateReq.Title, "description": updateReq.Description},
+		"diff":      map[string]any{"title": updateReq.Title, "author_name": updateReq.AuthorName},
 	})
 
 	// book itself should not be changed
@@ -198,7 +198,7 @@ func TestUpdateBook_WithReview(t *testing.T) {
 	})
 	test.AssertInDB(t, tt.DB, "books", test.Data{
 		"id":          book.ID,
-		"description": resp.Data["description"],
+		"author_name": resp.Data["author_name"],
 	})
 
 	// next edit should return "in-progress" data
@@ -212,7 +212,7 @@ func TestUpdateBook_WithReview(t *testing.T) {
 
 	// updating book that already have change request for review
 	// should only update that request
-	updateReq.AuthorName = random.String()
+	updateReq.Description = random.String()
 	UPDATE(t, pf("/books/%s/", book.ID), updateReq, &updateResp)
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
 		"user_id":    user.ID,
@@ -267,8 +267,7 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 			Visibility: book.Visibility,
 		},
 	}
-	var resp response.UpdateBook
-	UPDATE(t, pf("/books/%s/", book.ID), req, &resp)
+	var resp response.UpdateRevision
 	Request(t, RequestArgs{
 		method:       http.MethodPut,
 		path:         pf("/books/%s/", book.ID),
@@ -284,11 +283,11 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":              book.ID,
 		"title":           req.Title,
+		"description":     req.Description,
 		"preview_file_id": cover2.ID,
 	})
 	test.AssertInDB(t, tt.DB, "books", test.Data{
 		"id":            book.ID,
-		"description":   req.Description,
 		"cover_file_id": cover2.ID,
 	})
 	test.AssertInDB(t, tt.DB, "files", test.Data{

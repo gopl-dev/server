@@ -1,9 +1,5 @@
 // Package seed provides helpers for seeding test and development data.
 //
-// It encapsulates common seeding flows and dependency handling, including
-// generation of related entities and lazy, cached loading of foreign keys
-// to minimize database round-trips during seeding.
-//
 // The package is intended for non-production use (tests, local development).
 package seed
 
@@ -16,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"strings"
 	"sync"
 	"time"
 
@@ -37,6 +34,9 @@ var (
 
 	// ErrNoRows indicates that a query or operation returned no rows.
 	ErrNoRows = errors.New("no rows")
+
+	// ErrUniqueViolation indicates a violation of a uniqueness constraint.
+	ErrUniqueViolation = errors.New("UNIQUE VIOLATION")
 )
 
 // bucket returns an ID bucket for the given key, creating it if necessary.
@@ -205,6 +205,22 @@ func isUniqueViolation(err error) (column string, ok bool) {
 	// 23505 = unique_violation
 	if pgErr.Code != "23505" {
 		return
+	}
+
+	if pgErr.ColumnName == "" {
+		s := pgErr.Detail // "Key (username)=(test) already exists."
+		start := strings.Index(s, "(")
+		if start == -1 {
+			return
+		}
+
+		end := strings.Index(s[start+1:], ")")
+		if end == -1 {
+			return
+		}
+
+		column = s[start+1 : start+1+end] // username
+		return column, true
 	}
 
 	return pgErr.ColumnName, true

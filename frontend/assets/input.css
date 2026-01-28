@@ -3,3 +3,12 @@
 @plugin "./daisyui.js";
 
 [x-cloak]{display:none !important;}
+
+.logo {
+    color: #00aeff;
+    transition: color 0.2s ease;
+}
+
+.logo:hover {
+    color: white;
+}

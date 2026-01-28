@@ -109,10 +109,9 @@ templ EditBookForm(bookID string) {
     }
 </script>
 
-<div class="flex-1">
+<div class="min-w-2xl">
     <h1 class="text-3xl pb-4">Edit Book</h1>
-
-    <div class="bg-base-100 w-full shadow-2xl">
+    <div class="bg-base-100 w-full shadow-md">
         <div class="card-body">
             @Form("editBookForm") {
             <div x-init="init()"></div>
@@ -189,7 +188,6 @@ templ EditBookForm(bookID string) {
                 <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
 
                 <fieldset class="fieldset" :disabled="submitting">
-                    <!-- Cover upload (new component) -->
                     <div x-show="upload !== null">
                         @FileUploadInput(FileUploadInputParams{
                         Label: "Cover file",

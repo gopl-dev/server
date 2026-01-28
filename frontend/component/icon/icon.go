@@ -1,3 +1,4 @@
+// Package icon provides reusable SVG icon components for the frontend.
 package icon
 
 // Icons provided by Lucide (https://lucide.dev)

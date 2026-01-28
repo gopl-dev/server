@@ -8,10 +8,13 @@ type FilterBooks struct {
 	Count int       `json:"count"` // Count is the total number of matching books.
 }
 
-// UpdateBook defines the payload used to update an existing book.
+// UpdateRevision defines the response payload for an update request.
 //
-// Revision == 0 means there is no review revision created and the book
-// is updated directly (when the user is authorized to do so).
-type UpdateBook struct {
+// Revision is the current change-request revision for the entity:
+//   - 0 means the update was applied immediately (if the user is authorized to do so).
+//   - 1..N means the update was saved as a change request (review required),
+//     where N increases with each subsequent change request for the same entity
+//     and resets to 1 once the changes are reviewed.
+type UpdateRevision struct {
 	Revision int `json:"revision"`
 }

@@ -9,16 +9,24 @@ for simplicity, I keep todo list and progress here for now
   - [x] view book
   - [ ] delete book
   - [x] list books
+  - [ ] Add topics to entities
+  - [ ] Add price to book
+  - [ ] Rework book to have multiple authors
 
 
-- [ ] Add topics to entities
-- [ ] Add price to book
+- [ ] Minimal admin dashboard for current needs:
+  - [ ] List of new books to review
+  - [ ] List of edit requests for books
+  - [ ] List of edit requests for books
+
 - [ ] Maybe group services by entity not by action (Ask opinions)
 - [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
 - [x] Make tools to seed data
+
+**Before release**:
 - [ ] Review "TODO!"s
 - [ ] enable "unused" linter 
-- [ ] Frontpage
+- [ ] Homepage
 - [ ] RELEASE
 ---
 
@@ -28,6 +36,7 @@ NEXT:
 - [ ] Create a CLI command to set up a new dev environment
 - [ ] Jobs
 - [ ] Events
+- [ ] Software
 - [ ] Improve user profile
 - [ ] Internal notifications
 - [ ] Entity comments
@@ -35,7 +44,7 @@ NEXT:
 - [ ] Offline mode
 
 
-Must to have
+Must to have:
 - [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
 
 Nice to have:

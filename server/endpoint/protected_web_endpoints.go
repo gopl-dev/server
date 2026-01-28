@@ -13,7 +13,11 @@ func (r *Router) ProtectedWebEndpoints() {
 
 	// books
 	r.GET("/add-book/", r.handler.CreateBookView)
-
 	r.Group("/edit-book/{id}/", r.mw.RequestBook).
 		GET("/", r.handler.EditBookView)
+
+	// pages
+	r.GET("/add-page/", r.handler.CreatePageView)
+	r.Group("/edit-page/{id}/", r.mw.RequestPage).
+		GET("/", r.handler.EditPageView)
 }

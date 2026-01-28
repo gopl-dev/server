@@ -26,7 +26,6 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 		PublicID:      fake.UrlSlug(random.Int(3, 5)),
 		OwnerID:       ds.NilID,
 		PreviewFileID: ds.NilID,
-		Type:          random.Element(ds.EntityTypes),
 		Title:         fake.BookTitle(),
 		Visibility:    random.Element(ds.EntityVisibilities),
 		Status:        status,
@@ -48,12 +47,12 @@ func (f *Factory) CreateEntity(overrideOpt ...ds.Entity) (m *ds.Entity, err erro
 	m = f.NewEntity(overrideOpt...)
 
 	if m.OwnerID.IsNil() {
-		_, err := f.CreateUser()
+		u, err := f.CreateUser()
 		if err != nil {
 			return nil, err
 		}
 
-		m.OwnerID = m.ID
+		m.OwnerID = u.ID
 	}
 
 	err = f.repo.CreateEntity(context.Background(), m)

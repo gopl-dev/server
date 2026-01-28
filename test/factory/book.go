@@ -12,7 +12,6 @@ func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 	m = &ds.Book{
 		Entity:      f.NewEntity(),
 		CoverFileID: ds.NilID,
-		Description: fake.Paragraph(),
 		AuthorName:  fake.BookAuthor(),
 		AuthorLink:  fake.URL(),
 		Homepage:    fake.URL(),
@@ -37,6 +36,7 @@ func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 func (f *Factory) CreateBook(overrideOpt ...ds.Book) (m *ds.Book, err error) {
 	m = f.NewBook(overrideOpt...)
 
+	m.Entity.Type = ds.EntityTypeBook
 	m.Entity, err = f.CreateEntity(*m.Entity)
 	if err != nil {
 		return

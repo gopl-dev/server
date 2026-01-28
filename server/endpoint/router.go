@@ -11,8 +11,6 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/frontend"
-	"github.com/gopl-dev/server/frontend/layout"
-	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/docs"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/middleware"
@@ -147,15 +145,8 @@ func (r *Router) HandleNotFound() *Router {
 		pattern += "/"
 	}
 
-	r.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		println(r.Method, r.RequestURI, "404 NOT FOUND")
-
-		handler.RenderDefaultLayout(r.Context(), w, layout.Data{
-			Title: "404 Not Found",
-			Body:  page.Err404("This page does not exist."),
-		})
-	})
-
+	h := r.applyMWsToHandler(r.handler.RenderPageOrNotFound)
+	r.mux.HandleFunc(pattern, h)
 	return r
 }
 
@@ -165,10 +156,16 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.mux.ServeHTTP(w, req)
 }
 
-func (r *Router) register(method, pattern string, handler handler.Fn) {
+func (r *Router) applyMWsToHandler(h handler.Fn) handler.Fn {
 	for i := len(r.middlewares) - 1; i >= 0; i-- {
-		handler = r.middlewares[i](handler)
+		h = r.middlewares[i](h)
 	}
+
+	return h
+}
+
+func (r *Router) register(method, pattern string, h handler.Fn) {
+	h = r.applyMWsToHandler(h)
 
 	withSlash := strings.HasSuffix(pattern, "/")
 	pattern = path.Join(r.basePath, pattern)
@@ -188,5 +185,5 @@ func (r *Router) register(method, pattern string, handler handler.Fn) {
 	pattern = method + " " + pattern
 	fmt.Println(pattern)
 
-	r.mux.Handle(pattern, http.HandlerFunc(handler))
+	r.mux.Handle(pattern, http.HandlerFunc(h))
 }

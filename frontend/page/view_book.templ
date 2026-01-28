@@ -6,41 +6,45 @@ import (
 )
 
 templ ViewBookPage(book *ds.Book) {
-<div class="flex-1 prose">
-    <h1 class="pb-0">{ book.Title }</h1>
-    <h3>
-        by
-        if book.AuthorLink != "" {
-        <a href={book.AuthorLink}>{ book.AuthorName }</a>
-        } else {
-        { book.AuthorName }
-        }
-    </h3>
+<div class="flex gap-6">
+    <div class="prose flex-1">
+        <h1 class="pb-0">{ book.Title }</h1>
+        <h3>
+            by
+            if book.AuthorLink != "" {
+            <a href={book.AuthorLink}>{ book.AuthorName }</a>
+            } else {
+            { book.AuthorName }
+            }
+        </h3>
 
-    <div class="grid grid-cols-2 gap-4 not-prose">
-        <h4>Published { book.ReleaseDate }</h4>
+        <div class="grid grid-cols-2 gap-4 not-prose">
+            <h4>Published { book.ReleaseDate }</h4>
 
-        if book.Homepage != "" {
-        <h4 class="text-right">
+            if book.Homepage != "" {
+            <h4 class="text-right">
+                <a href={book.Homepage} class="link link-primary">
+                    @icon.ExternalLink("mr-1", "w-4", "h-4") Homepage
+                </a>
+            </h4>
+            }
+        </div>
 
-            <a href={book.Homepage} class="link link-primary">
-                @icon.ExternalLink("mr-1", "w-4", "h-4") Homepage</a>
-        </h4>
-        }
+        <p>{ book.Description }</p>
+        <p>
+            <a href={ "/edit-book/" + book.PublicID } class="link-info">
+            @icon.Pencil("mr-1", "w-4", "h-4") Edit ...
+            </a>
+        </p>
     </div>
 
-    <p>{ book.Description }</p>
-    <p><a href={ "/edit-book/" + book.PublicID } class="link-info">
-        @icon.Pencil("mr-1", "w-4", "h-4") Edit ...</a></p>
+    if !book.CoverFileID.IsNil() {
+    <div class="shrink-0">
+        <img
+                src={ "/files/" + book.CoverFileID.String() }
+        width="300"
+        />
+    </div>
+    }
 </div>
-
-<!-- обложка справа -->
-if !book.CoverFileID.IsNil() {
-<div class="shrink-0">
-    <img
-            src={ "/files/" + book.CoverFileID.String() }
-    width="300"
-    />
-</div>
-}
 }

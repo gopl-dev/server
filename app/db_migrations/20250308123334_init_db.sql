@@ -96,10 +96,11 @@ CREATE TABLE files
 CREATE TABLE entities
 (
     id              uuid PRIMARY KEY NOT NULL,
-    public_id       TEXT  UNIQUE     NOT NULL,
-    owner_id        UUID             NOT NULL,
+    public_id       TEXT             NOT NULL,
+    owner_id        UUID             NOT NULL REFERENCES users (id),
     preview_file_id uuid REFERENCES files (id),
     title           TEXT,
+    description     TEXT,
     type            TEXT             NOT NULL,
     visibility      TEXT             NOT NULL,
     status          TEXT             NOT NULL,
@@ -107,6 +108,10 @@ CREATE TABLE entities
     updated_at      TIMESTAMPTZ,
     deleted_at      TIMESTAMPTZ
 );
+
+CREATE UNIQUE INDEX entities_public_id_type_uidx
+    ON entities (public_id, type)
+    WHERE deleted_at IS NULL;
 
 CREATE TABLE entity_change_logs
 (
@@ -121,7 +126,6 @@ CREATE TABLE entity_change_logs
 CREATE TABLE books
 (
     id            uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
-    description   TEXT             NOT NULL,
     author_name   TEXT             NOT NULL,
     author_link   TEXT,
     homepage      TEXT,

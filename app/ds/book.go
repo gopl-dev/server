@@ -13,7 +13,6 @@ type Book struct {
 	*Entity
 
 	CoverFileID ID     `json:"cover_file_id"`
-	Description string `json:"description"`
 	AuthorName  string `json:"author_name"`
 	AuthorLink  string `json:"author_link"`
 	Homepage    string `json:"homepage"`

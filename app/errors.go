@@ -56,12 +56,34 @@ func NewError(code int, message string, params ...any) error {
 type InputError map[string]string
 
 // NewInputError creates and returns an empty InputError map.
-func NewInputError() InputError {
-	return InputError{}
+func NewInputError(kvOpt ...string) InputError {
+	e := InputError{}
+
+	if len(kvOpt) >= 2 { //nolint:mnd
+		if len(kvOpt) == 2 { //nolint:mnd
+			e.Add(kvOpt[0], kvOpt[1])
+			return e
+		}
+
+		// kvOpt[0] = key, kvOpt[1] = format string, kvOpt[2:] = format args
+		raw := kvOpt[2:]
+		args := make([]any, len(raw))
+		for i, s := range raw {
+			args[i] = s
+		}
+
+		e.Add(kvOpt[0], kvOpt[1], args...)
+	}
+
+	return e
 }
 
 // Add inserts a key-value pair (field name and error message) into the InputError map.
-func (i InputError) Add(k, v string) {
+func (i InputError) Add(k, v string, args ...any) {
+	if len(args) > 0 {
+		v = fmt.Sprintf(v, args...)
+	}
+
 	i[k] = v
 }
 

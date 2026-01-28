@@ -183,6 +183,15 @@ definitions:
       visibility:
         $ref: '#/definitions/ds.EntityVisibility'
     type: object
+  request.UpdatePage:
+    properties:
+      description:
+        type: string
+      public_id:
+        type: string
+      title:
+        type: string
+    type: object
   request.UserSignIn:
     properties:
       email:
@@ -215,7 +224,7 @@ definitions:
       success:
         type: boolean
     type: object
-  response.UpdateBook:
+  response.UpdateRevision:
     properties:
       revision:
         type: integer
@@ -318,41 +327,6 @@ paths:
       summary: Create a new book
       tags:
       - books
-    put:
-      consumes:
-      - application/json
-      operationId: UpdateBook
-      parameters:
-      - description: Request body
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.UpdateBook'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.UpdateBook'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handler.Error'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/handler.Error'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handler.Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Update book
-      tags:
-      - books
   /books/{id}/:
     get:
       consumes:
@@ -386,6 +360,46 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Get book
+      tags:
+      - books
+    put:
+      consumes:
+      - application/json
+      operationId: UpdateRevision
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateBook'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UpdateRevision'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update book
       tags:
       - books
   /books/{id}/edit/:
@@ -524,6 +538,82 @@ paths:
       summary: Get file metadata
       tags:
       - files
+  /pages/{id}/:
+    put:
+      consumes:
+      - application/json
+      operationId: UpdatePage
+      parameters:
+      - description: Page ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatePage'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UpdateRevision'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Update page
+      tags:
+      - pages
+  /pages/{id}/edit/:
+    get:
+      consumes:
+      - application/json
+      operationId: GetPageEditState
+      parameters:
+      - description: Page ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/service.EntityChange'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get page for editing
+      tags:
+      - books
   /users/:
     delete:
       consumes:

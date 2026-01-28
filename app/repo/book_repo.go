@@ -23,7 +23,6 @@ func (r *Repo) CreateBook(ctx context.Context, b *ds.Book) error {
 	return r.insert(ctx, "books", data{
 		"id":            b.ID,
 		"cover_file_id": b.CoverFileID,
-		"description":   b.Description,
 		"author_name":   b.AuthorName,
 		"author_link":   b.AuthorLink,
 		"homepage":      b.Homepage,
@@ -56,9 +55,9 @@ func (r *Repo) GetBookByPublicID(ctx context.Context, publicID string) (*ds.Book
 	defer span.End()
 
 	book := new(ds.Book)
-	const query = `SELECT * FROM entities e JOIN books b USING (id) WHERE e.public_id = $1 AND e.deleted_at IS NULL`
+	const query = `SELECT * FROM entities e JOIN books b USING (id) WHERE e.public_id = $1 AND e.type = $2 AND e.deleted_at IS NULL LIMIT 1`
 
-	err := pgxscan.Get(ctx, r.getDB(ctx), book, query, publicID)
+	err := pgxscan.Get(ctx, r.getDB(ctx), book, query, publicID, ds.EntityTypeBook)
 	if noRows(err) {
 		return nil, ErrBookNotFound
 	}
@@ -73,7 +72,6 @@ func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 
 	err := r.update(ctx, b.ID, "books", data{
 		"cover_file_id": b.CoverFileID,
-		"description":   b.Description,
 		"author_name":   b.AuthorName,
 		"author_link":   b.AuthorLink,
 		"homepage":      b.Homepage,

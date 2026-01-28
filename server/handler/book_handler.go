@@ -49,17 +49,18 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 
 // UpdateBook handles the API request for updating book.
 //
-//	@ID			UpdateBook
+//	@ID			UpdateRevision
 //	@Summary	Update book
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
+//	@Param		id	path		string	true	"Book ID"
 //	@Param		request	body		request.UpdateBook	true	"Request body"
-//	@Success	200		{object}	response.UpdateBook
+//	@Success	200		{object}	response.UpdateRevision
 //	@Failure	400		{object}	Error
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
-//	@Router		/books/ [put]
+//	@Router		/books/{id}/ [put]
 //	@Security	ApiKeyAuth
 func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "UpdateBook")
@@ -77,15 +78,13 @@ func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book := req.ToBook()
-
-	revision, err := h.service.UpdateBook(ctx, id, book)
+	revision, err := h.service.UpdateBook(ctx, id, req.ToBook())
 	if err != nil {
 		res.Abort(err)
 		return
 	}
 
-	res.jsonOK(response.UpdateBook{
+	res.jsonOK(response.UpdateRevision{
 		Revision: revision,
 	})
 }
@@ -203,7 +202,7 @@ func (h *Handler) GetBookView(w http.ResponseWriter, r *http.Request) {
 //	@Router		/books/{id}/edit/ [get]
 //	@Security	ApiKeyAuth
 func (h *Handler) GetBookEditState(w http.ResponseWriter, r *http.Request) {
-	ctx, span := h.tracer.Start(r.Context(), "GetEntityChangeRequest")
+	ctx, span := h.tracer.Start(r.Context(), "GetBookEditState")
 	defer span.End()
 
 	book := ds.BookFromContext(ctx)

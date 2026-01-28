@@ -67,7 +67,7 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 						return err
 					}
 				default:
-					return err
+					return fmt.Errorf("%w: column: %q", ErrUniqueViolation, column)
 				}
 
 				goto createUser

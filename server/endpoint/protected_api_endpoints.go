@@ -15,6 +15,12 @@ func (r *Router) ProtectedAPIEndpoints() {
 		PUT("/", r.handler.UpdateBook).
 		GET("/edit/", r.handler.GetBookEditState)
 
+	// pages
+	r.POST("/pages/", r.handler.CreatePage)
+	r.Group("/pages/{id}/", r.mw.RequestPage).
+		PUT("/", r.handler.UpdatePage).
+		GET("/edit/", r.handler.GetPageEditState)
+
 	// files
 	r.POST("/files/", r.handler.UploadFile)
 	r.DELETE("/files/{id}/", r.handler.DeleteFile)

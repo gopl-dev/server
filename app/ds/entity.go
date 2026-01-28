@@ -18,6 +18,7 @@ type Entity struct {
 	PreviewFileID ID               `json:"preview_file_id"`
 	Type          EntityType       `json:"-"`
 	Title         string           `json:"title"`
+	Description   string           `json:"description"`
 	Visibility    EntityVisibility `json:"visibility"`
 	Status        EntityStatus     `json:"status"`
 	PublishedAt   *time.Time       `json:"published_at,omitempty"`

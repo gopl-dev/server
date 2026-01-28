@@ -83,7 +83,7 @@ func Default(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></head><body class=\"bg-gray-100 font-sans w-full min-h-screen flex flex-col\"><header class=\"navbar bg-gray-600 text-neutral-content shadow-sm\"><div class=\"flex-none pl-10\"><a class=\"text-white no-underline\" href=\"/\"><img src=\"/assets/gopl.svg\" alt=\"gopl.dev\" width=\"60\"></a></div><div class=\"absolute left-1/2 -translate-x-1/2\"><ul class=\"menu menu-horizontal px-1\"><li><a href=\"/community/\" class=\"border-b-2 rounded-none\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><script>\r\n                const menuItems = [\r\n                    { href: \"/community/\", text: \"COMMUNITY\", iconId: \"icon-users\" },\r\n                    { href: \"/jobs/\",      text: \"JOBS\",      iconId: \"icon-pickaxe\" },\r\n                    { href: \"/books/\",     text: \"BOOKS\",     iconId: \"icon-library\" },\r\n                ];\r\n            </script></head><template id=\"icon-users\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -91,7 +91,7 @@ func Default(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "COMMUNITY</a></li><li><a href=\"/jobs/\" class=\"border-b-2 rounded-none\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</template><template id=\"icon-pickaxe\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -99,7 +99,7 @@ func Default(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "JOBS</a></li><li><a href=\"/books/\" class=\"border-b-2 rounded-none link-info border-info font-bold\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</template><template id=\"icon-library\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -107,7 +107,7 @@ func Default(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "BOOKS</a></li></ul></div><div class=\"flex-none ml-auto\"><ul class=\"menu menu-horizontal px-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</template><body class=\"bg-gray-100 font-sans w-full min-h-screen flex flex-col\"><header class=\"navbar bg-gray-600 text-neutral-content shadow-sm\"><div class=\"flex-none pl-10\"><a class=\"logo\" href=\"/\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" fill=\"currentColor\" viewBox=\"0 0 216 101\"><path d=\"M23.5 101.1c20 0 32.6-8.3 32.6-20.4C56 70.4 48 66.1 34 66.1h-8.4c-5.6 0-7.9-.9-7.9-3.3a4 4 0 0 1 1.4-3.3 28 28 0 0 0 6.2.8C38 60.3 48 54.9 48 41.9a11 11 0 0 0-1.4-5.6V36h8.6V22H34.3a29 29 0 0 0-9-1.3c-12.3 0-24 6.5-24 20.4A17 17 0 0 0 9 55.4v.4c-3.8 2.7-6.3 6.7-6.3 10.5A11 11 0 0 0 7.9 76v.4Q0 80.4 0 87.2c0 10 10.8 13.9 23.5 13.9m1.8-52.2c-3.5 0-6-2.5-6-7.9 0-5.1 2.5-7.6 6-7.6s6 2.5 6 7.6c0 5.4-2.4 7.9-6 7.9m1.4 40.3c-6.5 0-11-1.6-11-5.1q0-2.2 2-4c1.6.4 3.6.6 8 .6h4.5c4.8 0 7.5.4 7.5 3.4 0 3.1-4.7 5.1-11 5.1M87 79.4c14.3 0 27.8-10.8 27.8-29.4S101.3 20.6 87 20.6 59.2 31.4 59.2 50 72.6 79.4 87 79.4m0-15.5c-5.8 0-8-5.4-8-14s2.2-13.8 8-13.8 8 5.4 8 13.9-2.2 13.9-8 13.9m37.9 33.8h19.3V82.3l-.7-8.6a18 18 0 0 0 12.5 5.6c12 0 23.4-11 23.4-30.2 0-17.3-8.6-28.5-21.8-28.5-5.6 0-11 2.7-15.2 6.5h-.5l-1.3-5.1h-15.7zm26.4-34a10 10 0 0 1-7.1-2.7V40.3q3.4-4.2 7.6-4c5.1 0 7.8 3.8 7.8 13 0 10.8-3.8 14.4-8.3 14.4m55.9 15.7a24 24 0 0 0 9.4-1.6l-2.3-14.1-2 .2c-1.3 0-3.1-1.1-3.1-5V0h-19.3v58.3c0 12.5 4.3 21 17.3 21\"></path></svg></a></div><div class=\"absolute left-1/2 -translate-x-1/2\"><ul class=\"menu menu-horizontal px-1\" x-data=\"{\r\n      path: window.location.pathname,\r\n      items: menuItems,\r\n      mountIcon(el, id) {\r\n        const tpl = document.getElementById(id);\r\n        el.replaceChildren(tpl.content.cloneNode(true));\r\n      }\r\n    }\"><template x-for=\"item in items\" :key=\"item.href\"><li><a :href=\"item.href\" class=\"border-b-2 rounded-none inline-flex items-center gap-2\" :class=\"path.startsWith(item.href) ? 'link-info border-info font-bold' : ''\"><span x-init=\"mountIcon($el, item.iconId)\"></span> <span x-text=\"item.text\"></span></a></li></template></ul></div><div class=\"flex-none ml-auto\"><ul class=\"menu menu-horizontal px-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -144,7 +144,7 @@ func Default(d Data) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(d.User.Username)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/layout/default.templ`, Line: 51, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/layout/default.templ`, Line: 73, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {

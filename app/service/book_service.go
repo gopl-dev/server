@@ -100,7 +100,15 @@ func (s *Service) resolveBookCover(ctx context.Context, book *ds.Book, edit bool
 	return nil
 }
 
-// UpdateBook ...
+// UpdateBook updates an existing book by its identifier.
+//
+// For admin users, changes are applied immediately.
+//
+// For non-admin users, a pending entity change request is created instead,
+// and the update must be reviewed before being applied.
+//
+// The method returns the resulting revision number. For direct admin
+// updates, the revision is always 0.
 func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (revision int, err error) {
 	ctx, span := s.tracer.Start(ctx, "UpdateBook")
 	defer span.End()

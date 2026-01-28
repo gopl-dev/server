@@ -199,11 +199,11 @@ templ FilterBooksPage() {
     </template>
 
     <template x-for="b in books" :key="b.id">
-        <div class="card card-side bg-base-100 shadow-sm mb-2">
+        <div class="card rounded-none card-side bg-base-100 shadow-sm mb-2">
             <template x-if="b.cover_file_id">
                 <figure>
                     <img
-                            class="object-cover shrink-0 w-30"
+                            class="object-cover shrink-0 w-40"
                             :src="coverURL(b.cover_file_id)"
                             :alt="b.title"
                             width="300"

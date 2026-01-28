@@ -384,6 +384,9 @@ func Abort(w http.ResponseWriter, r *http.Request, err error) {
 	case app.CodeNotFound:
 		body = page.Err404(resp.Error)
 		title = "404 Not Found"
+	case app.CodeBadRequest:
+		body = page.Err400(resp.Error)
+		title = "400 Bad Request"
 	default:
 		body = page.Err500(resp.Error)
 		title = "500 Internal Server Error"

@@ -23,7 +23,7 @@ func (s *Service) CreateEntity(ctx context.Context, e *ds.Entity) error {
 	e.SetPublicID()
 
 resolvePublicID:
-	existing, err := s.db.FindEntityByPublicID(ctx, e.PublicID)
+	existing, err := s.db.FindEntityByPublicID(ctx, e.PublicID, e.Type)
 	if existing != nil {
 		e.PublicID += "-" + random.String(5) //nolint:mnd
 		goto resolvePublicID

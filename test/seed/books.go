@@ -4,6 +4,7 @@ package seed
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	fake "github.com/brianvoe/gofakeit/v7"
@@ -42,7 +43,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				return err
 			}
 
-			cover, err := makeImageFile(ctx, 800, 600)
+			cover, err := makeImageFile(ctx, 500, 800)
 			if err != nil {
 				return err
 			}
@@ -60,7 +61,9 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 			}
 
 			e := s.factory.NewEntity(ds.Entity{
+				Type:          ds.EntityTypeBook,
 				Title:         title,
+				Description:   strings.Join([]string{fake.Paragraph(), fake.Paragraph(), fake.Paragraph()}, " "),
 				PublicID:      app.Slug(title),
 				OwnerID:       ownerID,
 				PreviewFileID: cover.ID,
