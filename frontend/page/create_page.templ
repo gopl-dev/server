@@ -1,0 +1,100 @@
+package page
+
+import . "github.com/gopl-dev/server/frontend/component"
+
+templ CreatePageForm() {
+<script src="/assets/http_helpers.js"></script>
+<script src="/assets/form_helpers.js"></script>
+<script>
+    const PAGE_FORM_DEFAULTS = {
+        public_id: '',
+        title: '',
+        description: '',
+    }
+
+    function createPageForm() {
+        return {
+            ...FormHelpers.makeForm({
+                defaults: PAGE_FORM_DEFAULTS,
+                submit: async function () {
+                    const {resp, data} = await HTTP.postJSON('/api/pages/', this.form)
+
+                    if (resp.status === 201) {
+                        this.createdPage = data
+                        this.success = true
+                        return
+                    }
+
+                    if (data?.error) this.error = data.error
+                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)
+                },
+            }),
+
+            createdPage: null,
+            init() {},
+
+            get createdPageURL() {
+                const pid = this.createdPage?.public_id
+                return pid ? `/${pid}/` : ''
+            },
+        }
+    }
+
+
+</script>
+<div class="min-w-2xl">
+    <h1 class="text-3xl pb-4">Add page</h1>
+    <div class="bg-base-100 shadow-md card-body">
+        @Form("createPageForm") {
+        <div x-init="init()">
+            <p class="text-red-500" x-text="error" x-show="error !== ''"></p>
+            <div role="alert" class="alert alert-success" x-show="success" x-cloak>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+
+                <div>Page created successfully!</div>
+                <a
+                        class="link"
+                        :href="createdPageURL"
+                        x-show="createdPageURL !== ''"
+                >
+                    View page
+                </a>
+                |
+                <a href="/add-page/" class="link">Add another one</a>
+
+            </div>
+            <div x-show="!success">
+                <fieldset class="fieldset">
+                    @Input(InputParams{
+                    ID: "public_id",
+                    Label: "Pubcli ID",
+                    Model: "form.public_id",
+                    ErrorModel: "errors.public_id",
+                    })
+                    @Input(InputParams{
+                    ID: "title",
+                    Label: "Title",
+                    Model: "form.title",
+                    ErrorModel: "errors.title",
+                    })
+                    @Textarea(InputParams{
+                    ID: "description",
+                    Label: "Description",
+                    Model: "form.description",
+                    ErrorModel: "errors.description",
+                    Type: "textarea",
+                    })
+                    <div class="p-2">
+                        @SubmitButton("Create page")
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        }
+    </div>
+</div>
+}

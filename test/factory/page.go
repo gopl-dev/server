@@ -1,0 +1,42 @@
+package factory
+
+import (
+	"github.com/gopl-dev/server/app/ds"
+)
+
+// NewPage constructs a new Page model with default values.
+func (f *Factory) NewPage(overrideOpt ...ds.Page) (m *ds.Page) {
+	m = &ds.Page{
+		Entity: f.NewEntity(ds.Entity{
+			Visibility: ds.EntityVisibilityPublic,
+			Status:     ds.EntityStatusApproved,
+		}),
+	}
+
+	if len(overrideOpt) == 1 {
+		o := overrideOpt[0]
+		merge(m, o)
+
+		if o.Entity == nil {
+			o.Entity = &ds.Entity{}
+		} else {
+			merge(m.Entity, o.Entity)
+		}
+	}
+
+	return
+}
+
+// CreatePage creates and persists a Page domain model using the factory.
+func (f *Factory) CreatePage(overrideOpt ...ds.Page) (m *ds.Page, err error) {
+	m = f.NewPage(overrideOpt...)
+
+	m.Entity.Type = ds.EntityTypePage
+	m.Entity, err = f.CreateEntity(*m.Entity)
+	if err != nil {
+		return
+	}
+
+	// err = f.repo.CreatePage(context.Background(), m)
+	return
+}
