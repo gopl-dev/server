@@ -20,4 +20,7 @@ func (r *Router) ProtectedWebEndpoints() {
 	r.GET("/add-page/", r.handler.CreatePageView)
 	r.Group("/edit-page/{id}/", r.mw.RequestPage).
 		GET("/", r.handler.EditPageView)
+
+	// dashboard
+	r.GET("/dashboard/", r.handler.Dashboard)
 }

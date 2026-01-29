@@ -1,0 +1,86 @@
+<div x-data="window.dashboardComponents['new-books']()" x-init="init()">
+    <div class="mb-4 flex gap-2">
+        <select class="select select-bordered" x-model="filters.status" @change="loadData()">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+        </select>
+        <input type="text" placeholder="Search..." class="input input-bordered"
+               x-model="filters.search" @input.debounce.500ms="loadData()"/>
+    </div>
+
+    <!-- Loading state -->
+    <div x-show="loading" class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <!-- Error state -->
+    <div x-show="error" class="alert alert-error mb-4" x-cloak>
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span x-text="error"></span>
+    </div>
+
+    <!-- Table -->
+    <div x-show="!loading && !error" class="overflow-x-auto bg-white rounded-lg shadow" x-cloak>
+        <table class="table table-zebra">
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <template x-for="book in data.items" :key="book.id">
+                <tr>
+                    <td x-text="book.title"></td>
+                    <td x-text="book.author"></td>
+                    <td x-text="$root.formatDate(book.created_at)"></td>
+                    <td>
+                            <span class="badge"
+                                  :class="{
+                                      'badge-warning': book.status === 'pending',
+                                      'badge-success': book.status === 'approved',
+                                      'badge-error': book.status === 'rejected'
+                                  }"
+                                  x-text="book.status"></span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary"
+                                @click="approveBook(book.id)"
+                                :disabled="book.status !== 'pending'">
+                            Approve
+                        </button>
+                        <button class="btn btn-sm btn-error"
+                                @click="rejectBook(book.id)"
+                                :disabled="book.status !== 'pending'">
+                            Reject
+                        </button>
+                    </td>
+                </tr>
+            </template>
+            </tbody>
+        </table>
+
+        <!-- Empty state -->
+        <div x-show="data.items && data.items.length === 0" class="text-center py-8 text-gray-500">
+            No books found
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div x-show="data.total_pages > 1" class="flex justify-center mt-4" x-cloak>
+        <div class="join">
+            <button class="join-item btn" @click="changePage(pagination.page - 1)"
+                    :disabled="pagination.page <= 1">«</button>
+            <button class="join-item btn">Page <span x-text="pagination.page"></span></button>
+            <button class="join-item btn" @click="changePage(pagination.page + 1)"
+                    :disabled="pagination.page >= data.total_pages">»</button>
+        </div>
+    </div>
+</div>

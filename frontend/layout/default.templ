@@ -34,7 +34,7 @@ templ Default(d Data) {
                 </div>
 
                 <div class="absolute left-1/2 -translate-x-1/2">
-                    <ul class="menu menu-horizontal px-1"
+                    <ul class="menu menu-horizontal"
                         x-data="{
       path: window.location.pathname,
       items: menuItems,
@@ -46,8 +46,8 @@ templ Default(d Data) {
                         <template x-for="item in items" :key="item.href">
                             <li>
                                 <a :href="item.href"
-                                   class="border-b-2 rounded-none inline-flex items-center gap-2"
-                                   :class="path.startsWith(item.href) ? 'link-info border-info font-bold' : ''">
+                                   class="rounded-none inline-flex items-center"
+                                   :class="path.startsWith(item.href) ? 'border-b-2  link-info border-info ' : ''">
                                     <span x-init="mountIcon($el, item.iconId)"></span>
                                     <span x-text="item.text"></span>
                                 </a>
@@ -57,7 +57,7 @@ templ Default(d Data) {
                 </div>
 
                 <div class="flex-none ml-auto">
-					<ul class="menu menu-horizontal px-1">
+					<ul class="menu menu-horizontal">
 						if d.User == nil {
 							<li><a href="/users/sign-in/">
                                 @icon.LogIn()
@@ -68,11 +68,16 @@ templ Default(d Data) {
 						} else {
 							<li>
                                 <details class="dropdown dropdown-end">
-                                    <summary class="flex items-center gap-2">
+                                    <summary class="flex items-center">
                                         @icon.User()
                                         { d.User.Username }
                                     </summary>
-                                    <ul class="dropdown-content  bg-gray-500  rounded-t-none p-2 min-w-40">
+                                    <ul class="dropdown-content  bg-gray-600  rounded-t-none min-w-40">
+                                        if d.User.IsAdmin {
+                                        <li><a href="/dashboard/">
+                                            @icon.Menu()
+                                            Dashboard</a></li>
+                                        }
                                         <li><a href="/users/settings/">
                                             @icon.Settings()
                                             Settings</a></li>

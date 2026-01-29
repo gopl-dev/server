@@ -1,0 +1,29 @@
+<script src="new-books.js"></script>
+<div x-data="window.dashboardComponents['home']()" x-init="init()">
+    <div x-show="loading" class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" x-cloak>
+        <div class="stat bg-white rounded-lg shadow">
+            <div class="stat-title">New Books</div>
+            <div class="stat-value text-primary" x-text="stats.newBooks">0</div>
+            <div class="stat-desc">Pending approval</div>
+        </div>
+        <div class="stat bg-white rounded-lg shadow">
+            <div class="stat-title">Book Edits</div>
+            <div class="stat-value text-secondary" x-text="stats.bookEdits">0</div>
+            <div class="stat-desc">Waiting review</div>
+        </div>
+        <div class="stat bg-white rounded-lg shadow">
+            <div class="stat-title">Page Edits</div>
+            <div class="stat-value text-accent" x-text="stats.pageEdits">0</div>
+            <div class="stat-desc">Pending changes</div>
+        </div>
+        <div class="stat bg-white rounded-lg shadow">
+            <div class="stat-title">Total Actions</div>
+            <div class="stat-value" x-text="stats.totalActions">0</div>
+            <div class="stat-desc">Last 7 days</div>
+        </div>
+    </div>
+</div>
