@@ -36,7 +36,7 @@ func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 func (f *Factory) CreateBook(overrideOpt ...ds.Book) (m *ds.Book, err error) {
 	m = f.NewBook(overrideOpt...)
 
-	m.Entity.Type = ds.EntityTypeBook
+	m.Type = ds.EntityTypeBook
 	m.Entity, err = f.CreateEntity(*m.Entity)
 	if err != nil {
 		return

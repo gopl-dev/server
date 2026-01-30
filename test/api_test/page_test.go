@@ -51,10 +51,10 @@ func TestCreatePage(t *testing.T) {
 	})
 
 	// check log created
-	test.AssertInDB(t, tt.DB, "entity_change_logs", test.Data{
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
 		"entity_id": resp.ID,
 		"user_id":   user.ID,
-		"action":    ds.ActionCreate,
+		"type":      ds.EventLogEntityAdded,
 	})
 
 	t.Run("public_id already taken", func(t *testing.T) {

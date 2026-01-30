@@ -29,22 +29,6 @@ CREATE TABLE user_sessions
 );
 
 
-CREATE TABLE user_activity_logs
-(
-    id          UUID PRIMARY KEY NOT NULL,
-    user_id     UUID REFERENCES users (id),
-    action_type INT              NOT NULL,
-    is_public   BOOLEAN          NOT NULL DEFAULT FALSE,
-    entity_type VARCHAR(100),
-    entity_id   BIGINT,
-    meta        JSONB,
-    created_at  TIMESTAMPTZ      NOT NULL
-);
-
-CREATE INDEX idx_user_activity_logs_user_id ON user_activity_logs (user_id);
-CREATE INDEX idx_user_activity_logs_action_type ON user_activity_logs (action_type);
-CREATE INDEX idx_user_activity_logs_public_feed ON user_activity_logs (created_at DESC) WHERE is_public = TRUE;
-
 CREATE TABLE password_reset_tokens
 (
     id         UUID PRIMARY KEY NOT NULL,
@@ -113,16 +97,6 @@ CREATE UNIQUE INDEX entities_public_id_type_uidx
     ON entities (public_id, type)
     WHERE deleted_at IS NULL;
 
-CREATE TABLE entity_change_logs
-(
-    id         uuid PRIMARY KEY         NOT NULL,
-    entity_id  UUID                     NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    user_id    UUID                     NOT NULL,
-    action     TEXT                     NOT NULL,
-    metadata   JSONB,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE books
 (
     id            uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
@@ -154,3 +128,16 @@ CREATE TABLE entity_change_requests
 CREATE UNIQUE INDEX uidx_entity_change_requests_one_pending
     ON entity_change_requests (entity_id, user_id)
     WHERE status = 'pending';
+
+CREATE TABLE event_logs
+(
+    id               UUID PRIMARY KEY,
+    user_id          UUID REFERENCES users (id),
+    type             TEXT        NOT NULL,
+    entity_id        UUID REFERENCES entities (id),
+    entity_change_id UUID REFERENCES entity_change_requests (id),
+    message          TEXT,
+    is_public        BOOLEAN,
+    meta             JSONB,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);

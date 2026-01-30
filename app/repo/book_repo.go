@@ -92,6 +92,7 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 	count, err = r.filter("entities e", "e").
 		columns(`
 		  e.id            AS id,
+		  e.type,
 		  e.public_id,
 		  e.owner_id,
 		  e.title,
@@ -107,9 +108,11 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		  b.author_link,
 		  b.homepage,
 		  b.release_date,
+
 		  u.username AS "owner"`).
 		join("LEFT JOIN books b USING (id)").
 		join("LEFT JOIN users u ON e.owner_id = u.id").
+		where("e.type", ds.EntityTypeBook).
 		paginate(f.Page, f.PerPage).
 		createdAt(f.CreatedAt).
 		deletedAt(f.DeletedAt).

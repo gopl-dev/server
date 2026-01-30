@@ -325,7 +325,7 @@ type Sanitizer interface {
 	Sanitize()
 }
 
-func idFromPath(r *http.Request, paramNameOpt ...string) (ds.ID, error) {
+func idFromPath(r *http.Request, paramNameOpt ...string) (ds.ID, error) { //nolint:unparam
 	name := "id"
 	if len(paramNameOpt) == 1 {
 		name = paramNameOpt[0]
@@ -428,10 +428,7 @@ func bindQuery(r *http.Request, to any) {
 	bindQueryToStruct(q, v)
 }
 
-// bindQueryToStruct recursively binds URL query parameters to fields of the given struct value.
-//
-// It walks all fields, and when it encounters an embedded (anonymous) struct (or pointer to struct),
-// it recurses into it. All other fields are bound by their `url` tags.
+// bindQueryToStruct recursively binds URL query parameters to the fields of v.
 func bindQueryToStruct(q url.Values, v reflect.Value) {
 	t := v.Type()
 
@@ -439,135 +436,182 @@ func bindQueryToStruct(q url.Values, v reflect.Value) {
 		sf := t.Field(i)
 		fv := v.Field(i)
 
-		if sf.Anonymous {
-			if fv.Kind() == reflect.Struct {
-				bindQueryToStruct(q, fv)
-				continue
-			}
-
-			if fv.Kind() == reflect.Ptr && fv.Type().Elem().Kind() == reflect.Struct {
-				if fv.IsNil() {
-					if fv.CanSet() {
-						fv.Set(reflect.New(fv.Type().Elem()))
-					} else {
-						continue
-					}
-				}
-				bindQueryToStruct(q, fv.Elem())
-				continue
-			}
+		if sf.Anonymous && tryBindAnonymous(q, fv) {
+			continue
 		}
 
-		tag := sf.Tag.Get("url")
-		tag = strings.Replace(tag, ",omitempty", "", 1)
+		tag := cleanURLTag(sf.Tag.Get("url"))
 		if tag == "" {
 			continue
 		}
 
-		vals, ok := q[tag]
-		if !ok || len(vals) == 0 {
-			continue
-		}
-		s := vals[0]
-
-		if !fv.CanSet() {
+		vals := q[tag]
+		if len(vals) == 0 || !fv.CanSet() {
 			continue
 		}
 
-		switch fv.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			n, err := strconv.ParseInt(s, 10, 64)
-			if err == nil {
-				fv.SetInt(n)
-			}
+		setFieldFromStrings(fv, vals)
+	}
+}
 
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			n, err := strconv.ParseUint(s, 10, 64)
-			if err == nil {
-				fv.SetUint(n)
-			}
+// cleanURLTag normalizes a `url` struct tag by removing supported modifiers
+// (currently only ",omitempty") and returning the pure query key.
+func cleanURLTag(tag string) string {
+	return strings.Replace(tag, ",omitempty", "", 1)
+}
 
-		case reflect.Float32, reflect.Float64:
-			n, err := strconv.ParseFloat(s, fv.Type().Bits())
-			if err == nil {
-				fv.SetFloat(n)
-			}
+// tryBindAnonymous attempts to process an anonymous (embedded) field.
+func tryBindAnonymous(q url.Values, fv reflect.Value) bool {
+	switch fv.Kind() {
+	case reflect.Struct:
+		bindQueryToStruct(q, fv)
+		return true
 
+	case reflect.Ptr:
+		if fv.Type().Elem().Kind() != reflect.Struct {
+			return false
+		}
+
+		if fv.IsNil() {
+			if !fv.CanSet() {
+				return true // handled: cannot allocate, so skip
+			}
+			fv.Set(reflect.New(fv.Type().Elem()))
+		}
+
+		bindQueryToStruct(q, fv.Elem())
+		return true
+
+	default:
+		return false
+	}
+}
+
+// setFieldFromStrings assigns query values to a struct field.
+func setFieldFromStrings(fv reflect.Value, vals []string) {
+	switch fv.Kind() {
+	case reflect.Slice:
+		setSliceFromStrings(fv, vals)
+	case reflect.Ptr:
+		setPtrFromString(fv, vals[0])
+	default:
+		setScalarFromString(fv, vals[0])
+	}
+}
+
+// setScalarFromString parses a single string value and assigns it to a
+// non-pointer, non-slice field of a supported scalar kind
+// (string, bool, int*, uint*, float*).
+func setScalarFromString(fv reflect.Value, s string) {
+	switch fv.Kind() {
+	case reflect.String:
+		fv.SetString(s)
+
+	case reflect.Bool:
+		b, err := strconv.ParseBool(s)
+		if err == nil {
+			fv.SetBool(b)
+		}
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		n, err := strconv.ParseInt(s, 10, 64)
+		if err == nil {
+			fv.SetInt(n)
+		}
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		n, err := strconv.ParseUint(s, 10, 64)
+		if err == nil {
+			fv.SetUint(n)
+		}
+
+	case reflect.Float32, reflect.Float64:
+		n, err := strconv.ParseFloat(s, fv.Type().Bits())
+		if err == nil {
+			fv.SetFloat(n)
+		}
+	}
+}
+
+// setPtrFromString parses a single string value and assigns it to a pointer field.
+func setPtrFromString(fv reflect.Value, s string) {
+	elemType := fv.Type().Elem()
+
+	// Special-case *string to avoid reflect.New + SetString.
+	if elemType.Kind() == reflect.String {
+		fv.Set(reflect.ValueOf(&s))
+		return
+	}
+
+	if !shouldSetPtr(elemType.Kind(), s, elemType) {
+		return
+	}
+
+	ptr := reflect.New(elemType)
+	setScalarFromString(ptr.Elem(), s)
+	fv.Set(ptr)
+}
+
+// shouldSetPtr reports whether a pointer value of the given kind should be set
+// based on whether the string can be successfully parsed into that type.
+func shouldSetPtr(kind reflect.Kind, s string, t reflect.Type) bool {
+	switch kind {
+	case reflect.Bool:
+		_, err := strconv.ParseBool(s)
+		return err == nil
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		_, err := strconv.ParseInt(s, 10, 64)
+		return err == nil
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		_, err := strconv.ParseUint(s, 10, 64)
+		return err == nil
+
+	case reflect.Float32, reflect.Float64:
+		_, err := strconv.ParseFloat(s, t.Bits())
+		return err == nil
+
+	default:
+		return false
+	}
+}
+
+// setSliceFromStrings binds multiple query values to a slice field.
+func setSliceFromStrings(fv reflect.Value, vals []string) {
+	elemType := fv.Type().Elem()
+	slice := reflect.MakeSlice(fv.Type(), len(vals), len(vals))
+
+	for i, s := range vals {
+		elem := slice.Index(i)
+
+		switch elemType.Kind() {
+		case reflect.String:
+			elem.SetString(s)
 		case reflect.Bool:
 			b, err := strconv.ParseBool(s)
 			if err == nil {
-				fv.SetBool(b)
+				elem.SetBool(b)
 			}
-
-		case reflect.String:
-			fv.SetString(s)
-
-		case reflect.Ptr:
-			elemType := fv.Type().Elem()
-			switch elemType.Kind() {
-			case reflect.String:
-				fv.Set(reflect.ValueOf(&s))
-
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				if n, err := strconv.ParseInt(s, 10, 64); err == nil {
-					ptr := reflect.New(elemType)
-					ptr.Elem().SetInt(n)
-					fv.Set(ptr)
-				}
-
-			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				if n, err := strconv.ParseUint(s, 10, 64); err == nil {
-					ptr := reflect.New(elemType)
-					ptr.Elem().SetUint(n)
-					fv.Set(ptr)
-				}
-
-			case reflect.Float32, reflect.Float64:
-				if n, err := strconv.ParseFloat(s, elemType.Bits()); err == nil {
-					ptr := reflect.New(elemType)
-					ptr.Elem().SetFloat(n)
-					fv.Set(ptr)
-				}
-
-			case reflect.Bool:
-				if b, err := strconv.ParseBool(s); err == nil {
-					ptr := reflect.New(elemType)
-					ptr.Elem().SetBool(b)
-					fv.Set(ptr)
-				}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			n, err := strconv.ParseInt(s, 10, 64)
+			if err == nil {
+				elem.SetInt(n)
 			}
-
-		case reflect.Slice:
-			// Support for slices (e.g., []string, []int)
-			elemType := fv.Type().Elem()
-			slice := reflect.MakeSlice(fv.Type(), len(vals), len(vals))
-
-			for j, val := range vals {
-				elem := slice.Index(j)
-				switch elemType.Kind() {
-				case reflect.String:
-					elem.SetString(val)
-				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-					if n, err := strconv.ParseInt(val, 10, 64); err == nil {
-						elem.SetInt(n)
-					}
-				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-					if n, err := strconv.ParseUint(val, 10, 64); err == nil {
-						elem.SetUint(n)
-					}
-				case reflect.Float32, reflect.Float64:
-					if n, err := strconv.ParseFloat(val, elemType.Bits()); err == nil {
-						elem.SetFloat(n)
-					}
-				case reflect.Bool:
-					if b, err := strconv.ParseBool(val); err == nil {
-						elem.SetBool(b)
-					}
-				}
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			n, err := strconv.ParseUint(s, 10, 64)
+			if err == nil {
+				elem.SetUint(n)
 			}
-			fv.Set(slice)
+		case reflect.Float32, reflect.Float64:
+			n, err := strconv.ParseFloat(s, elemType.Bits())
+			if err == nil {
+				elem.SetFloat(n)
+			}
 		}
 	}
+
+	fv.Set(slice)
 }
 
 const sessionCookieName = "session"

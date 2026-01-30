@@ -42,7 +42,17 @@ func (s *Service) ConfirmEmailChange(ctx context.Context, token string) (err err
 		return ErrInvalidChangeEmailToken
 	}
 
+	user, err := s.FindUserByID(ctx, req.UserID)
+	if err != nil {
+		return
+	}
+
 	err = s.db.UpdateUserEmail(ctx, req.UserID, req.NewEmail)
+	if err != nil {
+		return
+	}
+
+	err = s.LogEmailChanged(ctx, user.ID, user.Email, req.NewEmail)
 	if err != nil {
 		return
 	}

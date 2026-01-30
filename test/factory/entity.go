@@ -27,6 +27,7 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 		OwnerID:       ds.NilID,
 		PreviewFileID: ds.NilID,
 		Title:         fake.BookTitle(),
+		Description:   fake.Paragraph(),
 		Visibility:    random.Element(ds.EntityVisibilities),
 		Status:        status,
 		PublishedAt:   publishedAt,

@@ -49,7 +49,12 @@ func (s *Service) ChangeUsername(ctx context.Context, in ChangeUsernameInput) (e
 		return app.InputError{"username": UsernameAlreadyTaken}
 	}
 
-	return s.db.UpdateUsername(ctx, user.ID, in.NewUsername)
+	err = s.db.UpdateUsername(ctx, user.ID, in.NewUsername)
+	if err != nil {
+		return
+	}
+
+	return s.LogUsernameChanged(ctx, user.ID, user.Username, in.NewUsername)
 }
 
 // ChangeUsernameInput ...

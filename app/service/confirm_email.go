@@ -49,7 +49,12 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 		return
 	}
 
-	return s.logEmailConfirmed(ctx, ec.UserID)
+	user, err := s.FindUserByID(ctx, ec.UserID)
+	if err != nil {
+		return
+	}
+
+	return s.LogEmailConfirmed(ctx, user.Email, user.ID)
 }
 
 // ConfirmEmailInput ...

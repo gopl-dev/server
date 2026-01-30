@@ -80,6 +80,11 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID ds.ID, ne
 		return
 	}
 
+	err = s.LogEmailChangeRequested(ctx, user.ID)
+	if err != nil {
+		return
+	}
+
 	// TODO: Send email asynchronously
 	return email.Send(in.NewEmail, email.ConfirmEmailChange{
 		Username: user.Username,

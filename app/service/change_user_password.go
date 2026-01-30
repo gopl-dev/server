@@ -52,7 +52,12 @@ func (s *Service) ChangeUserPassword(ctx context.Context, userID ds.ID, oldPassw
 		return err
 	}
 
-	return s.db.UpdateUserPassword(ctx, user.ID, string(newPasswordHash))
+	err = s.db.UpdateUserPassword(ctx, user.ID, string(newPasswordHash))
+	if err != nil {
+		return err
+	}
+
+	return s.LogPasswordChanged(ctx, user.ID)
 }
 
 // ChangeUserPasswordInput defines the input for changing a user's password.

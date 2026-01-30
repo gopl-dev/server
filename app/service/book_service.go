@@ -61,15 +61,7 @@ func (s *Service) CreateBook(ctx context.Context, book *ds.Book) error {
 			}
 		}
 
-		log := &ds.EntityChangeLog{
-			ID:        ds.NewID(),
-			EntityID:  book.ID,
-			UserID:    book.OwnerID,
-			Action:    ds.ActionCreate,
-			CreatedAt: book.CreatedAt,
-		}
-
-		return s.db.CreateEntityChangeLog(ctx, log)
+		return nil
 	})
 }
 
@@ -142,6 +134,8 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	// But for now, we need some kind of raw authority check.
 	if user.IsAdmin {
 		err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
+			// TODO create change request, so we can have a diff
+
 			if newBook.CoverFileID != book.CoverFileID {
 				err = s.resolveBookCover(ctx, newBook, true)
 				if err != nil {
@@ -174,16 +168,7 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 				return err
 			}
 
-			log := &ds.EntityChangeLog{
-				ID:        ds.NewID(),
-				EntityID:  book.ID,
-				UserID:    user.ID,
-				Diff:      diff,
-				Action:    ds.ActionEdit,
-				CreatedAt: book.CreatedAt,
-			}
-
-			return s.db.CreateEntityChangeLog(ctx, log)
+			return s.LogEntityUpdated(ctx, newBook.Entity)
 		})
 
 		return 0, err

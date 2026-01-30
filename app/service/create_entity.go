@@ -47,5 +47,10 @@ resolvePublicID:
 		return err
 	}
 
-	return s.db.CreateEntity(ctx, e)
+	err = s.db.CreateEntity(ctx, e)
+	if err != nil {
+		return err
+	}
+
+	return s.LogEntityCreated(ctx, e)
 }

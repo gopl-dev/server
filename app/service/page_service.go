@@ -58,21 +58,12 @@ func (s *Service) CreatePage(ctx context.Context, page *ds.Page) error {
 			return
 		}
 
-		// as for now Page is simply Entity
+		// as for now Page is simply an Entity
 		// err = s.db.CreatePage(ctx, page)
 		// if err != nil {
 		//	return
 		// }
-
-		log := &ds.EntityChangeLog{
-			ID:        ds.NewID(),
-			EntityID:  page.ID,
-			UserID:    page.OwnerID,
-			Action:    ds.ActionCreate,
-			CreatedAt: page.CreatedAt,
-		}
-
-		return s.db.CreateEntityChangeLog(ctx, log)
+		return nil
 	})
 }
 
@@ -114,6 +105,7 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 
 	if user.IsAdmin {
 		err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
+			// TODO create change request, so we can have a diff
 			err = s.db.UpdateEntity(ctx, newPage.Entity)
 			if err != nil {
 				return err
@@ -124,16 +116,7 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 			//	return err
 			// }
 
-			log := &ds.EntityChangeLog{
-				ID:        ds.NewID(),
-				EntityID:  page.ID,
-				UserID:    user.ID,
-				Diff:      diff,
-				Action:    ds.ActionEdit,
-				CreatedAt: page.CreatedAt,
-			}
-
-			return s.db.CreateEntityChangeLog(ctx, log)
+			return s.LogEntityUpdated(ctx, newPage.Entity)
 		})
 
 		return 0, err

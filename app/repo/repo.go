@@ -158,7 +158,7 @@ func (r *Repo) filter(table string, selectorOpt ...string) *filterBuilder {
 	return b
 }
 
-func (b *filterBuilder) columns(columns ...string) *filterBuilder { //nolint:unparam
+func (b *filterBuilder) columns(columns ...string) *filterBuilder {
 	b.qb = b.qb.Columns(columns...)
 	b.columnsSet = true
 

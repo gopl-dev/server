@@ -60,6 +60,11 @@ func (s *Service) ResetPassword(ctx context.Context, token, password string) (er
 		return err
 	}
 
+	err = s.LogPasswordChangedByResetRequest(ctx, prt.UserID)
+	if err != nil {
+		return err
+	}
+
 	return s.db.DeletePasswordResetToken(ctx, prt.ID)
 }
 

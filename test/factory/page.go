@@ -31,7 +31,7 @@ func (f *Factory) NewPage(overrideOpt ...ds.Page) (m *ds.Page) {
 func (f *Factory) CreatePage(overrideOpt ...ds.Page) (m *ds.Page, err error) {
 	m = f.NewPage(overrideOpt...)
 
-	m.Entity.Type = ds.EntityTypePage
+	m.Type = ds.EntityTypePage
 	m.Entity, err = f.CreateEntity(*m.Entity)
 	if err != nil {
 		return

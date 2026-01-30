@@ -9,7 +9,6 @@ import (
 	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	useractivity "github.com/gopl-dev/server/app/ds/user_activity"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/request"
@@ -55,10 +54,10 @@ func TestUserSignUp(t *testing.T) {
 		"code":    vars["code"],
 	})
 
-	test.AssertInDB(t, tt.DB, "user_activity_logs", test.Data{
-		"user_id":     user.ID,
-		"action_type": useractivity.UserRegistered,
-		"is_public":   false, // "New user" event should not be public by default
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogUserAccountCreated,
+		"is_public": false,
 	})
 
 	t.Run("username already taken", func(t *testing.T) {
@@ -102,10 +101,6 @@ func TestUserSignUp(t *testing.T) {
 
 func TestUserConfirmEmail(t *testing.T) {
 	ec := create[ds.EmailConfirmation](t)
-	log := create(t, ds.UserActivityLog{
-		UserID:     ec.UserID,
-		ActionType: useractivity.UserRegistered,
-	})
 
 	req := request.ConfirmEmail{
 		Code: ec.Code,
@@ -129,11 +124,15 @@ func TestUserConfirmEmail(t *testing.T) {
 		"code": ec.Code,
 	})
 
-	test.AssertInDB(t, tt.DB, "user_activity_logs", test.Data{
-		"id":          log.ID,
-		"user_id":     ec.UserID,
-		"action_type": useractivity.UserRegistered,
-		"is_public":   true,
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   ec.UserID,
+		"type":      ds.EventLogUserEmailConfirmed,
+		"is_public": false,
+	})
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   ec.UserID,
+		"type":      ds.EventLogUserAccountActivated,
+		"is_public": true,
 	})
 }
 
@@ -197,6 +196,12 @@ func TestChangePassword(t *testing.T) {
 		assertStatus: http.StatusUnprocessableEntity,
 	})
 
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogUserPasswordChanged,
+		"is_public": false,
+	})
+
 	t.Run("login with new password", func(t *testing.T) {
 		var signInResp response.UserSignIn
 		Request(t, RequestArgs{
@@ -246,6 +251,12 @@ func TestPasswordReset(t *testing.T) {
 
 	test.AssertInDB(t, tt.DB, "password_reset_tokens", test.Data{"user_id": user.ID})
 
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogUserRequestPasswordReset,
+		"is_public": false,
+	})
+
 	emailVars := test.LoadEmailVars(t, user.Email)
 	token := app.String(emailVars["token"])
 	assert.NotZero(t, token)
@@ -266,6 +277,12 @@ func TestPasswordReset(t *testing.T) {
 
 	// Assert the authToken was deleted
 	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"token": token})
+
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogUserPasswordChangedByResetRequest,
+		"is_public": false,
+	})
 
 	// 3. Verify login with the new password
 	var signInResp response.UserSignIn
@@ -335,6 +352,12 @@ func TestChangeEmail(t *testing.T) {
 		"new_email": newEmail,
 	})
 
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogUserEmailChangeRequested,
+		"is_public": false,
+	})
+
 	emailVars := test.LoadEmailVars(t, newEmail)
 	confirmToken := app.String(emailVars["token"])
 	assert.NotZero(t, confirmToken)
@@ -359,6 +382,13 @@ func TestChangeEmail(t *testing.T) {
 
 	test.AssertNotInDB(t, tt.DB, "change_email_requests", test.Data{
 		"token": confirmToken,
+	})
+
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogUserEmailChanged,
+		"meta":      map[string]any{"new_email": newEmail, "old_email": user.Email},
+		"is_public": false,
 	})
 
 	// Test failure case: using the same authToken again
@@ -403,6 +433,13 @@ func TestChangeUsername(t *testing.T) {
 		test.AssertInDB(t, tt.DB, "users", test.Data{
 			"id":       user.ID,
 			"username": newUsername,
+		})
+
+		test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+			"user_id":   user.ID,
+			"type":      ds.EventLogUserUsernameChanged,
+			"meta":      map[string]any{"old_username": user.Username, "new_username": newUsername},
+			"is_public": false,
 		})
 	})
 

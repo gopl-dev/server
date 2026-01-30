@@ -60,6 +60,11 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, emailAddr stri
 		return
 	}
 
+	err = s.LogPasswordResetRequest(ctx, user.ID)
+	if err != nil {
+		return
+	}
+
 	// TODO: Send email asynchronously
 	return email.Send(user.Email, email.PasswordResetRequest{
 		Username: user.Username,

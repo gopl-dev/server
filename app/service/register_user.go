@@ -110,7 +110,7 @@ func (s *Service) RegisterUser(ctx context.Context, username, emailAddr, passwor
 		return
 	}
 
-	err = s.logUserRegistered(ctx, user.ID)
+	err = s.LogUserRegistered(ctx, user.ID)
 	return
 }
 

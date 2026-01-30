@@ -26,5 +26,5 @@ func (r *Router) ProtectedAPIEndpoints() {
 	r.DELETE("/files/{id}/", r.handler.DeleteFile)
 
 	// dashboard
-	//r.Group("dashboard", r.mw.AdminOnly)
+	// r.Group("dashboard", r.mw.AdminOnly)
 }

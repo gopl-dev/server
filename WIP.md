@@ -21,6 +21,7 @@ for simplicity, I keep todo list and progress here for now
   - [ ] List of edit requests for books
   - [ ] List activity log
 
+- [x] Rework user_action_log and entity_change_log into event_log
 - [ ] Maybe group services by entity not by action (Ask opinions)
 - [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
 - [x] Make tools to seed data
@@ -33,6 +34,7 @@ for simplicity, I keep todo list and progress here for now
 ---
 
 NEXT:
+- [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
 - [ ] Pages
 - [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
@@ -44,12 +46,7 @@ NEXT:
 - [ ] Entity comments
 - [ ] Entity likes
 - [ ] Offline mode
-
-
-Must to have:
-- [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
-
-Nice to have:
+- [ ] Make one instance of input validation for frontend and backend
 - [ ] If user could see his connected AOuth accounts, connect other accounts and disconnect them
 - [ ] Rework workers so it is possible to display a list of workers, enable/disable them, see run status, last run time, logs, etc.
 - [ ] Tests for frontend
