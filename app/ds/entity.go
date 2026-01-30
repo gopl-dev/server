@@ -14,7 +14,7 @@ import (
 type Entity struct {
 	ID            ID               `json:"id"`
 	PublicID      string           `json:"public_id"`
-	OwnerID       ID               `json:"owner_id"`
+	OwnerID       ID               `json:"-"`
 	PreviewFileID ID               `json:"preview_file_id"`
 	Type          EntityType       `json:"-"`
 	Title         string           `json:"title"`
@@ -25,6 +25,8 @@ type Entity struct {
 	CreatedAt     time.Time        `json:"created_at"`
 	UpdatedAt     *time.Time       `json:"updated_at,omitempty"`
 	DeletedAt     *time.Time       `json:"-"`
+
+	Owner *string `db:"owner" json:"owner,omitempty"`
 }
 
 // CreateRules returns the validation schema for creating a new entity.

@@ -431,7 +431,7 @@ func bindQuery(r *http.Request, to any) {
 // bindQueryToStruct recursively binds URL query parameters to fields of the given struct value.
 //
 // It walks all fields, and when it encounters an embedded (anonymous) struct (or pointer to struct),
-// it recurses into it. All other fields are bound by their `q` tags.
+// it recurses into it. All other fields are bound by their `url` tags.
 func bindQueryToStruct(q url.Values, v reflect.Value) {
 	t := v.Type()
 
@@ -475,18 +475,97 @@ func bindQueryToStruct(q url.Values, v reflect.Value) {
 		}
 
 		switch fv.Kind() {
-		case reflect.Int:
-			n, err := strconv.Atoi(s)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			n, err := strconv.ParseInt(s, 10, 64)
 			if err == nil {
-				fv.SetInt(int64(n))
+				fv.SetInt(n)
 			}
+
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			n, err := strconv.ParseUint(s, 10, 64)
+			if err == nil {
+				fv.SetUint(n)
+			}
+
+		case reflect.Float32, reflect.Float64:
+			n, err := strconv.ParseFloat(s, fv.Type().Bits())
+			if err == nil {
+				fv.SetFloat(n)
+			}
+
+		case reflect.Bool:
+			b, err := strconv.ParseBool(s)
+			if err == nil {
+				fv.SetBool(b)
+			}
+
 		case reflect.String:
 			fv.SetString(s)
+
 		case reflect.Ptr:
-			if fv.Type().Elem().Kind() == reflect.String {
+			elemType := fv.Type().Elem()
+			switch elemType.Kind() {
+			case reflect.String:
 				fv.Set(reflect.ValueOf(&s))
+
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+					ptr := reflect.New(elemType)
+					ptr.Elem().SetInt(n)
+					fv.Set(ptr)
+				}
+
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				if n, err := strconv.ParseUint(s, 10, 64); err == nil {
+					ptr := reflect.New(elemType)
+					ptr.Elem().SetUint(n)
+					fv.Set(ptr)
+				}
+
+			case reflect.Float32, reflect.Float64:
+				if n, err := strconv.ParseFloat(s, elemType.Bits()); err == nil {
+					ptr := reflect.New(elemType)
+					ptr.Elem().SetFloat(n)
+					fv.Set(ptr)
+				}
+
+			case reflect.Bool:
+				if b, err := strconv.ParseBool(s); err == nil {
+					ptr := reflect.New(elemType)
+					ptr.Elem().SetBool(b)
+					fv.Set(ptr)
+				}
 			}
-			// TODO add more types when needed
+
+		case reflect.Slice:
+			// Support for slices (e.g., []string, []int)
+			elemType := fv.Type().Elem()
+			slice := reflect.MakeSlice(fv.Type(), len(vals), len(vals))
+
+			for j, val := range vals {
+				elem := slice.Index(j)
+				switch elemType.Kind() {
+				case reflect.String:
+					elem.SetString(val)
+				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+					if n, err := strconv.ParseInt(val, 10, 64); err == nil {
+						elem.SetInt(n)
+					}
+				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+					if n, err := strconv.ParseUint(val, 10, 64); err == nil {
+						elem.SetUint(n)
+					}
+				case reflect.Float32, reflect.Float64:
+					if n, err := strconv.ParseFloat(val, elemType.Bits()); err == nil {
+						elem.SetFloat(n)
+					}
+				case reflect.Bool:
+					if b, err := strconv.ParseBool(val); err == nil {
+						elem.SetBool(b)
+					}
+				}
+			}
+			fv.Set(slice)
 		}
 	}
 }

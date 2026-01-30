@@ -1,16 +1,4 @@
-<div x-data="window.dashboardComponents['new-books']()" x-init="init()">
-    <div class="mb-4 flex gap-2">
-        <select class="select select-bordered" x-model="filters.status" @change="loadData()">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-        </select>
-        <input type="text" placeholder="Search..." class="input input-bordered"
-               x-model="filters.search" @input.debounce.500ms="loadData()"/>
-    </div>
-
-    <!-- Loading state -->
+<div x-data="window.dashboardComponents['new-books']()">
     <div x-show="loading" class="flex justify-center py-8">
         <span class="loading loading-spinner loading-lg"></span>
     </div>
@@ -28,48 +16,60 @@
         <table class="table table-zebra">
             <thead>
             <tr>
+                <th> </th>
                 <th>Title</th>
-                <th>Author</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>User</th>
+                <th>Created At</th>
             </tr>
             </thead>
             <tbody>
-            <template x-for="book in data.items" :key="book.id">
+            <template x-for="book in data.data" :key="book.id">
                 <tr>
-                    <td x-text="book.title"></td>
-                    <td x-text="book.author"></td>
-                    <td x-text="$root.formatDate(book.created_at)"></td>
                     <td>
-                            <span class="badge"
-                                  :class="{
-                                      'badge-warning': book.status === 'pending',
-                                      'badge-success': book.status === 'approved',
-                                      'badge-error': book.status === 'rejected'
-                                  }"
-                                  x-text="book.status"></span>
+                            <button class="btn btn-ghost btn-success rounded-full" @click="approveBook(book.id)">
+                                <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="w-5 h-5"
+                                        aria-hidden="true"
+                                >
+                                    <path d="M20 6 9 17l-5-5"/>
+                                </svg>
+                            </button>
+                            <button class="btn btn-ghost btn-error rounded-full "@click="rejectBook(book.id)">
+                                <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="w-5 h-5"
+                                        aria-hidden="true"
+                                >
+                                    <path d="M4.929 4.929 19.07 19.071"/>
+                                    <circle cx="12" cy="12" r="10"/>
+                                </svg>
+                            </button>
+                        </div>
                     </td>
-                    <td>
-                        <button class="btn btn-sm btn-primary"
-                                @click="approveBook(book.id)"
-                                :disabled="book.status !== 'pending'">
-                            Approve
-                        </button>
-                        <button class="btn btn-sm btn-error"
-                                @click="rejectBook(book.id)"
-                                :disabled="book.status !== 'pending'">
-                            Reject
-                        </button>
-                    </td>
+                    <td><a :href="`/books/${book.public_id}/`" x-text="book.title" class="link-info" target="_blank"></a></td>
+                    <td><a :href="`/users/${book.owner}/`" x-text="book.owner" class="link-info" target="_blank"></a></td>
+                    <td x-text="formatDate(book.created_at)"></td>
                 </tr>
             </template>
             </tbody>
         </table>
 
         <!-- Empty state -->
-        <div x-show="data.items && data.items.length === 0" class="text-center py-8 text-gray-500">
-            No books found
+        <div x-show="data.data && data.data.length === 0" class="text-center py-8 text-gray-500">
+            No new books found
         </div>
     </div>
 

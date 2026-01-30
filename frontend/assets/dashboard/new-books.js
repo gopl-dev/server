@@ -8,7 +8,7 @@ window.dashboardComponents['new-books'] = function newBooksComponent() {
             total_pages: 0
         },
         filters: {
-            status: '',
+            s: 'review', // status
             search: ''
         },
         pagination: {
@@ -31,7 +31,7 @@ window.dashboardComponents['new-books'] = function newBooksComponent() {
                     ...this.filters
                 });
 
-                const response = await fetch(`/api/dashboard/new-books?${params}`);
+                const response = await fetch(`/api/books/?${params}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);

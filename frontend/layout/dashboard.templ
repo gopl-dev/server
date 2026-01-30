@@ -53,7 +53,7 @@ templ Dashboard(d Data) {
         </div>
     </div>
 
-    <div class="drawer-side is-drawer-close:overflow-visible">
+    <div class="drawer-side is-drawer-close:overflow-visible max-w-75">
         <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
         <div class="flex min-h-full flex-col items-start bg-gray-600 text-neutral-content">
             <div class="p-5">
@@ -64,28 +64,28 @@ templ Dashboard(d Data) {
                 <hr class="my-1 border-neutral-content/30">
                 <li>
                     <a @click.prevent="navigate('home')" href="#home"
-                       :class="{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'home'}">
+                       :class="{'dashboard-menu-active': currentRoute === 'home'}">
                         @icon.Menu()
                         Dashboard
                     </a>
                 </li>
                 <li>
                     <a @click.prevent="navigate('new-books')" href="#new-books"
-                       :class="{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'new-books'}">
+                       :class="{'dashboard-menu-active': currentRoute === 'new-books'}">
                         @icon.BookPlus()
                         New books
                     </a>
                 </li>
                 <li>
                     <a @click.prevent="navigate('book-edits')" href="#book-edits"
-                       :class="{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'book-edits'}">
+                       :class="{'dashboard-menu-active': currentRoute === 'book-edits'}">
                         @icon.BookCheck()
                         Book edits
                     </a>
                 </li>
                 <li>
                     <a @click.prevent="navigate('page-edits')" href="#page-edits"
-                       :class="{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'page-edits'}">
+                       :class="{'dashboard-menu-active': currentRoute === 'page-edits'}">
                         @icon.FileCheck()
                         Page edits
                     </a>
@@ -93,7 +93,7 @@ templ Dashboard(d Data) {
 
                 <li>
                     <a @click.prevent="navigate('log')" href="#log"
-                       :class="{'bg-info shadow-md text-info-content': currentRoute === 'log'}">
+                       :class="{'dashboard-menu-active': currentRoute === 'log'}">
                         @icon.Log()
                         Log
                     </a>

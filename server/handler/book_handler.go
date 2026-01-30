@@ -137,16 +137,29 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 	var req request.FilterBooks
 	bindQuery(r, &req)
 
+	var isAdmin bool
+	user := ds.UserFromContext(ctx)
+	if user != nil {
+		isAdmin = user.IsAdmin
+	}
+
+	filter := ds.EntitiesFilter{
+		Page:           req.Page,
+		PerPage:        req.PerPage,
+		WithCount:      true,
+		Status:         req.Status,
+		Visibility:     req.Visibility,
+		OrderBy:        "created_at",
+		OrderDirection: "desc",
+	}
+
+	if !isAdmin {
+		filter.Status = []ds.EntityStatus{ds.EntityStatusApproved}
+		filter.Visibility = []ds.EntityVisibility{ds.EntityVisibilityPublic}
+	}
+
 	books, count, err := h.service.FilterBooks(ctx, ds.BooksFilter{
-		EntitiesFilter: ds.EntitiesFilter{
-			Page:           req.Page,
-			PerPage:        req.PerPage,
-			WithCount:      true,
-			Status:         []ds.EntityStatus{ds.EntityStatusApproved},
-			Visibility:     []ds.EntityVisibility{ds.EntityVisibilityPublic},
-			OrderBy:        "created_at",
-			OrderDirection: "desc",
-		},
+		EntitiesFilter: filter,
 	})
 	if err != nil {
 		Abort(w, r, err)
@@ -183,7 +196,7 @@ func (h *Handler) GetBookView(w http.ResponseWriter, r *http.Request) {
 
 	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: book.Title,
-		Body:  page.ViewBookPage(book),
+		Body:  page.ViewBookPage(ds.UserFromContext(ctx), book),
 	})
 }
 

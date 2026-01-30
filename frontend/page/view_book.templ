@@ -5,9 +5,56 @@ import (
     "github.com/gopl-dev/server/frontend/component/icon"
 )
 
-templ ViewBookPage(book *ds.Book) {
+templ ViewBookPage(user *ds.User, book *ds.Book) {
+<script src="/assets/helpers.js" defer></script>
 <div class="flex gap-6">
     <div class="prose flex-1">
+        if book.Status == ds.EntityStatusUnderReview {
+        <div class="alert alert-warning not-prose mb-10  text-lg">
+            <div>
+                if user != nil && user.IsAdmin {
+                <h3 class="font-bold"><span>AWAITING YOUR REVIEW:</span></h3>
+                    <div>
+                        <button class="btn btn-ghost btn-success rounded-full" @click="approveBook(book.id)">
+                            <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="w-5 h-5"
+                                    aria-hidden="true"
+                            >
+                                <path d="M20 6 9 17l-5-5"/>
+                            </svg>
+                        Accept </button>
+                        <button class="btn btn-ghost btn-error rounded-full "@click="rejectBook(book.id)">
+                            <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="w-5 h-5"
+                                    aria-hidden="true"
+                            >
+                                <path d="M4.929 4.929 19.07 19.071"/>
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                        Reject </button>
+                    </div>
+                } else {
+                <div>
+                    @icon.BotMessage("w-6 h-6 mr-1")
+                    <span  class="bot-gl">This book is awaiting review. Please stand by - a human will look at it soon -Kzzkzt</span></div>
+                }
+            </div>
+        </div>
+        }
         <h1 class="pb-0">{ book.Title }</h1>
         <h3>
             by
@@ -31,11 +78,13 @@ templ ViewBookPage(book *ds.Book) {
         </div>
 
         <p>{ book.Description }</p>
+        if book.Status == ds.EntityStatusApproved {
         <p>
             <a href={ "/edit-book/" + book.PublicID } class="link-info">
             @icon.Pencil("mr-1", "w-4", "h-4") Edit ...
             </a>
         </p>
+        }
     </div>
 
     if !book.CoverFileID.IsNil() {

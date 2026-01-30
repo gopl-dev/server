@@ -11,13 +11,15 @@ for simplicity, I keep todo list and progress here for now
   - [x] list books
   - [ ] Add topics to entities
   - [ ] Add price to book
+  - [ ] Strict format for release date
   - [ ] Rework book to have multiple authors
 
 
 - [ ] Minimal admin dashboard for current needs:
-  - [ ] List of new books to review
+  - [x] List of new books to review
   - [ ] List of edit requests for books
   - [ ] List of edit requests for books
+  - [ ] List activity log
 
 - [ ] Maybe group services by entity not by action (Ask opinions)
 - [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.

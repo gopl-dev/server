@@ -45,8 +45,8 @@ func NewResetDevEnvCmd() cli.Command {
 
 type resetDevEnvCmd struct {
 	NoSeed   bool    `arg:"-ns"`
-	Username *string `arg:"-u" default:"ognev.dev"`
-	Email    *string `arg:"-e" default:"mail@ognev.dev"`
+	Username *string `arg:"-u" default:"admin"`
+	Email    *string `arg:"-e" default:"admin@admin"`
 	Password *string `arg:"-p" default:"1"`
 }
 

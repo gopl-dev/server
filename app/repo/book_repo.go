@@ -89,15 +89,36 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 	_, span := r.tracer.Start(ctx, "FilterBooks")
 	defer span.End()
 
-	count, err = r.filter("entities e").
-		join("JOIN books b USING (id)").
+	count, err = r.filter("entities e", "e").
+		columns(`
+		  e.id            AS id,
+		  e.public_id,
+		  e.owner_id,
+		  e.title,
+		  e.description,
+		  e.visibility,
+		  e.status,
+		  e.created_at,
+		  e.updated_at,
+		  e.deleted_at,
+		
+		  b.cover_file_id,
+		  b.author_name,
+		  b.author_link,
+		  b.homepage,
+		  b.release_date,
+		  u.username AS "owner"`).
+		join("LEFT JOIN books b USING (id)").
+		join("LEFT JOIN users u ON e.owner_id = u.id").
 		paginate(f.Page, f.PerPage).
 		createdAt(f.CreatedAt).
 		deletedAt(f.DeletedAt).
 		deleted(f.Deleted).
 		order(f.OrderBy, f.OrderDirection).
-		where("status", f.Status).
-		where("visibility", f.Visibility).
+		apply(
+			whereIn("e.status", f.Status),
+			whereIn("e.visibility", f.Visibility),
+		).
 		withCount(f.WithCount).
 		scan(ctx, &books)
 

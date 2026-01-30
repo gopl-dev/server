@@ -31,7 +31,7 @@ func Dashboard(d Data) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"/assets/output.css\"><script src=\"https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js\" defer></script><title>Dashboard | gopl.dev</title></head><body class=\"bg-gray-100 font-sans w-full\" x-data=\"dashboardApp()\" x-init=\"init()\"><div class=\"drawer lg:drawer-open\"><input id=\"my-drawer-4\" type=\"checkbox\" class=\"drawer-toggle\"><div class=\"drawer-content\"><nav class=\"navbar w-full bg-gray-600 text-neutral-content\"><label for=\"my-drawer-4\" aria-label=\"open sidebar\" class=\"btn btn-square btn-ghost\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" stroke-linejoin=\"round\" stroke-linecap=\"round\" stroke-width=\"2\" fill=\"none\" stroke=\"currentColor\" class=\"my-1.5 inline-block size-4\"><path d=\"M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z\"></path> <path d=\"M9 4v16\"></path> <path d=\"M14 10l2 2l-2 2\"></path></svg></label><div class=\"px-4\" x-text=\"currentTitle\"></div><!-- Loading indicator --><div class=\"ml-auto mr-4\" x-show=\"loadingTemplate\" x-cloak><span class=\"loading loading-spinner loading-sm\"></span></div></nav><div class=\"p-4\"><!-- Loading state for templates --><div x-show=\"loadingTemplate\" class=\"flex justify-center py-8\" x-cloak><span class=\"loading loading-spinner loading-lg\"></span></div><!-- Error state --><div x-show=\"templateError\" class=\"alert alert-error\" x-cloak><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"stroke-current shrink-0 h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span x-text=\"templateError\"></span></div><!-- Dynamic content container --><div id=\"dashboard-content\" x-show=\"!loadingTemplate && !templateError\" x-html=\"templateContent\" x-cloak></div></div></div><div class=\"drawer-side is-drawer-close:overflow-visible\"><label for=\"my-drawer-4\" aria-label=\"close sidebar\" class=\"drawer-overlay\"></label><div class=\"flex min-h-full flex-col items-start bg-gray-600 text-neutral-content\"><div class=\"p-5\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"/assets/output.css\"><script src=\"https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js\" defer></script><title>Dashboard | gopl.dev</title></head><body class=\"bg-gray-100 font-sans w-full\" x-data=\"dashboardApp()\" x-init=\"init()\"><div class=\"drawer lg:drawer-open\"><input id=\"my-drawer-4\" type=\"checkbox\" class=\"drawer-toggle\"><div class=\"drawer-content\"><nav class=\"navbar w-full bg-gray-600 text-neutral-content\"><label for=\"my-drawer-4\" aria-label=\"open sidebar\" class=\"btn btn-square btn-ghost\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" stroke-linejoin=\"round\" stroke-linecap=\"round\" stroke-width=\"2\" fill=\"none\" stroke=\"currentColor\" class=\"my-1.5 inline-block size-4\"><path d=\"M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z\"></path> <path d=\"M9 4v16\"></path> <path d=\"M14 10l2 2l-2 2\"></path></svg></label><div class=\"px-4\" x-text=\"currentTitle\"></div><!-- Loading indicator --><div class=\"ml-auto mr-4\" x-show=\"loadingTemplate\" x-cloak><span class=\"loading loading-spinner loading-sm\"></span></div></nav><div class=\"p-4\"><!-- Loading state for templates --><div x-show=\"loadingTemplate\" class=\"flex justify-center py-8\" x-cloak><span class=\"loading loading-spinner loading-lg\"></span></div><!-- Error state --><div x-show=\"templateError\" class=\"alert alert-error\" x-cloak><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"stroke-current shrink-0 h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> <span x-text=\"templateError\"></span></div><!-- Dynamic content container --><div id=\"dashboard-content\" x-show=\"!loadingTemplate && !templateError\" x-html=\"templateContent\" x-cloak></div></div></div><div class=\"drawer-side is-drawer-close:overflow-visible max-w-75\"><label for=\"my-drawer-4\" aria-label=\"close sidebar\" class=\"drawer-overlay\"></label><div class=\"flex min-h-full flex-col items-start bg-gray-600 text-neutral-content\"><div class=\"p-5\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -48,7 +48,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div><ul class=\"menu w-full\"><hr class=\"my-1 border-neutral-content/30\"><li><a @click.prevent=\"navigate('home')\" href=\"#home\" :class=\"{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'home'}\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div><ul class=\"menu w-full\"><hr class=\"my-1 border-neutral-content/30\"><li><a @click.prevent=\"navigate('home')\" href=\"#home\" :class=\"{'dashboard-menu-active': currentRoute === 'home'}\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -56,7 +56,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Dashboard</a></li><li><a @click.prevent=\"navigate('new-books')\" href=\"#new-books\" :class=\"{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'new-books'}\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Dashboard</a></li><li><a @click.prevent=\"navigate('new-books')\" href=\"#new-books\" :class=\"{'dashboard-menu-active': currentRoute === 'new-books'}\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -64,7 +64,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "New books</a></li><li><a @click.prevent=\"navigate('book-edits')\" href=\"#book-edits\" :class=\"{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'book-edits'}\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "New books</a></li><li><a @click.prevent=\"navigate('book-edits')\" href=\"#book-edits\" :class=\"{'dashboard-menu-active': currentRoute === 'book-edits'}\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -72,7 +72,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "Book edits</a></li><li><a @click.prevent=\"navigate('page-edits')\" href=\"#page-edits\" :class=\"{'bg-info shadow-md shadow-md-inset text-info-content': currentRoute === 'page-edits'}\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "Book edits</a></li><li><a @click.prevent=\"navigate('page-edits')\" href=\"#page-edits\" :class=\"{'dashboard-menu-active': currentRoute === 'page-edits'}\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -80,7 +80,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Page edits</a></li><li><a @click.prevent=\"navigate('log')\" href=\"#log\" :class=\"{'bg-info shadow-md text-info-content': currentRoute === 'log'}\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Page edits</a></li><li><a @click.prevent=\"navigate('log')\" href=\"#log\" :class=\"{'dashboard-menu-active': currentRoute === 'log'}\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

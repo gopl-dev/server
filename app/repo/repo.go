@@ -135,6 +135,7 @@ func (r *Repo) exec(ctx context.Context, query string, args ...any) (err error) 
 type filterBuilder struct {
 	qb             sq.SelectBuilder
 	db             *app.DB
+	selector       string
 	columnsSet     bool
 	whereDeleted   bool
 	whereDeletedAt bool
@@ -142,13 +143,19 @@ type filterBuilder struct {
 	orderBy        string
 }
 
-func (r *Repo) filter(table string) *filterBuilder {
+func (r *Repo) filter(table string, selectorOpt ...string) *filterBuilder {
 	q := sq.Select().From(table).PlaceholderFormat(sq.Dollar)
 
-	return &filterBuilder{
+	b := &filterBuilder{
 		qb: q,
 		db: r.db,
 	}
+
+	if len(selectorOpt) > 0 {
+		b.selector = selectorOpt[0] + "."
+	}
+
+	return b
 }
 
 func (b *filterBuilder) columns(columns ...string) *filterBuilder { //nolint:unparam
@@ -201,10 +208,10 @@ func (b *filterBuilder) deletedAt(dt *ds.FilterDT) *filterBuilder {
 	b.whereDeletedAt = true
 
 	if dt.DT != nil {
-		return b.atDT("deleted_at", dt.DT)
+		return b.atDT(b.selector+"deleted_at", dt.DT)
 	}
 
-	return b.dtRange("deleted_at", dt)
+	return b.dtRange(b.selector+"deleted_at", dt)
 }
 
 func (b *filterBuilder) createdAt(dt *ds.FilterDT) *filterBuilder {
@@ -213,11 +220,11 @@ func (b *filterBuilder) createdAt(dt *ds.FilterDT) *filterBuilder {
 	}
 
 	if dt.DT != nil {
-		b.atDT("created_at", dt.DT)
+		b.atDT(b.selector+"created_at", dt.DT)
 		return b
 	}
 
-	b.dtRange("created_at", dt)
+	b.dtRange(b.selector+"created_at", dt)
 	return b
 }
 
@@ -250,6 +257,10 @@ func (b *filterBuilder) order(column string, direction string) *filterBuilder {
 		return b
 	}
 
+	if !strings.Contains(column, ".") {
+		column = b.selector + column
+	}
+
 	if strings.ToLower(direction) != "asc" {
 		direction = "DESC"
 	}
@@ -261,13 +272,6 @@ func (b *filterBuilder) order(column string, direction string) *filterBuilder {
 func (b *filterBuilder) where(column string, val any) *filterBuilder {
 	b.qb = b.qb.Where(sq.Eq{column: val})
 
-	return b
-}
-
-func (b *filterBuilder) apply(filters ...filterFn) *filterBuilder {
-	for _, fn := range filters {
-		b.qb = fn(b.qb)
-	}
 	return b
 }
 
@@ -321,11 +325,11 @@ func (b *filterBuilder) countSQL() (sql string, args []any, err error) {
 func (b *filterBuilder) applyDeletedFilter() {
 	if !b.whereDeletedAt {
 		if b.whereDeleted {
-			b.qb = b.qb.Where("deleted_at IS NOT NULL")
+			b.qb = b.qb.Where(b.selector + "deleted_at IS NOT NULL")
 			return
 		}
 
-		b.qb = b.qb.Where("deleted_at IS NULL")
+		b.qb = b.qb.Where(b.selector + "deleted_at IS NULL")
 	}
 }
 
@@ -356,7 +360,45 @@ func (b *filterBuilder) scan(ctx context.Context, desc any) (count int, err erro
 	return
 }
 
+func (b *filterBuilder) apply(filters ...filterFn) *filterBuilder {
+	for _, fn := range filters {
+		b.qb = fn(b.qb)
+	}
+
+	return b
+}
+
 type filterFn func(sq.SelectBuilder) sq.SelectBuilder
+
+// whereIn builds a filter function that conditionally applies an equality or IN
+// clause for the given column based on the number of values provided.
+//
+// Behavior:
+//   - len(val) == 0: no condition is applied (the filter is skipped)
+//   - len(val) == 1: applies `column = val[0]`
+//   - len(val) > 1: applies `column IN (val...)`
+//
+// This helper exists as a standalone function because Go currently does not
+// allow type parameters on methods. Using a generic free function keeps the
+// filterBuilder API non-generic while still providing type-safe slice handling.
+//
+// This helper is intended to avoid generating `IN ()` clauses (which Squirrel
+// turns into `(1=0)`) and to keep slice-specific logic out of the query builder.
+func whereIn[T any](column string, val []T) filterFn {
+	return func(sb sq.SelectBuilder) sq.SelectBuilder {
+		if len(val) == 0 {
+			return sb
+		}
+
+		if len(val) == 1 {
+			sb = sb.Where(sq.Eq{column: val[0]})
+			return sb
+		}
+
+		sb = sb.Where(sq.Eq{column: val})
+		return sb
+	}
+}
 
 func noRows(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
