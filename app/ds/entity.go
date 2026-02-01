@@ -19,14 +19,15 @@ type Entity struct {
 	Type          EntityType       `json:"-"`
 	Title         string           `json:"title"`
 	Description   string           `json:"description"`
-	Visibility    EntityVisibility `json:"visibility"`
 	Status        EntityStatus     `json:"status"`
+	Visibility    EntityVisibility `json:"visibility"`
 	PublishedAt   *time.Time       `json:"published_at,omitempty"`
 	CreatedAt     time.Time        `json:"created_at"`
 	UpdatedAt     *time.Time       `json:"updated_at,omitempty"`
 	DeletedAt     *time.Time       `json:"-"`
 
-	Owner *string `db:"owner" json:"owner,omitempty"`
+	Topics []Topic `json:"topics"`
+	Owner  *string `db:"owner" json:"owner,omitempty"`
 }
 
 // CreateRules returns the validation schema for creating a new entity.
@@ -79,6 +80,7 @@ type EntitiesFilter struct {
 	Title          *FilterString
 	Visibility     []EntityVisibility
 	Status         []EntityStatus
+	Topics         []string
 	OrderBy        string
 	OrderDirection string
 }

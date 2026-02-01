@@ -82,10 +82,24 @@ func (id ID) MarshalJSON() ([]byte, error) {
 	return res, nil
 }
 
-// UnmarshalJSON uses the built-in UnmarshalText.
+// UnmarshalJSON decodes ID from JSON.
+// It treats null and empty string ("") as zero (empty) ID.
 func (id *ID) UnmarshalJSON(data []byte) error {
+	// null → zero value
+	if string(data) == "null" {
+		*id = ID{}
+		return nil
+	}
+
+	// must be JSON string
 	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
 		return ErrInvalidIDFormat
+	}
+
+	// empty string → zero value
+	if len(data) == 2 { //nolint:mnd
+		*id = ID{}
+		return nil
 	}
 
 	var u uuid.UUID

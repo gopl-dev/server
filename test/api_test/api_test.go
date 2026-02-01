@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/google/go-querystring/query"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/session"
 	"github.com/gopl-dev/server/server"
@@ -194,6 +195,7 @@ func DELETE(t *testing.T, path string, response any) *httptest.ResponseRecorder 
 }
 
 // GET makes simple "get" request that should return "response" and 200.
+// path can be string or Query.
 func GET(t *testing.T, path any, response any) *httptest.ResponseRecorder {
 	t.Helper()
 
@@ -219,6 +221,8 @@ func GET(t *testing.T, path any, response any) *httptest.ResponseRecorder {
 
 func login(t *testing.T) *ds.User {
 	t.Helper()
+
+	app.Config().Admins = []string{}
 
 	if authUser != nil && authToken != "" {
 		return authUser

@@ -11,9 +11,15 @@ import (
 type ctxKey string
 
 const (
-	// PerPageDefault ...
+	// PerPageNoLimit disables pagination limits and returns all records.
+	PerPageNoLimit = -1
+
+	// PerPageDefault defines the default number of records per page
+	// when no explicit per-page value is provided.
 	PerPageDefault = 25
-	// PerPageMax ...
+
+	// PerPageMax defines the maximum allowed number of records per page
+	// to prevent excessive result sizes.
 	PerPageMax = 100
 )
 

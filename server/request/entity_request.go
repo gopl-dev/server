@@ -9,4 +9,5 @@ type FilterEntities struct {
 	Status     []ds.EntityStatus     `json:"s" url:"s,omitempty"`
 	Visibility []ds.EntityVisibility `json:"v" url:"v,omitempty"`
 	Search     *string               `json:"search" url:"search,omitempty"`
+	Topics     []string              `json:"topics" url:"topics,omitempty"`
 }

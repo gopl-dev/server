@@ -18,6 +18,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// ErrBatchInsertMissingColumn indicates that a batch insert operation
+// failed because one or more required columns were not provided.
+var ErrBatchInsertMissingColumn = errors.New("insert: missing column")
+
+// ErrInsertNoValues indicates that an insert operation was attempted
+// without providing any values to insert.
+var ErrInsertNoValues = errors.New("insert: no values")
+
 type data map[string]any
 
 // dbKey is a private type to avoid collisions in context.WithValue.
@@ -67,11 +75,40 @@ func (r *Repo) getDB(ctx context.Context) DBI {
 // insert inserts a data map into the DB.
 // (If another method like insertSomething is needed later, rename this to insertMap;
 // until then, it remains simply insert).
-func (r *Repo) insert(ctx context.Context, table string, values data) (err error) {
-	sql, args, err := sq.Insert(table).
-		SetMap(values).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
+func (r *Repo) insert(ctx context.Context, table string, values ...data) (err error) {
+	if len(values) == 0 {
+		return ErrInsertNoValues
+	}
+
+	b := sq.Insert(table).
+		PlaceholderFormat(sq.Dollar)
+
+	switch len(values) {
+	case 0:
+		return ErrInsertNoValues
+	case 1:
+		b = b.SetMap(values[0])
+	default:
+		cols := make([]string, 0)
+		for k := range values[0] {
+			cols = append(cols, k)
+		}
+
+		b = b.Columns(cols...)
+		for i, v := range values {
+			vals := make([]any, 0)
+			for _, col := range cols {
+				vv, ok := v[col]
+				if !ok {
+					return fmt.Errorf("%w %q from element %d", ErrBatchInsertMissingColumn, col, i)
+				}
+				vals = append(vals, vv)
+			}
+			b = b.Values(vals...)
+		}
+	}
+
+	sql, args, err := b.ToSql()
 	if err != nil {
 		return
 	}
@@ -172,7 +209,11 @@ func (b *filterBuilder) join(clause string, args ...any) *filterBuilder {
 }
 
 func (b *filterBuilder) paginate(page, perPage int) *filterBuilder {
-	if perPage <= 0 {
+	if perPage == ds.PerPageNoLimit {
+		return b
+	}
+
+	if perPage == 0 {
 		perPage = ds.PerPageDefault
 	}
 	if perPage > ds.PerPageMax {
@@ -195,8 +236,8 @@ func (b *filterBuilder) paginate(page, perPage int) *filterBuilder {
 	return b
 }
 
-func (b *filterBuilder) deleted(flag bool) *filterBuilder {
-	b.whereDeleted = flag
+func (b *filterBuilder) deleted(ok bool) *filterBuilder {
+	b.whereDeleted = ok
 	return b
 }
 
@@ -273,6 +314,23 @@ func (b *filterBuilder) where(column string, val any) *filterBuilder {
 	b.qb = b.qb.Where(sq.Eq{column: val})
 
 	return b
+}
+
+func (b *filterBuilder) whereRaw(steak string, seasoning ...any) *filterBuilder {
+	if steak == "" {
+		return b
+	}
+
+	b.qb = b.qb.Where(steak, seasoning...)
+	return b
+}
+
+func (b *filterBuilder) whereValue(column string, val any) *filterBuilder {
+	if val == nil {
+		return b
+	}
+
+	return b.where(column, val)
 }
 
 func (b *filterBuilder) withCount(ok bool) *filterBuilder {

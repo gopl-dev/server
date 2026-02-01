@@ -2,10 +2,10 @@ package response
 
 import "github.com/gopl-dev/server/app/ds"
 
-// FilterBooks represents a paginated collection of books returned by a list or search operation.
+// FilterBooks represents a paginated collection of books returned by a filter operation.
 type FilterBooks struct {
-	Data  []ds.Book `json:"data"`  // Data is the list of books for the current page.
-	Count int       `json:"count"` // Count is the total number of matching books.
+	Data  []ds.Book `json:"data"`
+	Count int       `json:"count"`
 }
 
 // UpdateRevision defines the response payload for an update request.

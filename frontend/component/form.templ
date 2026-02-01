@@ -210,3 +210,24 @@ templ FileUploadInput(p FileUploadInputParams) {
 <input type="hidden" name={ p.Name } :value={ p.FileIDModel }>
 </div>
 }
+
+templ TopicPicker() {
+<div class="flex flex-wrap gap-2 p-2" x-ref="topicsWrap">
+    <template x-for="t in sortedTopics()" :key="t.id">
+        <label
+                class="badge badge-info badge-lg cursor-pointer select-none transition-transform duration-150 ease-out"
+                :data-topic-id="t.id"
+                :class="form.topics.includes(t.id) ? 'shadow-md' : 'badge-soft'"
+        >
+            <input
+                    type="checkbox"
+                    class="hidden"
+                    :value="t.id"
+                    @change="toggleTopic(t.id)"
+                    :checked="form.topics.includes(t.id)"
+            />
+            <span x-text="t.name" :title="t.description"></span>
+        </label>
+    </template>
+</div>
+}

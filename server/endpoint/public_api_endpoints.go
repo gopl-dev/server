@@ -1,6 +1,6 @@
 package endpoint
 
-// PublicAPIEndpoints ...
+// PublicAPIEndpoints registers all publicly accessible API routes.
 func (r *Router) PublicAPIEndpoints() {
 	r.GET("status/", r.handler.ServerStatus)
 

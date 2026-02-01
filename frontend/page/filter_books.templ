@@ -3,51 +3,68 @@ package page
 import "github.com/gopl-dev/server/frontend/component/icon"
 
 templ FilterBooksPage() {
+<script src="/assets/http_helpers.js"></script>
 <script>
     function booksPage() {
         return {
             books: [],
             loading: false,
             error: '',
-            page: 1,
-            perPage: 10,
             total: 0,
+            topics: [],
             loadedOnce: false,
+
+            filters: {
+                page: 1,
+                per_page: 10,
+                topic_ids: [],
+            },
 
             coverURL(fileID) {
                 return '/files/' + fileID + '/?preview'
             },
 
             get totalPages() {
-                return Math.max(1, Math.ceil(this.total / this.perPage))
+                return Math.max(1, Math.ceil(this.total / this.filters.per_page))
             },
 
             readFromURL() {
                 const url = new URL(window.location.href)
+
                 const p = parseInt(url.searchParams.get('page') || '', 10)
-                if (Number.isFinite(p) && p > 0) this.page = p
+                if (Number.isFinite(p) && p > 0) this.filters.page = p
+                else this.filters.page = 1
+
+                const pp = parseInt(url.searchParams.get('per_page') || '', 10)
+                if (Number.isFinite(pp) && pp > 0) this.filters.per_page = pp
+
+                const topicIDs = url.searchParams.getAll('topics')
+                this.filters.topic_ids = topicIDs ?? []
             },
 
             writeToURL() {
                 const url = new URL(window.location.href)
-                if (this.page === 1) {
-                    url.searchParams.delete('page')
-                } else {
-                    url.searchParams.set('page', String(this.page))
+
+                if (this.filters.page === 1) url.searchParams.delete('page')
+                else url.searchParams.set('page', String(this.filters.page))
+
+                if (this.filters.per_page === 10) url.searchParams.delete('per_page')
+                else url.searchParams.set('per_page', String(this.filters.per_page))
+
+                url.searchParams.delete('topics')
+                for (const id of (this.filters.topic_ids ?? [])) {
+                    url.searchParams.append('topics', id)
                 }
+
                 window.history.replaceState({}, '', url.toString())
             },
 
             onPopState() {
                 this.readFromURL()
-                this.load(this.page, { syncURL: false, scrollTop: true })
+                this.load({ syncURL: false, scrollTop: true })
             },
 
-            init() {
-                this.readFromURL()
-                window.addEventListener('popstate', () => this.onPopState())
-                this.load(this.page, { syncURL: false, scrollTop: false })
-            },
+            // ---------- pagination ui ----------
 
             scrollToTop() {
                 if (window.scrollY > 80) {
@@ -57,7 +74,7 @@ templ FilterBooksPage() {
 
             get pageButtons() {
                 const max = this.totalPages
-                const cur = this.page
+                const cur = this.filters.page
 
                 const start = Math.max(2, cur - 3)
                 const end = Math.min(max - 1, cur + 3)
@@ -79,17 +96,46 @@ templ FilterBooksPage() {
             gotoPage(p) {
                 if (p < 1) p = 1
                 if (p > this.totalPages) p = this.totalPages
-                if (p === this.page) return
-                this.load(p, { syncURL: true, scrollTop: true })
+                if (p === this.filters.page) return
+
+                this.filters.page = p
+                this.load({ syncURL: true, scrollTop: true })
             },
 
-            async load(pageOpt, opt) {
-                const options = opt || { syncURL: true, scrollTop: true }
-                if (pageOpt) this.page = pageOpt
+            buildBooksQS() {
+                const qs = new URLSearchParams({
+                    page: String(this.filters.page),
+                    per_page: String(this.filters.per_page),
+                })
 
-                if (this.page < 1) this.page = 1
-                if (this.loadedOnce && this.page > this.totalPages) {
-                    this.page = this.totalPages
+                for (const id of (this.filters.topic_ids ?? [])) {
+                    qs.append('topics', id)
+                }
+
+                return qs.toString()
+            },
+
+            async loadTopicsOnce() {
+                if (this.topics.length) return
+
+                try {
+                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book`, { method: 'GET' })
+                    if (resp.status !== 200) {
+                        this.error = data?.error || 'Failed to load topics'
+                        return
+                    }
+                    this.topics = data?.data ?? []
+                } catch (err) {
+                    console.error(err)
+                    this.error = 'Failed to load topics'
+                }
+            },
+
+            async load(opt) {
+                const options = opt || { syncURL: true, scrollTop: true }
+                if (this.filters.page < 1) this.filters.page = 1
+                if (this.loadedOnce && this.filters.page > this.totalPages) {
+                    this.filters.page = this.totalPages
                 }
 
                 if (options.scrollTop) this.scrollToTop()
@@ -98,32 +144,22 @@ templ FilterBooksPage() {
                 this.error = ''
 
                 try {
-                    const qs = new URLSearchParams({
-                        page: String(this.page),
-                        per_page: String(this.perPage),
-                    })
+                    await this.loadTopicsOnce()
 
-                    const resp = await fetch('/api/books/?' + qs.toString(), {
-                        headers: { 'Accept': 'application/json' },
-                    })
-                    if (!resp.ok) {
-                        let msg = 'Failed to load books'
-                        try {
-                            const data = await resp.json()
-                            if (data && (data.error || data.message)) msg = data.error || data.message
-                        } catch (_) {}
-                        throw new Error(msg)
+                    const { resp, data } = await HTTP.requestJSON('/api/books/?' + this.buildBooksQS())
+                    if (resp.status !== 200) {
+                        this.error = data?.error || 'Failed to load books'
+                        return
                     }
 
-                    const payload = await resp.json()
-                    this.books = payload?.data ?? []
-                    this.total = payload?.count ?? 0
+                    this.books = data?.data ?? []
+                    this.total = data?.count ?? 0
                     this.loadedOnce = true
 
-                    if (this.page > this.totalPages) {
-                        this.page = this.totalPages
+                    if (this.filters.page > this.totalPages) {
+                        this.filters.page = this.totalPages
                         if (options.syncURL) this.writeToURL()
-                        return await this.load(this.page, { syncURL: false, scrollTop: false })
+                        return await this.load({ syncURL: false, scrollTop: false })
                     }
 
                     if (options.syncURL) this.writeToURL()
@@ -133,6 +169,16 @@ templ FilterBooksPage() {
                     this.loading = false
                 }
             },
+
+            isTopicSelected(t) {
+                return (this.filters.topic_ids ?? []).includes(String(t.public_id))
+            },
+
+            init() {
+                this.readFromURL()
+                window.addEventListener('popstate', () => this.onPopState())
+                this.load({ syncURL: false, scrollTop: false })
+            },
         }
     }
 </script>
@@ -140,20 +186,45 @@ templ FilterBooksPage() {
 <div x-data="booksPage()">
     <div class="flex items-center justify-between pb-4">
         <h1 class="text-3xl">Books</h1>
-        <a class="btn btn-info" href="/add-book/">Add book</a>
+        <a class="btn btn-info ml-2" href="/add-book/">Add book</a>
     </div>
+
+    <!-- topics -->
+    <div class="flex flex-wrap gap-2 mb-2">
+        <template x-for="t in topics" :key="t.id">
+            <label
+                    class="badge badge-lg cursor-pointer select-none"
+                    :class="filters.topic_ids.includes(t.public_id) ? 'badge-info' : 'badge-soft'"
+            >
+                <input
+                        type="checkbox"
+                        class="hidden"
+                        @change="
+  $event.target.checked
+    ? filters.topic_ids.push(t.public_id)
+    : filters.topic_ids = filters.topic_ids.filter(id => id !== t.public_id)
+  filters.page = 1
+  load({ syncURL: true, scrollTop: true })
+"
+                        :checked="filters.topic_ids.includes(t.public_id)"
+                />
+                <span x-text="t.name"></span>
+            </label>
+        </template>
+    </div>
+
     <!-- Top pagination -->
     <div class="flex items-center justify-between mb-4">
         <div class="text-sm text-gray-500">
             <span x-text="'Total: ' + total"></span>
             <span class="mx-2">•</span>
-            <span x-text="'Page ' + page + ' of ' + totalPages"></span>
+            <span x-text="'Page ' + filters.page + ' of ' + totalPages"></span>
         </div>
 
         <div class="flex items-center gap-2">
             <button
                     class="btn btn-sm"
-                    :class="page === 1 ? 'btn-active' : ''"
+                    :class="filters.page === 1 ? 'btn-active' : ''"
                     :disabled="loading"
                     @click="gotoPage(1)"
             >
@@ -181,7 +252,7 @@ templ FilterBooksPage() {
             <template x-if="totalPages > 1">
                 <button
                         class="btn btn-sm"
-                        :class="page === totalPages ? 'btn-active' : ''"
+                        :class="filters.page === totalPages ? 'btn-active' : ''"
                         :disabled="loading"
                         @click="gotoPage(totalPages)"
                         x-text="totalPages"
@@ -250,11 +321,20 @@ templ FilterBooksPage() {
                 <template x-if="b.description">
                     <p x-text="b.description"></p>
                 </template>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <template x-for="t in (b.topics ?? [])" :key="t.public_id">
+    <a :href="'/books/?topics=' + t.public_id"
+            class="badge"
+            :class="isTopicSelected(t) ? 'badge-outline badge-info' : 'badge-soft'"
+            x-text="t.name"
+    ></a>
+                    </template>
+                </div>
 
-                <a
+                <p><a
                         class="hover:underline link-info"
                         :href="'/books/' + b.public_id + '/'"
-                >More...</a>
+                >More...</a></p>
             </div>
         </div>
     </template>
@@ -268,13 +348,13 @@ templ FilterBooksPage() {
         <div class="text-sm text-gray-500">
             <span x-text="'Total: ' + total"></span>
             <span class="mx-2">•</span>
-            <span x-text="'Page ' + page + ' of ' + totalPages"></span>
+            <span x-text="'Page ' + filters.page + ' of ' + totalPages"></span>
         </div>
 
         <div class="flex items-center gap-2">
             <button
                     class="btn btn-sm"
-                    :class="page === 1 ? 'btn-active' : ''"
+                    :class="filters.page === 1 ? 'btn-active' : ''"
                     :disabled="loading"
                     @click="gotoPage(1)"
             >
@@ -302,7 +382,7 @@ templ FilterBooksPage() {
             <template x-if="totalPages > 1">
                 <button
                         class="btn btn-sm"
-                        :class="page === totalPages ? 'btn-active' : ''"
+                        :class="filters.page === totalPages ? 'btn-active' : ''"
                         :disabled="loading"
                         @click="gotoPage(totalPages)"
                         x-text="totalPages"

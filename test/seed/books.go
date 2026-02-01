@@ -16,6 +16,15 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var topicList = []string{
+	"Beginner", "Advanced", "Algorithms",
+	"Concurrency", "Parallelism", "Microservices",
+	"API Design", "High Load", "Databases",
+	"DevOps", "Security", "Testing",
+	"Refactoring", "Debugging", "Software Engineering",
+	"Theory", "Case Studies", "Reference",
+}
+
 // Books seeds the database with `count` random books.
 //
 // It generates a unique public slug (entities.public_id) for each book title,
@@ -32,11 +41,16 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 		})
 	}
 
+	topics, err := s.resolveBookTopics(ctx)
+	if err != nil {
+		return err
+	}
+
 	var eg errgroup.Group
 
 	for range count {
 		eg.Go(func() error {
-			title := fake.BookTitle()
+			title := random.Element([]string{fake.BookTitle(), fake.MovieName(), fake.CelebrityActor()})
 
 			ownerID, err := s.RandomUserID(ctx)
 			if err != nil {
@@ -67,7 +81,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				PublicID:      app.Slug(title),
 				OwnerID:       ownerID,
 				PreviewFileID: cover.ID,
-				DeletedAt:     random.ValOrNil(fake.DateRange(time.Now().AddDate(0, -12, -25), time.Now()), 20),
+				DeletedAt:     random.ValOrNil(fake.DateRange(time.Now().AddDate(0, -12, -25), time.Now()), 10),
 			})
 
 		createBook:
@@ -82,6 +96,18 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				}
 				e.PublicID = newID
 				goto createBook
+			}
+
+			// topics
+			for range random.Int(1, 3) {
+				t := random.Element(topics)
+				err := s.repo.CreateEntityTopic(ctx, e.ID, t.ID)
+				if _, ok := isUniqueViolation(err); ok {
+					continue
+				}
+				if err != nil {
+					return fmt.Errorf("create entity topic: %w", err)
+				}
 			}
 
 			return err
@@ -101,4 +127,37 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 	}
 
 	return nil
+}
+
+func (s *Seed) resolveBookTopics(ctx context.Context) ([]ds.Topic, error) {
+	topics, _, err := s.repo.FilterTopics(ctx, ds.TopicsFilter{
+		PerPage: 100,
+		Type:    ds.EntityTypeBook,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(topics) == 0 {
+		topics = make([]ds.Topic, len(topicList))
+		for i, name := range topicList {
+			t, err := s.factory.CreateTopic(ds.Topic{
+				ID:          ds.NewID(),
+				Type:        ds.EntityTypeBook,
+				PublicID:    app.Slug(name),
+				Name:        name,
+				Description: fake.ProductDescription(),
+				CreatedAt:   time.Now(),
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			topics[i] = *t
+		}
+
+		return topics, nil
+	}
+
+	return topics, nil
 }

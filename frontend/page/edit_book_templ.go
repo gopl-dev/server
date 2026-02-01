@@ -32,19 +32,19 @@ func EditBookForm(bookID string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        author_name: '',\r\n        author_link: '',\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        visibility: 'public',\r\n    }\r\n\r\n    const BOOK_ID = \"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script src=\"/assets/topic_picker.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        author_name: '',\r\n        author_link: '',\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        topics: [],\r\n    }\r\n\r\n    const BOOK_ID = \"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Var2, templ_7745c5c3_Err := templruntime.ScriptContentInsideStringLiteral(bookID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/edit_book.templ`, Line: 23, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/edit_book.templ`, Line: 24, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"\r\n\r\n    function editBookForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: BOOK_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.putJSON(`/api/books/${BOOK_ID}/`, this.form)\r\n\r\n                    if (resp.status === 200) {\r\n                        this.saveRevision = data?.revision ?? 0\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            revision: null,\r\n            revision_date: null,\r\n            saveRevision: null,\r\n\r\n            // page state\r\n            loading: true,\r\n            loadError: '',\r\n            book: null,\r\n            updatedBook: null,\r\n\r\n            // uploader (init() to bind callbacks to Alpine proxy)\r\n            upload: null,\r\n\r\n            get bookURL() {\r\n                return  `/books/${BOOK_ID}/`\r\n            },\r\n\r\n            get revisionDateFormatted() {\r\n                if (!this.revision_date) return ''\r\n\r\n                return new Date(this.revision_date).toLocaleString('en-US', {\r\n                    hour: '2-digit',\r\n                    minute: '2-digit',\r\n                    month: 'short',\r\n                    hour12: false,\r\n                    day: '2-digit'\r\n                })\r\n\r\n            },\r\n\r\n\r\n            async init() {\r\n                // init uploader\r\n                this.upload = FileUpload.makeFileUpload({\r\n                    purpose: 'book-cover',\r\n                    onUploaded: (id) => { this.form.cover_file_id = id },\r\n                    onRemoved: () => { this.form.cover_file_id = '' },\r\n                })\r\n\r\n                // load book\r\n                this.loading = true\r\n                this.loadError = ''\r\n\r\n                try {\r\n                    const { resp, data } = await HTTP.requestJSON(`/api/books/${BOOK_ID}/edit/`, { method: 'GET' })\r\n\r\n                    if (resp.status !== 200) {\r\n                        this.loadError = data?.error || 'Failed to load book'\r\n                        return\r\n                    }\r\n\r\n                    this.book = data.data || null\r\n                    this.revision = data?.revision ?? null\r\n                    this.revision_date = data?.revision_date ?? null\r\n\r\n                    for (const k of Object.keys(BOOK_FORM_DEFAULTS)) {\r\n                        if (k in (data.data || {})) this.form[k] = data.data[k] ?? BOOK_FORM_DEFAULTS[k]\r\n                    }\r\n\r\n                } catch (_) {\r\n                    this.loadError = 'Failed to load book'\r\n                } finally {\r\n                    this.loading = false\r\n                }\r\n            },\r\n        }\r\n    }\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Edit Book</h1><div class=\"bg-base-100 w-full shadow-md\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"\r\n\r\n    function editBookForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: BOOK_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.putJSON(`/api/books/${BOOK_ID}/`, this.form)\r\n\r\n                    if (resp.status === 200) {\r\n                        this.saveRevision = data?.revision ?? 0\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            topics: [],\r\n            ...TopicPicker.make(),\r\n\r\n            revision: null,\r\n            revision_date: null,\r\n            saveRevision: null,\r\n\r\n            // page state\r\n            loading: true,\r\n            loadError: '',\r\n            book: null,\r\n            updatedBook: null,\r\n\r\n            // uploader (init() to bind callbacks to Alpine proxy)\r\n            upload: null,\r\n\r\n            get bookURL() {\r\n                return  `/books/${BOOK_ID}/`\r\n            },\r\n\r\n            get revisionDateFormatted() {\r\n                if (!this.revision_date) return ''\r\n\r\n                return new Date(this.revision_date).toLocaleString('en-US', {\r\n                    hour: '2-digit',\r\n                    minute: '2-digit',\r\n                    month: 'short',\r\n                    hour12: false,\r\n                    day: '2-digit'\r\n                })\r\n\r\n            },\r\n\r\n            async init() {\r\n                // init uploader\r\n                this.upload = FileUpload.makeFileUpload({\r\n                    purpose: 'book-cover',\r\n                    onUploaded: (id) => { this.form.cover_file_id = id },\r\n                    onRemoved: () => { this.form.cover_file_id = '' },\r\n                })\r\n\r\n                this.loading = true\r\n                this.loadError = ''\r\n\r\n                try {\r\n                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book`, { method: 'GET' })\r\n                    if (resp.status !== 200) {\r\n                        this.loadError = data?.error || 'Failed to load topics'\r\n                        return\r\n                    }\r\n\r\n                    this.topics = data?.data ?? []\r\n                    console.log(this.topics)\r\n                } catch (err) {\r\n                    console.error(err)\r\n                    this.loadError = 'Failed to load topics'\r\n                } finally {\r\n                    this.loading = false\r\n                }\r\n\r\n                this.loading = true\r\n                this.loadError = ''\r\n\r\n                try {\r\n                    const { resp, data } = await HTTP.requestJSON(`/api/books/${BOOK_ID}/edit/`, { method: 'GET' })\r\n                    if (resp.status !== 200) {\r\n                        this.loadError = data?.error || 'Failed to load book'\r\n                        return\r\n                    }\r\n\r\n                    this.book = data.data || null\r\n                    this.revision = data?.revision ?? null\r\n                    this.revision_date = data?.revision_date ?? null\r\n\r\n                    for (const k of Object.keys(BOOK_FORM_DEFAULTS)) {\r\n                        if (k in (data.data || {})) this.form[k] = data.data[k] ?? BOOK_FORM_DEFAULTS[k]\r\n                    }\r\n\r\n                    const bookTopics = (data.data?.topics ?? [])\r\n                    this.form.topics = bookTopics.map(t => t.id).filter(Boolean)\r\n                } catch (err) {\r\n                    console.error(err)\r\n                    this.loadError = 'Failed to load book'\r\n                } finally {\r\n                    this.loading = false\r\n                }\r\n\r\n\r\n            },\r\n        }\r\n    }\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Edit Book</h1><div class=\"bg-base-100 w-full shadow-md\"><div class=\"card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -75,6 +75,10 @@ func EditBookForm(bookID string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = TopicPicker().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -130,19 +134,6 @@ func EditBookForm(bookID string) templ.Component {
 				Label:      "Release Date",
 				Model:      "form.release_date",
 				ErrorModel: "errors.release_date",
-			}).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = Radio(RadioParams{
-				Label:      "Visibility",
-				Model:      "form.visibility",
-				ErrorModel: "errors.visibility",
-				Items: []RadioItem{
-					{Label: "Public", Value: "public", Description: "Visible to everyone and indexed"},
-					{Label: "Private", Value: "private", Description: "Visible only to you"},
-					{Label: "Unlisted", Value: "unlisted", Description: "Accessible only via direct link"},
-				},
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

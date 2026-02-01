@@ -17,12 +17,6 @@ func TestValidateAuthenticateUserInput(t *testing.T) {
 		data      service.AuthenticateUserInput
 	}{
 		{
-			name:      "invalid email",
-			expectErr: "must be a valid email",
-			argName:   "email",
-			data:      service.AuthenticateUserInput{"aaa", "bbb"},
-		},
-		{
 			name:      "empty email",
 			expectErr: "Email is required",
 			argName:   "email",

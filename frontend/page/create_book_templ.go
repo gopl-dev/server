@@ -31,7 +31,7 @@ func CreateBookForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        author_name: '',\r\n        author_link: '',\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        visibility: 'public',\r\n    }\r\n\r\n    function createBookForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: BOOK_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const {resp, data} = await HTTP.postJSON('/api/books/', this.form)\r\n\r\n                    if (resp.status === 201) {\r\n                        this.createdBook = data\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            createdBook: null,\r\n\r\n            upload: null,\r\n\r\n            init() {\r\n                this.upload = FileUpload.makeFileUpload({\r\n                    purpose: 'book-cover',\r\n                    onUploaded: (id) => {\r\n                        this.form.cover_file_id = id\r\n                    },\r\n                    onRemoved: () => {\r\n                        this.form.cover_file_id = ''\r\n                    },\r\n                })\r\n            },\r\n\r\n            get createdBookURL() {\r\n                const pid = this.createdBook?.public_id\r\n                return pid ? `/books/${pid}/` : ''\r\n            },\r\n        }\r\n    }\r\n\r\n\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Add Book</h1><div class=\"bg-base-100 shadow-md card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script src=\"/assets/topic_picker.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        author_name: '',\r\n        author_link: '',\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        topics: []\r\n    }\r\n\r\n    function createBookForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: BOOK_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const {resp, data} = await HTTP.postJSON('/api/books/', this.form)\r\n\r\n                    if (resp.status === 201) {\r\n                        this.createdBook = data\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            topics: [],\r\n            ...TopicPicker.make(),\r\n\r\n            createdBook: null,\r\n            upload: null,\r\n            loading: false,\r\n            loadError: '',\r\n\r\n            async init() {\r\n                this.upload = FileUpload.makeFileUpload({\r\n                    purpose: 'book-cover',\r\n                    onUploaded: (id) => {\r\n                        this.form.cover_file_id = id\r\n                    },\r\n                    onRemoved: () => {\r\n                        this.form.cover_file_id = ''\r\n                    },\r\n                })\r\n\r\n                this.loading = true\r\n                this.loadError = ''\r\n\r\n                try {\r\n                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book`, { method: 'GET' })\r\n                    if (resp.status !== 200) {\r\n                        this.loadError = data?.error || 'Failed to load topics'\r\n                        return\r\n                    }\r\n\r\n                    this.topics = data?.data ?? []\r\n                    console.log(this.topics)\r\n                } catch (err) {\r\n                    console.error(err)\r\n                    this.loadError = 'Failed to load topics'\r\n                } finally {\r\n                    this.loading = false\r\n                }\r\n            },\r\n\r\n            get createdBookURL() {\r\n                const pid = this.createdBook?.public_id\r\n                return pid ? `/books/${pid}/` : ''\r\n            },\r\n        }\r\n    }\r\n\r\n\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Add Book</h1><div class=\"bg-base-100 shadow-md card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -59,6 +59,10 @@ func CreateBookForm() templ.Component {
 				Accept:      "image/*",
 				Preview:     true,
 			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = TopicPicker().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -114,19 +118,6 @@ func CreateBookForm() templ.Component {
 				Label:      "Release Date",
 				Model:      "form.release_date",
 				ErrorModel: "errors.release_date",
-			}).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = Radio(RadioParams{
-				Label:      "Visibility",
-				Model:      "form.visibility",
-				ErrorModel: "errors.visibility",
-				Items: []RadioItem{
-					{Label: "Public", Value: "public", Description: "Visible to everyone and indexed"},
-					{Label: "Private", Value: "private", Description: "Visible only to you"},
-					{Label: "Unlisted", Value: "unlisted", Description: "Accessible only via direct link"},
-				},
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

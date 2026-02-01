@@ -5,14 +5,21 @@ import (
 
 	fake "github.com/brianvoe/gofakeit/v7"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/test/factory/random"
 )
 
-// NewBook ...
+// NewBook creates a new Book model instance populated with default
+// randomly generated data.
 func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 	m = &ds.Book{
 		Entity:      f.NewEntity(),
 		CoverFileID: ds.NilID,
-		AuthorName:  fake.BookAuthor(),
+		AuthorName: random.Element([]string{
+			fake.BookAuthor(),
+			fake.CelebrityActor(),
+			fake.CelebritySport(),
+			fake.CelebrityBusiness(),
+		}),
 		AuthorLink:  fake.URL(),
 		Homepage:    fake.URL(),
 		ReleaseDate: fake.Date().Format("2006-01-02"),
@@ -32,7 +39,7 @@ func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 	return
 }
 
-// CreateBook ...
+// CreateBook creates and persists a new Book record in the repository.
 func (f *Factory) CreateBook(overrideOpt ...ds.Book) (m *ds.Book, err error) {
 	m = f.NewBook(overrideOpt...)
 

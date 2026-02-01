@@ -141,3 +141,30 @@ CREATE TABLE event_logs
     meta             JSONB,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE topics
+(
+    id          uuid PRIMARY KEY NOT NULL,
+    type        TEXT             NOT NULL,
+    public_id   TEXT             NOT NULL,
+    name        TEXT             NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMPTZ      NOT NULL,
+    updated_at  TIMESTAMPTZ,
+    deleted_at  TIMESTAMPTZ,
+
+    CONSTRAINT topics_entity_type_slug_uniq UNIQUE (type, public_id)
+);
+
+CREATE INDEX topics_entity_type_idx ON topics (type);
+CREATE INDEX topics_deleted_at_idx ON topics (deleted_at);
+
+
+CREATE TABLE entity_topics
+(
+    entity_id uuid NOT NULL REFERENCES entities (id),
+    topic_id  uuid NOT NULL REFERENCES topics (id),
+
+    CONSTRAINT entity_topics_pk PRIMARY KEY (entity_id, topic_id)
+);
+

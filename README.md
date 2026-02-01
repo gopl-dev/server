@@ -11,15 +11,13 @@ https://golangci-lint.run/docs/welcome/install/local/
 
 `golangci-lint run`  
 
-`go run ./cmd/service_call_guard ./app/service`
-
 
 # openapi & swagger
 https://github.com/swaggo/swag  
 `swag fmt --dir server/handler`  
 `swag init --parseDependency  --parseDepth 1 --dir server/handler -g handler.go -o server/docs`
 
-# devtools
+# internal devtools
 `go run ./cmd/cli/main.go rde`  
 Reset dev environment (recreate DB, apply migrations & create default user). Useful during active development when you messed with the DB or need a clean state.
 

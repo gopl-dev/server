@@ -23,13 +23,13 @@ type Book struct {
 func (b *Book) Data() map[string]any {
 	return map[string]any{
 		"title":         b.Title,
-		"visibility":    b.Visibility,
 		"cover_file_id": b.CoverFileID,
 		"description":   b.Description,
 		"author_name":   b.AuthorName,
 		"author_link":   b.AuthorLink,
 		"homepage":      b.Homepage,
 		"release_date":  b.ReleaseDate,
+		"topics":        b.Topics,
 	}
 }
 

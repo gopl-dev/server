@@ -13,21 +13,16 @@
     color: white;
 }
 
-.arrow-right {
-    position: absolute;
-    top: 50%;
-    right: -14px;              /* выдвигаем наружу */
-    transform: translateY(-50%);
-
-    width: 0;
-    height: 0;
-
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    border-left: 14px solid oklch(var(--b2));
-}
-
 .dashboard-menu-active {
     @apply rounded-l-full bg-gray-100 shadow-md text-info-content pl-5 translate-x-[8px];
+}
+
+footer {
+    @apply bg-gray-600 text-base-content gap-4 p-3 w-full text-sm text-gray-400;
+    box-shadow: 0 3px 3px -3px inset rgba(0, 0, 0, 0.5);
+
+    a:hover {
+        @apply link text-info;
+    }
 }
 

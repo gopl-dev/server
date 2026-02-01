@@ -1,6 +1,8 @@
 package layout
 
-import "github.com/gopl-dev/server/frontend/component/icon"
+import (
+    "github.com/gopl-dev/server/frontend/component/icon"
+)
 
 templ Default(d Data) {
 	<!DOCTYPE html>
@@ -102,18 +104,17 @@ templ Default(d Data) {
                 </div>
             </main>
 
-            <footer class="bg-gray-600 text-base-content gap-4 p-10 w-full">
-                <div class="grid grid-cols-3 max-w-6xl mx-auto text-neutral-content">
+            <footer>
+                <div class="grid grid-cols-3 max-w-6xl mx-auto">
                     <div>
-                        2026 <a href="/" class="link-info">gopl.dev</a>
+                        2026 <a href="/">gopl.dev</a>
                     </div>
-                    <div class="text-center">
-                        <a href="/about/" class="link-info">
+                    <div class="text-center"></div>
+                    <div class="text-right">
+                        <a href="/about/" class="mr-2">
                             @icon.Info("mr-1 w-5 h-5")
                             About</a>
-                    </div>
-                    <div class="text-right">
-                        <a href="https://github.com/gopl-dev/server" class="link-info">
+                        <a href="https://github.com/gopl-dev/server">
                             @icon.GitHub("mr-1 w-5 h-5")
                             Source</a>
                     </div>

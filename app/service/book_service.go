@@ -13,14 +13,18 @@ import (
 )
 
 var (
-	// ErrCoverIsNotABookCover ...
+	// ErrCoverIsNotABookCover indicates that the provided file
+	// cannot be used as a book cover because it is not marked
+	// or classified as a book cover.
 	ErrCoverIsNotABookCover = errors.New("cover: not a book cover")
 
-	// ErrCoverBelongsToAnotherUser ...
+	// ErrCoverBelongsToAnotherUser indicates that the provided
+	// cover file is owned by a different user and therefore
+	// cannot be attached to the current user's book.
 	ErrCoverBelongsToAnotherUser = errors.New("cover: not owner")
 )
 
-// FilterBooks ...
+// FilterBooks retrieves a paginated list of books matching the given filter.
 func (s *Service) FilterBooks(ctx context.Context, f ds.BooksFilter) (data []ds.Book, count int, err error) {
 	ctx, span := s.tracer.Start(ctx, "FilterBooks")
 	defer span.End()
@@ -43,6 +47,11 @@ func (s *Service) CreateBook(ctx context.Context, book *ds.Book) error {
 		return err
 	}
 
+	book.Topics, err = s.normalizeTopics(ctx, book.Topics, ds.EntityTypeBook, 1)
+	if err != nil {
+		return err
+	}
+
 	return s.db.WithTx(ctx, func(ctx context.Context) (err error) {
 		err = s.CreateEntity(ctx, book.Entity)
 		if err != nil {
@@ -50,6 +59,11 @@ func (s *Service) CreateBook(ctx context.Context, book *ds.Book) error {
 		}
 
 		err = s.db.CreateBook(ctx, book)
+		if err != nil {
+			return
+		}
+
+		err = s.AttachTopics(ctx, book.ID, book.Topics)
 		if err != nil {
 			return
 		}
@@ -65,6 +79,7 @@ func (s *Service) CreateBook(ctx context.Context, book *ds.Book) error {
 	})
 }
 
+// resolveBookCover validates and normalizes the book cover file reference.
 func (s *Service) resolveBookCover(ctx context.Context, book *ds.Book, edit bool) (err error) {
 	if book.CoverFileID.IsNil() {
 		return
@@ -90,6 +105,50 @@ func (s *Service) resolveBookCover(ctx context.Context, book *ds.Book, edit bool
 
 	book.PreviewFileID = book.CoverFileID
 	return nil
+}
+
+// normalizeTopics filters, deduplicates, and validates input topics
+// against the allowed topics for the given entity type.
+//
+// Only topics that exist and belong to the specified entity type are kept;
+// all others are silently discarded. Duplicate topic IDs are removed while
+// preserving the original order.
+func (s *Service) normalizeTopics(ctx context.Context, input []ds.Topic, typ ds.EntityType, minRequired int) (resolved []ds.Topic, err error) {
+	topics, _, err := s.FilterTopics(ctx, ds.TopicsFilter{
+		Type:    typ,
+		PerPage: ds.PerPageNoLimit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	allowed := make(map[ds.ID]ds.Topic, len(topics))
+	for _, t := range topics {
+		allowed[t.ID] = t
+	}
+
+	seen := make(map[ds.ID]struct{}, len(input))
+	resolved = make([]ds.Topic, 0, len(input))
+
+	for _, t := range input {
+		if _, dup := seen[t.ID]; dup {
+			continue
+		}
+		seen[t.ID] = struct{}{}
+
+		if at, ok := allowed[t.ID]; ok {
+			resolved = append(resolved, at)
+		}
+	}
+
+	if minRequired > 0 && len(resolved) < minRequired {
+		return nil, app.NewInputError(
+			"topics",
+			fmt.Sprintf("at least %d topic(s) required", minRequired),
+		)
+	}
+
+	return resolved, nil
 }
 
 // UpdateBook updates an existing book by its identifier.

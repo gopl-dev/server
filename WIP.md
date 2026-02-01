@@ -13,6 +13,7 @@ for simplicity, I keep todo list and progress here for now
   - [ ] Add price to book
   - [ ] Strict format for release date
   - [ ] Rework book to have multiple authors
+  - [ ] Remove visibility from book
 
 
 - [ ] Minimal admin dashboard for current needs:
@@ -35,6 +36,7 @@ for simplicity, I keep todo list and progress here for now
 
 NEXT:
 - [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
+- [ ] Create new topic when creating/editing entity
 - [ ] Pages
 - [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
@@ -52,3 +54,4 @@ NEXT:
 - [ ] Tests for frontend
 - [ ] Render initial data on the backend (for example, when the books page is requested, render it fully and return it, instead of letting the frontend fetch data via the API).
 - [ ] Add server version to frontend
+- [ ] Plain theme

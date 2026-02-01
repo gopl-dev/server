@@ -1,6 +1,6 @@
 package endpoint
 
-// ProtectedAPIEndpoints is endpoints that require user auth.
+// ProtectedAPIEndpoints registers API routes that require authentication.
 func (r *Router) ProtectedAPIEndpoints() {
 	// users
 	r.PUT("/users/password/", r.handler.ChangePassword)
@@ -24,6 +24,9 @@ func (r *Router) ProtectedAPIEndpoints() {
 	// files
 	r.POST("/files/", r.handler.UploadFile)
 	r.DELETE("/files/{id}/", r.handler.DeleteFile)
+
+	// topics
+	r.GET("/topics/", r.handler.FilterTopics)
 
 	// dashboard
 	// r.Group("dashboard", r.mw.AdminOnly)

@@ -6,6 +6,7 @@ templ CreateBookForm() {
 <script src="/assets/http_helpers.js"></script>
 <script src="/assets/file_upload_helpers.js"></script>
 <script src="/assets/form_helpers.js"></script>
+<script src="/assets/topic_picker.js"></script>
 <script>
     const BOOK_FORM_DEFAULTS = {
         title: '',
@@ -15,7 +16,7 @@ templ CreateBookForm() {
         homepage: '',
         release_date: '',
         cover_file_id: '',
-        visibility: 'public',
+        topics: []
     }
 
     function createBookForm() {
@@ -36,11 +37,15 @@ templ CreateBookForm() {
                 },
             }),
 
+            topics: [],
+            ...TopicPicker.make(),
+
             createdBook: null,
-
             upload: null,
+            loading: false,
+            loadError: '',
 
-            init() {
+            async init() {
                 this.upload = FileUpload.makeFileUpload({
                     purpose: 'book-cover',
                     onUploaded: (id) => {
@@ -50,6 +55,25 @@ templ CreateBookForm() {
                         this.form.cover_file_id = ''
                     },
                 })
+
+                this.loading = true
+                this.loadError = ''
+
+                try {
+                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book`, { method: 'GET' })
+                    if (resp.status !== 200) {
+                        this.loadError = data?.error || 'Failed to load topics'
+                        return
+                    }
+
+                    this.topics = data?.data ?? []
+                    console.log(this.topics)
+                } catch (err) {
+                    console.error(err)
+                    this.loadError = 'Failed to load topics'
+                } finally {
+                    this.loading = false
+                }
             },
 
             get createdBookURL() {
@@ -97,12 +121,15 @@ templ CreateBookForm() {
                     Preview: true,
                     })
 
+                    @TopicPicker()
+
                     @Input(InputParams{
                     ID: "title",
                     Label: "Title",
                     Model: "form.title",
                     ErrorModel: "errors.title",
                     })
+
                     @Textarea(InputParams{
                     ID: "description",
                     Label: "Description",
@@ -110,18 +137,21 @@ templ CreateBookForm() {
                     ErrorModel: "errors.description",
                     Type: "textarea",
                     })
+
                     @Input(InputParams{
                     ID: "author_name",
                     Label: "Author Name",
                     Model: "form.author_name",
                     ErrorModel: "errors.author_name",
                     })
+
                     @Input(InputParams{
                     ID: "author_link",
                     Label: "Author Link",
                     Model: "form.author_link",
                     ErrorModel: "errors.author_link",
                     })
+
                     @Input(InputParams{
                     ID: "homepage",
                     Label: "Homepage",
@@ -129,22 +159,12 @@ templ CreateBookForm() {
                     ErrorModel: "errors.homepage",
                     Description: "Where to find more information about this book",
                     })
+
                     @Input(InputParams{
                     ID: "release_date",
                     Label: "Release Date",
                     Model: "form.release_date",
                     ErrorModel: "errors.release_date",
-                    })
-
-                    @Radio(RadioParams{
-                    Label: "Visibility",
-                    Model: "form.visibility",
-                    ErrorModel: "errors.visibility",
-                    Items: []RadioItem{
-                    {Label: "Public", Value: "public", Description: "Visible to everyone and indexed"},
-                    {Label: "Private", Value: "private", Description: "Visible only to you"},
-                    {Label: "Unlisted", Value: "unlisted", Description: "Accessible only via direct link"},
-                    },
                     })
 
                     <div class="p-2">

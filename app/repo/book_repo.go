@@ -46,6 +46,11 @@ func (r *Repo) GetBookByID(ctx context.Context, id ds.ID) (*ds.Book, error) {
 		return nil, ErrBookNotFound
 	}
 
+	book.Topics, err = r.EntityTopics(ctx, book.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	return book, err
 }
 
@@ -60,6 +65,11 @@ func (r *Repo) GetBookByPublicID(ctx context.Context, publicID string) (*ds.Book
 	err := pgxscan.Get(ctx, r.getDB(ctx), book, query, publicID, ds.EntityTypeBook)
 	if noRows(err) {
 		return nil, ErrBookNotFound
+	}
+
+	book.Topics, err = r.EntityTopics(ctx, book.ID)
+	if err != nil {
+		return nil, err
 	}
 
 	return book, err
@@ -84,14 +94,26 @@ func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 	return nil
 }
 
-// FilterBooks ...
+// FilterBooks retrieves a paginated list of books matching the given filter.
 func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Book, count int, err error) {
 	_, span := r.tracer.Start(ctx, "FilterBooks")
 	defer span.End()
 
+	var whereTopics string
+	if len(f.Topics) > 0 {
+		whereTopics = `
+		EXISTS (
+		  SELECT 1
+		  FROM entity_topics et
+		  JOIN topics t ON et.topic_id = t.id
+		  WHERE et.entity_id = e.id
+			AND t.public_id = ANY(?::text[])
+		)`
+	}
+
 	count, err = r.filter("entities e", "e").
 		columns(`
-		  e.id            AS id,
+		  e.id AS id,
 		  e.type,
 		  e.public_id,
 		  e.owner_id,
@@ -113,6 +135,7 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		join("LEFT JOIN books b USING (id)").
 		join("LEFT JOIN users u ON e.owner_id = u.id").
 		where("e.type", ds.EntityTypeBook).
+		whereRaw(whereTopics, f.Topics).
 		paginate(f.Page, f.PerPage).
 		createdAt(f.CreatedAt).
 		deletedAt(f.DeletedAt).
@@ -124,6 +147,36 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		).
 		withCount(f.WithCount).
 		scan(ctx, &books)
+
+	// topics
+	if len(books) > 0 {
+		ids := make([]ds.ID, len(books))
+		for i := range books {
+			ids[i] = books[i].ID
+		}
+
+		var topics []ds.EntityTopic
+
+		_, err = r.filter("entity_topics et").
+			columns("et.entity_id, t.name, t.description, t.public_id").
+			join("JOIN topics t ON t.id = et.topic_id").
+			where("entity_id", ids).
+			deleted(false).
+			scan(ctx, &topics)
+		if err != nil {
+			err = fmt.Errorf("filter books: select topics: %w", err)
+			return nil, 0, err
+		}
+
+		topicsByEntity := make(map[ds.ID][]ds.Topic, len(books))
+		for _, t := range topics {
+			topicsByEntity[t.EntityID] = append(topicsByEntity[t.EntityID], t.Topic)
+		}
+
+		for i := range books {
+			books[i].Topics = topicsByEntity[books[i].ID]
+		}
+	}
 
 	return
 }

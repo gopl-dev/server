@@ -903,4 +903,33 @@ func FileUploadInput(p FileUploadInputParams) templ.Component {
 	})
 }
 
+func TopicPicker() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var48 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var48 == nil {
+			templ_7745c5c3_Var48 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div class=\"flex flex-wrap gap-2 p-2\" x-ref=\"topicsWrap\"><template x-for=\"t in sortedTopics()\" :key=\"t.id\"><label class=\"badge badge-info badge-lg cursor-pointer select-none transition-transform duration-150 ease-out\" :data-topic-id=\"t.id\" :class=\"form.topics.includes(t.id) ? 'shadow-md' : 'badge-soft'\"><input type=\"checkbox\" class=\"hidden\" :value=\"t.id\" @change=\"toggleTopic(t.id)\" :checked=\"form.topics.includes(t.id)\"> <span x-text=\"t.name\" :title=\"t.description\"></span></label></template></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
 var _ = templruntime.GeneratedTemplate

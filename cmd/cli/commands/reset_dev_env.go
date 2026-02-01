@@ -46,7 +46,7 @@ func NewResetDevEnvCmd() cli.Command {
 type resetDevEnvCmd struct {
 	NoSeed   bool    `arg:"-ns"`
 	Username *string `arg:"-u" default:"admin"`
-	Email    *string `arg:"-e" default:"admin@admin"`
+	Email    *string `arg:"-e" default:"admin"`
 	Password *string `arg:"-p" default:"1"`
 }
 
@@ -170,9 +170,6 @@ func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
 		return err
 	}
 
-	cli.OK("New user %s <%s> with password %s created", *cmd.Username, *cmd.Email, *cmd.Password)
-	cli.Info("    USER ID: %s", u.ID)
-
 	err = writeAdminsToConfig(u.ID.String())
 	if err != nil {
 		return fmt.Errorf("update admins in config: %w", err)
@@ -199,7 +196,8 @@ func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
 		}
 	}
 
-	cli.OK("Done!")
+	cli.OK("New user created\n\tEmail:%s\n\tPassword: %s", *cmd.Email, *cmd.Password)
+	cli.Info("    USER ID: %s", u.ID)
 	return nil
 }
 

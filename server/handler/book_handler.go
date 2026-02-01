@@ -149,6 +149,7 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 		WithCount:      true,
 		Status:         req.Status,
 		Visibility:     req.Visibility,
+		Topics:         req.Topics,
 		OrderBy:        "created_at",
 		OrderDirection: "desc",
 	}
@@ -172,7 +173,7 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// FilterBooksView ...
+// FilterBooksView renders the books listing page with filtering UI.
 func (h *Handler) FilterBooksView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "FilterBooksView")
 	defer span.End()
@@ -183,7 +184,7 @@ func (h *Handler) FilterBooksView(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetBookView ...
+// GetBookView renders a single book details page.
 func (h *Handler) GetBookView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "GetBookView")
 	defer span.End()

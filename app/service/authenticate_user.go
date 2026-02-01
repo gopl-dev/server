@@ -14,7 +14,7 @@ import (
 )
 
 var authenticateUserInputRules = z.Shape{
-	"Email":    emailInputRules,
+	"Email":    z.String().Required(z.Message("Email is required")),
 	"Password": z.String().Required(z.Message("Password is required")),
 }
 

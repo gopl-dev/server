@@ -10,6 +10,7 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
+	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
@@ -21,6 +22,8 @@ import (
 func TestCreateBook_Basic(t *testing.T) {
 	user := login(t)
 
+	topic := create(t, ds.Topic{Type: ds.EntityTypeBook})
+
 	req := request.CreateBook{
 		Title:       random.Title(),
 		Description: random.String(),
@@ -28,7 +31,7 @@ func TestCreateBook_Basic(t *testing.T) {
 		AuthorName:  random.String(),
 		AuthorLink:  random.URL(),
 		Homepage:    random.URL(),
-		Visibility:  random.Element(ds.EntityVisibilities),
+		Topics:      []ds.ID{topic.ID},
 	}
 
 	var resp ds.Book
@@ -43,7 +46,6 @@ func TestCreateBook_Basic(t *testing.T) {
 		"owner_id":    user.ID,
 		"type":        ds.EntityTypeBook,
 		"status":      ds.EntityStatusUnderReview,
-		"visibility":  req.Visibility,
 	})
 
 	// check book created
@@ -60,11 +62,35 @@ func TestCreateBook_Basic(t *testing.T) {
 		"type":      ds.EventLogEntitySubmitted,
 		"is_public": false,
 	})
+
+	// topic attached
+	test.AssertInDB(t, tt.DB, "entity_topics", test.Data{
+		"entity_id": resp.ID,
+		"topic_id":  topic.ID,
+	})
+
+	t.Run("book without topic", func(t *testing.T) {
+		req.Topics = []ds.ID{}
+		var errResp handler.Error
+		Request(t, RequestArgs{
+			method:       http.MethodPost,
+			path:         "/books/",
+			body:         req,
+			bindResponse: &errResp,
+			assertStatus: http.StatusUnprocessableEntity,
+		})
+
+		errText, ok := errResp.InputErrors["topics"]
+		assert.True(t, ok)
+		assert.True(t, errText != "")
+	})
 }
 
 // TestCreateBook_WithCover is a minimal effort to create valid book with cover.
 func TestCreateBook_WithCover(t *testing.T) {
 	login(t)
+
+	topic := create(t, ds.Topic{Type: ds.EntityTypeBook})
 
 	imageBytes, err := random.ImagePNG(10)
 	test.CheckErr(t, err)
@@ -88,8 +114,8 @@ func TestCreateBook_WithCover(t *testing.T) {
 		AuthorName:  random.String(),
 		AuthorLink:  random.URL(),
 		Homepage:    random.URL(),
-		Visibility:  random.Element(ds.EntityVisibilities),
 		CoverFileID: cover.ID,
+		Topics:      []ds.ID{topic.ID},
 	}
 
 	var resp ds.Book
@@ -176,7 +202,6 @@ func TestUpdateBook_WithReview(t *testing.T) {
 			AuthorLink:  book.AuthorLink,
 			Homepage:    book.Homepage,
 			CoverFileID: book.CoverFileID,
-			Visibility:  book.Visibility,
 		},
 	}
 	var updateResp response.UpdateRevision
@@ -265,8 +290,6 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 			AuthorLink:  book.AuthorLink,
 			Homepage:    book.Homepage,
 			CoverFileID: cover2.ID,
-
-			Visibility: book.Visibility,
 		},
 	}
 	var resp response.UpdateRevision
