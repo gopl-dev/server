@@ -224,3 +224,14 @@ func ValOrNil[T any](val T, probabilityOpt ...int) *T {
 
 	return nil
 }
+
+// Maybe returns either the provided value or the zero value of T,
+// based on the given probability.
+func Maybe[T any](val T, probabilityOpt ...int) T {
+	var v T
+	if ValOrNil(v, probabilityOpt...) != nil {
+		return val
+	}
+
+	return v
+}

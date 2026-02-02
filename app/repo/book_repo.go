@@ -23,8 +23,7 @@ func (r *Repo) CreateBook(ctx context.Context, b *ds.Book) error {
 	return r.insert(ctx, "books", data{
 		"id":            b.ID,
 		"cover_file_id": b.CoverFileID,
-		"author_name":   b.AuthorName,
-		"author_link":   b.AuthorLink,
+		"authors":       b.Authors,
 		"homepage":      b.Homepage,
 		"release_date":  b.ReleaseDate,
 	})
@@ -82,8 +81,7 @@ func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 
 	err := r.update(ctx, b.ID, "books", data{
 		"cover_file_id": b.CoverFileID,
-		"author_name":   b.AuthorName,
-		"author_link":   b.AuthorLink,
+		"authors":       b.Authors,
 		"homepage":      b.Homepage,
 		"release_date":  b.ReleaseDate,
 	})
@@ -126,8 +124,7 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		  e.deleted_at,
 		
 		  b.cover_file_id,
-		  b.author_name,
-		  b.author_link,
+		  b.authors,
 		  b.homepage,
 		  b.release_date,
 

@@ -1,6 +1,9 @@
 package page
 
-import . "github.com/gopl-dev/server/frontend/component"
+import (
+. "github.com/gopl-dev/server/frontend/component"
+"github.com/gopl-dev/server/frontend/component/icon"
+)
 
 // EditBookForm renders book edit page.
 templ EditBookForm(bookID string) {
@@ -13,8 +16,7 @@ templ EditBookForm(bookID string) {
     const BOOK_FORM_DEFAULTS = {
         title: '',
         description: '',
-        author_name: '',
-        author_link: '',
+        authors: [{ name: '', link: '' }],
         homepage: '',
         release_date: '',
         cover_file_id: '',
@@ -93,7 +95,6 @@ templ EditBookForm(bookID string) {
                     }
 
                     this.topics = data?.data ?? []
-                    console.log(this.topics)
                 } catch (err) {
                     console.error(err)
                     this.loadError = 'Failed to load topics'
@@ -127,8 +128,50 @@ templ EditBookForm(bookID string) {
                 } finally {
                     this.loading = false
                 }
+            },
+
+            addAuthorRow() {
+                this.form.authors.push({ name: '', link: '' })
+            },
+
+            removeAuthorRow(i) {
+                if (this.form.authors.length <= 1) return
+                this.form.authors.splice(i, 1)
+            },
 
 
+            dragIndex: null,
+            dragOverIndex: null,
+
+            onAuthorDragStart(i) {
+                this.dragIndex = i
+            },
+
+            onAuthorDragOver(e, i) {
+                e.preventDefault()
+                this.dragOverIndex = i
+            },
+
+            onAuthorDrop(i) {
+                if (this.dragIndex === null || this.dragIndex === i) {
+                    this.dragOverIndex = null
+                    return
+                }
+
+                const moved = this.form.authors.splice(this.dragIndex, 1)[0]
+                this.form.authors.splice(i, 0, moved)
+
+                this.dragIndex = null
+                this.dragOverIndex = null
+            },
+
+            onAuthorDragLeave(i) {
+                if (this.dragOverIndex === i) this.dragOverIndex = null
+            },
+
+            onAuthorDragEnd() {
+                this.dragIndex = null
+                this.dragOverIndex = null
             },
         }
     }
@@ -232,28 +275,12 @@ templ EditBookForm(bookID string) {
                     ErrorModel: "errors.title",
                     })
 
-
-
                     @Textarea(InputParams{
                     ID: "description",
                     Label: "Description",
                     Model: "form.description",
                     ErrorModel: "errors.description",
                     Type: "textarea",
-                    })
-
-                    @Input(InputParams{
-                    ID: "author_name",
-                    Label: "Author Name",
-                    Model: "form.author_name",
-                    ErrorModel: "errors.author_name",
-                    })
-
-                    @Input(InputParams{
-                    ID: "author_link",
-                    Label: "Author Link",
-                    Model: "form.author_link",
-                    ErrorModel: "errors.author_link",
                     })
 
                     @Input(InputParams{
@@ -270,6 +297,82 @@ templ EditBookForm(bookID string) {
                     Model: "form.release_date",
                     ErrorModel: "errors.release_date",
                     })
+
+                    <div class="p-2">
+                        <label class="label">
+                            <span class="label-text text-lg">Authors:</span>
+                        </label>
+
+                        <div class="flex flex-col gap-2">
+                            <template x-for="(a, i) in form.authors" :key="i">
+                                <div class="relative">
+                                    <div
+                                            class="absolute -top-1 left-0 right-0 h-1 border-t-2 border-dashed border-info"
+                                            x-show="dragOverIndex === i && dragIndex !== null && dragIndex !== i"
+                                            x-cloak
+                                    ></div>
+
+                                    <div
+                                            class="flex gap-2 items-start p-2 rounded"
+                                            :class="[
+                dragIndex === i ? 'opacity-50' : '',
+                dragOverIndex === i && dragIndex !== null && dragIndex !== i ? 'bg-base-200' : ''
+            ].join(' ')"
+                                            draggable="true"
+                                            x-on:dragstart="onAuthorDragStart(i)"
+                                            x-on:dragover="onAuthorDragOver($event, i)"
+                                            x-on:dragleave="onAuthorDragLeave(i)"
+                                            x-on:drop="onAuthorDrop(i)"
+                                            x-on:dragend="onAuthorDragEnd()"
+                                    >
+                                        <div class="flex gap-2 flex-1">
+                                            <input
+                                                    type="text"
+                                                    class="input input-bordered w-full"
+                                                    placeholder="Author name"
+                                                    x-model="a.name"
+                                            />
+
+                                            <input
+                                                    type="url"
+                                                    class="input input-bordered w-full"
+                                                    placeholder="Author link (optional)"
+                                                    x-model="a.link"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <button
+                                                    type="button"
+                                                    class="btn btn-ghost btn-success px-2"
+                                                    x-on:click="addAuthorRow()"
+                                                    aria-label="Add author"
+                                                    title="Add author"
+                                            >
+                                                @icon.SquarePlus()
+                                            </button>
+
+                                            <button
+                                                    type="button"
+                                                    class="btn btn-ghost btn-error px-2"
+                                                    x-on:click="removeAuthorRow(i)"
+                                                    :disabled="form.authors.length <= 1"
+                                                    :class="form.authors.length <= 1 ? 'btn-disabled' : ''"
+                                                    aria-label="Remove author"
+                                                    title="Remove author"
+                                            >
+                                                @icon.SquareMinus()
+                                            </button>
+                                            <div class="btn  btn-ghost cursor-move select-none" title="Drag to reorder">
+                                                ≡
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <p class="text-error text-sm" x-show="errors.authors" x-text="errors.authors"></p>
+                        </div>
+                    </div>
 
                     <div class="p-2">
                         @SubmitButton("Save changes")

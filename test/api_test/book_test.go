@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -28,8 +29,7 @@ func TestCreateBook_Basic(t *testing.T) {
 		Title:       random.Title(),
 		Description: random.String(),
 		ReleaseDate: random.String(),
-		AuthorName:  random.String(),
-		AuthorLink:  random.URL(),
+		Authors:     factory.NewBookAuthors(),
 		Homepage:    random.URL(),
 		Topics:      []ds.ID{topic.ID},
 	}
@@ -50,9 +50,8 @@ func TestCreateBook_Basic(t *testing.T) {
 
 	// check book created
 	test.AssertInDB(t, tt.DB, "books", test.Data{
-		"author_name": req.AuthorName,
-		"author_link": req.AuthorLink,
-		"homepage":    req.Homepage,
+		"authors":  req.Authors,
+		"homepage": req.Homepage,
 	})
 
 	// check log created
@@ -111,8 +110,7 @@ func TestCreateBook_WithCover(t *testing.T) {
 		Title:       random.Title(),
 		Description: random.String(),
 		ReleaseDate: random.String(),
-		AuthorName:  random.String(),
-		AuthorLink:  random.URL(),
+		Authors:     factory.NewBookAuthors(),
 		Homepage:    random.URL(),
 		CoverFileID: cover.ID,
 		Topics:      []ds.ID{topic.ID},
@@ -187,19 +185,24 @@ func TestUpdateBook_WithReview(t *testing.T) {
 	assert.Equal(t, 0, resp.Revision)
 	assert.True(t, len(book.Data()) == len(resp.Data))
 
-	for k, v := range book.Data() {
+	var data map[string]any
+	jsonData, err := json.Marshal(book.Data())
+	test.CheckErr(t, err)
+	err = json.Unmarshal(jsonData, &data)
+	test.CheckErr(t, err)
+
+	for k, v := range data {
 		assert.Equal(t, fmt.Sprintf("%v", v), fmt.Sprintf("%v", resp.Data[k]))
 	}
 
-	// do update (change only title and author)
+	// do update (change only title)
 	updateReq := request.UpdateBook{
 		CreateBook: request.CreateBook{
-			Title:      random.Title(),
-			AuthorName: random.String(),
+			Title: random.Title(),
 
 			Description: book.Description,
 			ReleaseDate: book.ReleaseDate,
-			AuthorLink:  book.AuthorLink,
+			Authors:     book.Authors,
 			Homepage:    book.Homepage,
 			CoverFileID: book.CoverFileID,
 		},
@@ -215,17 +218,13 @@ func TestUpdateBook_WithReview(t *testing.T) {
 		"entity_id": book.ID,
 		"status":    ds.EntityChangePending,
 		"revision":  1,
-		"diff":      map[string]any{"title": updateReq.Title, "author_name": updateReq.AuthorName},
+		"diff":      map[string]any{"title": updateReq.Title},
 	})
 
 	// book itself should not be changed
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":    book.ID,
 		"title": resp.Data["title"],
-	})
-	test.AssertInDB(t, tt.DB, "books", test.Data{
-		"id":          book.ID,
-		"author_name": resp.Data["author_name"],
 	})
 
 	// next edit should return "in-progress" data
@@ -250,7 +249,6 @@ func TestUpdateBook_WithReview(t *testing.T) {
 		"diff": map[string]any{
 			"title":       updateReq.Title,
 			"description": updateReq.Description,
-			"author_name": updateReq.AuthorName,
 		},
 	})
 }
@@ -286,8 +284,7 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 			Title:       random.Title(),
 			Description: random.String(),
 			ReleaseDate: book.ReleaseDate,
-			AuthorName:  book.AuthorName,
-			AuthorLink:  book.AuthorLink,
+			Authors:     factory.NewBookAuthors(),
 			Homepage:    book.Homepage,
 			CoverFileID: cover2.ID,
 		},

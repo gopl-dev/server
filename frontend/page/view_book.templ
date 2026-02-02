@@ -5,6 +5,28 @@ import (
     "github.com/gopl-dev/server/frontend/component/icon"
 )
 
+templ authorsInline(authors []ds.BookAuthor) {
+if len(authors) == 0 {
+return
+}
+
+for i, a := range authors {
+if a.Link != "" {
+<a href={ a.Link } class="link">{ a.Name }</a>
+} else {
+<span>{ a.Name }</span>
+}
+
+if len(authors) > 1 && i < len(authors)-2 {
+,&nbsp;
+}
+
+if len(authors) > 1 && i == len(authors)-2 {
+and&nbsp;
+}
+}
+}
+
 templ ViewBookPage(user *ds.User, book *ds.Book) {
 <script src="/assets/helpers.js" defer></script>
 <div class="flex gap-6">
@@ -56,14 +78,11 @@ templ ViewBookPage(user *ds.User, book *ds.Book) {
         </div>
         }
         <h1 class="pb-0">{ book.Title }</h1>
-        <h3>
-            by
-            if book.AuthorLink != "" {
-            <a href={book.AuthorLink}>{ book.AuthorName }</a>
-            } else {
-            { book.AuthorName }
-            }
-        </h3>
+        <div class="text-lg pb-5">
+            by&nbsp;
+            @authorsInline(book.Authors)
+
+        </div>
 
         <div class="grid grid-cols-2 gap-4 not-prose">
             <h4>Published { book.ReleaseDate }</h4>
@@ -78,9 +97,9 @@ templ ViewBookPage(user *ds.User, book *ds.Book) {
         </div>
 
         <p>{ book.Description }</p>
-        <div class="flex flex-wrap gap-2 ">
+        <div class="flex flex-wrap gap-2 not-prose">
             for _, t := range book.Topics {
-            <span class="badge badge-soft badge-lg">{ t.Name }</span>
+            <a class="badge badge-soft badge-lg" href={"/books/?topics=" + t.PublicID}>{ t.Name }</a>
             }
         </div>
         if book.Status == ds.EntityStatusApproved {

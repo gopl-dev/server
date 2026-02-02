@@ -9,12 +9,11 @@ for simplicity, I keep todo list and progress here for now
   - [x] view book
   - [ ] delete book
   - [x] list books
-  - [ ] Add topics to entities
+  - [x] Add topics to entities
   - [ ] Add price to book
   - [ ] Strict format for release date
   - [ ] Rework book to have multiple authors
-  - [ ] Remove visibility from book
-
+  - [x] Remove visibility from book
 
 - [ ] Minimal admin dashboard for current needs:
   - [x] List of new books to review

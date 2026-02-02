@@ -12,24 +12,30 @@ var bookCtxKey ctxKey = "book"
 type Book struct {
 	*Entity
 
-	CoverFileID ID     `json:"cover_file_id"`
-	AuthorName  string `json:"author_name"`
-	AuthorLink  string `json:"author_link"`
-	Homepage    string `json:"homepage"`
-	ReleaseDate string `json:"release_date"`
+	CoverFileID ID           `json:"cover_file_id"`
+	Authors     []BookAuthor `json:"authors"`
+	Homepage    string       `json:"homepage"`
+	ReleaseDate string       `json:"release_date"`
 }
 
 // Data returns the editable fields of the Book as a key-value map.
 func (b *Book) Data() map[string]any {
+	if b.Topics == nil {
+		b.Topics = make([]Topic, 0)
+	}
+
+	if b.Authors == nil {
+		b.Authors = make([]BookAuthor, 0)
+	}
+
 	return map[string]any{
 		"title":         b.Title,
 		"cover_file_id": b.CoverFileID,
 		"description":   b.Description,
-		"author_name":   b.AuthorName,
-		"author_link":   b.AuthorLink,
 		"homepage":      b.Homepage,
 		"release_date":  b.ReleaseDate,
 		"topics":        b.Topics,
+		"authors":       b.Authors,
 	}
 }
 
@@ -38,10 +44,12 @@ func (b *Book) CreateRules() z.Shape {
 	return z.Shape{
 		"Title":       z.String().Trim().Required(),
 		"Description": z.String().Trim().Required(),
-		"AuthorName":  z.String().Trim().Required(),
-		"AuthorLink":  z.String().Trim().URL(),
-		"Homepage":    z.String().Trim().URL().Required(),
+		"Homepage":    z.String().Trim().URL(),
 		"ReleaseDate": z.String().Trim().Required(),
+		"Authors": z.Slice(z.Struct(z.Shape{
+			"Name": z.String().Trim().Required(),
+			"Link": z.String().Trim().URL(),
+		})).Min(1).Required(),
 	}
 }
 
@@ -69,4 +77,10 @@ func BookFromContext(ctx context.Context) *Book {
 // BooksFilter is used to filter and paginate user queries.
 type BooksFilter struct {
 	EntitiesFilter
+}
+
+// BookAuthor represents an author of a book.
+type BookAuthor struct {
+	Name string `json:"name"`
+	Link string `json:"link"`
 }

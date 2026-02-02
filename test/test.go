@@ -116,7 +116,7 @@ func countDatabaseRows(t *testing.T, db *app.DB, table string, data Data) int {
 	for col, val := range data {
 		col = dbIdent(col)
 		if val == nil {
-			wheres = append(wheres, fmt.Sprintf(`"%s" IS NULL`, col))
+			wheres = append(wheres, col+" IS NULL")
 
 			continue
 		}

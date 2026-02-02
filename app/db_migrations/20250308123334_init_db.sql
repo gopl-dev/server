@@ -100,8 +100,7 @@ CREATE UNIQUE INDEX entities_public_id_type_uidx
 CREATE TABLE books
 (
     id            uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
-    author_name   TEXT             NOT NULL,
-    author_link   TEXT,
+    authors       JSONB,
     homepage      TEXT,
     release_date  TEXT             NOT NULL,
     cover_file_id uuid REFERENCES files (id)

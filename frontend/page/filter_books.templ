@@ -4,6 +4,7 @@ import "github.com/gopl-dev/server/frontend/component/icon"
 
 templ FilterBooksPage() {
 <script src="/assets/http_helpers.js"></script>
+<script src="/assets/helpers.js"></script>
 <script>
     function booksPage() {
         return {
@@ -304,18 +305,29 @@ templ FilterBooksPage() {
 
                 <span>
 						by&nbsp;
-						<template x-if="b.author_link">
-							<a
-                                    class="hover:underline"
-                                    :href="b.author_link"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    x-text="b.author_name"
+                <template x-for="(a, i) in b.authors" :key="a.name">
+                    <span>
+                        <template x-if="a.link">
+                            <a
+                                    :href="a.link"
+                                    class="link"
+                                    x-text="a.name"
                             ></a>
-						</template>
-						<template x-if="!b.author_link">
-							<span x-text="b.author_name"></span>
-						</template>
+                        </template>
+
+                        <template x-if="!a.link">
+                            <span x-text="a.name"></span>
+                        </template>
+
+                        <template x-if="b.authors.length > 1 && i < b.authors.length - 2">
+                            <span>, </span>
+                        </template>
+
+                        <template x-if="b.authors.length > 1 && i === b.authors.length - 2">
+                            <span>&nbsp;and&nbsp;</span>
+                        </template>
+                    </span>
+                </template>
 					</span>
 
                 <template x-if="b.description">

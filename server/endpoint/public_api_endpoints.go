@@ -21,4 +21,7 @@ func (r *Router) PublicAPIEndpoints() {
 	// files
 	r.Group("files").
 		GET("{id}/", r.handler.GetFileMetadata)
+
+	// topics
+	r.GET("/topics/", r.handler.FilterTopics)
 }

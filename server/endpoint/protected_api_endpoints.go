@@ -25,9 +25,6 @@ func (r *Router) ProtectedAPIEndpoints() {
 	r.POST("/files/", r.handler.UploadFile)
 	r.DELETE("/files/{id}/", r.handler.DeleteFile)
 
-	// topics
-	r.GET("/topics/", r.handler.FilterTopics)
-
 	// dashboard
 	// r.Group("dashboard", r.mw.AdminOnly)
 }

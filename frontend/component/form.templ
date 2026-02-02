@@ -229,5 +229,6 @@ templ TopicPicker() {
             <span x-text="t.name" :title="t.description"></span>
         </label>
     </template>
+    <p class="text-error text-sm" x-show="errors.topics" x-text="errors.topics"></p>
 </div>
 }

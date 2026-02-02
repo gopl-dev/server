@@ -924,7 +924,7 @@ func TopicPicker() templ.Component {
 			templ_7745c5c3_Var48 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div class=\"flex flex-wrap gap-2 p-2\" x-ref=\"topicsWrap\"><template x-for=\"t in sortedTopics()\" :key=\"t.id\"><label class=\"badge badge-info badge-lg cursor-pointer select-none transition-transform duration-150 ease-out\" :data-topic-id=\"t.id\" :class=\"form.topics.includes(t.id) ? 'shadow-md' : 'badge-soft'\"><input type=\"checkbox\" class=\"hidden\" :value=\"t.id\" @change=\"toggleTopic(t.id)\" :checked=\"form.topics.includes(t.id)\"> <span x-text=\"t.name\" :title=\"t.description\"></span></label></template></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div class=\"flex flex-wrap gap-2 p-2\" x-ref=\"topicsWrap\"><template x-for=\"t in sortedTopics()\" :key=\"t.id\"><label class=\"badge badge-info badge-lg cursor-pointer select-none transition-transform duration-150 ease-out\" :data-topic-id=\"t.id\" :class=\"form.topics.includes(t.id) ? 'shadow-md' : 'badge-soft'\"><input type=\"checkbox\" class=\"hidden\" :value=\"t.id\" @change=\"toggleTopic(t.id)\" :checked=\"form.topics.includes(t.id)\"> <span x-text=\"t.name\" :title=\"t.description\"></span></label></template><p class=\"text-error text-sm\" x-show=\"errors.topics\" x-text=\"errors.topics\"></p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

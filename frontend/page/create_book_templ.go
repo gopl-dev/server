@@ -8,7 +8,10 @@ package page
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import . "github.com/gopl-dev/server/frontend/component"
+import (
+	. "github.com/gopl-dev/server/frontend/component"
+	"github.com/gopl-dev/server/frontend/component/icon"
+)
 
 func CreateBookForm() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -31,7 +34,7 @@ func CreateBookForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script src=\"/assets/topic_picker.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        author_name: '',\r\n        author_link: '',\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        topics: []\r\n    }\r\n\r\n    function createBookForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: BOOK_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const {resp, data} = await HTTP.postJSON('/api/books/', this.form)\r\n\r\n                    if (resp.status === 201) {\r\n                        this.createdBook = data\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            topics: [],\r\n            ...TopicPicker.make(),\r\n\r\n            createdBook: null,\r\n            upload: null,\r\n            loading: false,\r\n            loadError: '',\r\n\r\n            async init() {\r\n                this.upload = FileUpload.makeFileUpload({\r\n                    purpose: 'book-cover',\r\n                    onUploaded: (id) => {\r\n                        this.form.cover_file_id = id\r\n                    },\r\n                    onRemoved: () => {\r\n                        this.form.cover_file_id = ''\r\n                    },\r\n                })\r\n\r\n                this.loading = true\r\n                this.loadError = ''\r\n\r\n                try {\r\n                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book`, { method: 'GET' })\r\n                    if (resp.status !== 200) {\r\n                        this.loadError = data?.error || 'Failed to load topics'\r\n                        return\r\n                    }\r\n\r\n                    this.topics = data?.data ?? []\r\n                    console.log(this.topics)\r\n                } catch (err) {\r\n                    console.error(err)\r\n                    this.loadError = 'Failed to load topics'\r\n                } finally {\r\n                    this.loading = false\r\n                }\r\n            },\r\n\r\n            get createdBookURL() {\r\n                const pid = this.createdBook?.public_id\r\n                return pid ? `/books/${pid}/` : ''\r\n            },\r\n        }\r\n    }\r\n\r\n\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Add Book</h1><div class=\"bg-base-100 shadow-md card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script src=\"/assets/topic_picker.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        authors: [{ name: '', link: '' }],\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        topics: []\r\n    }\r\n\r\n    function createBookForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: BOOK_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const {resp, data} = await HTTP.postJSON('/api/books/', this.form)\r\n\r\n                    if (resp.status === 201) {\r\n                        this.createdBook = data\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            topics: [],\r\n            ...TopicPicker.make(),\r\n\r\n            createdBook: null,\r\n            upload: null,\r\n            loading: false,\r\n            loadError: '',\r\n\r\n            async init() {\r\n                this.upload = FileUpload.makeFileUpload({\r\n                    purpose: 'book-cover',\r\n                    onUploaded: (id) => {\r\n                        this.form.cover_file_id = id\r\n                    },\r\n                    onRemoved: () => {\r\n                        this.form.cover_file_id = ''\r\n                    },\r\n                })\r\n\r\n                this.loading = true\r\n                this.loadError = ''\r\n\r\n                try {\r\n                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book`, { method: 'GET' })\r\n                    if (resp.status !== 200) {\r\n                        this.loadError = data?.error || 'Failed to load topics'\r\n                        return\r\n                    }\r\n\r\n                    this.topics = data?.data ?? []\r\n                } catch (err) {\r\n                    console.error(err)\r\n                    this.loadError = 'Failed to load topics'\r\n                } finally {\r\n                    this.loading = false\r\n                }\r\n            },\r\n\r\n            get createdBookURL() {\r\n                const pid = this.createdBook?.public_id\r\n                return pid ? `/books/${pid}/` : ''\r\n            },\r\n\r\n            addAuthorRow() {\r\n                this.form.authors.push({ name: '', link: '' })\r\n            },\r\n\r\n            removeAuthorRow(i) {\r\n                if (this.form.authors.length <= 1) return\r\n                this.form.authors.splice(i, 1)\r\n            },\r\n\r\n\r\n            dragIndex: null,\r\n            dragOverIndex: null,\r\n\r\n            onAuthorDragStart(i) {\r\n                this.dragIndex = i\r\n            },\r\n\r\n            onAuthorDragOver(e, i) {\r\n                e.preventDefault()\r\n                this.dragOverIndex = i\r\n            },\r\n\r\n            onAuthorDrop(i) {\r\n                if (this.dragIndex === null || this.dragIndex === i) {\r\n                    this.dragOverIndex = null\r\n                    return\r\n                }\r\n\r\n                const moved = this.form.authors.splice(this.dragIndex, 1)[0]\r\n                this.form.authors.splice(i, 0, moved)\r\n\r\n                this.dragIndex = null\r\n                this.dragOverIndex = null\r\n            },\r\n\r\n            onAuthorDragLeave(i) {\r\n                if (this.dragOverIndex === i) this.dragOverIndex = null\r\n            },\r\n\r\n            onAuthorDragEnd() {\r\n                this.dragIndex = null\r\n                this.dragOverIndex = null\r\n            },\r\n        }\r\n    }\r\n\r\n\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Add Book</h1><div class=\"bg-base-100 shadow-md card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -86,24 +89,6 @@ func CreateBookForm() templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = Input(InputParams{
-				ID:         "author_name",
-				Label:      "Author Name",
-				Model:      "form.author_name",
-				ErrorModel: "errors.author_name",
-			}).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = Input(InputParams{
-				ID:         "author_link",
-				Label:      "Author Link",
-				Model:      "form.author_link",
-				ErrorModel: "errors.author_link",
-			}).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = Input(InputParams{
 				ID:          "homepage",
 				Label:       "Homepage",
 				Model:       "form.homepage",
@@ -122,7 +107,23 @@ func CreateBookForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"p-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"p-2\"><label class=\"label\"><span class=\"label-text text-lg\">Authors:</span></label><div class=\"flex flex-col gap-2\"><template x-for=\"(a, i) in form.authors\" :key=\"i\"><div class=\"relative\"><div class=\"absolute -top-1 left-0 right-0 h-1 border-t-2 border-dashed border-info\" x-show=\"dragOverIndex === i && dragIndex !== null && dragIndex !== i\" x-cloak></div><div class=\"flex gap-2 items-start p-2 rounded\" :class=\"[\r\n                dragIndex === i ? 'opacity-50' : '',\r\n                dragOverIndex === i && dragIndex !== null && dragIndex !== i ? 'bg-base-200' : ''\r\n            ].join(' ')\" draggable=\"true\" x-on:dragstart=\"onAuthorDragStart(i)\" x-on:dragover=\"onAuthorDragOver($event, i)\" x-on:dragleave=\"onAuthorDragLeave(i)\" x-on:drop=\"onAuthorDrop(i)\" x-on:dragend=\"onAuthorDragEnd()\"><div class=\"flex gap-2 flex-1\"><input type=\"text\" class=\"input input-bordered w-full\" placeholder=\"Author name\" x-model=\"a.name\"> <input type=\"url\" class=\"input input-bordered w-full\" placeholder=\"Author link (optional)\" x-model=\"a.link\"></div><div><button type=\"button\" class=\"btn btn-ghost btn-success px-2\" x-on:click=\"addAuthorRow()\" aria-label=\"Add author\" title=\"Add author\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = icon.SquarePlus().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</button> <button type=\"button\" class=\"btn btn-ghost btn-error px-2\" x-on:click=\"removeAuthorRow(i)\" :disabled=\"form.authors.length <= 1\" :class=\"form.authors.length <= 1 ? 'btn-disabled' : ''\" aria-label=\"Remove author\" title=\"Remove author\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = icon.SquareMinus().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</button><div class=\"btn  btn-ghost cursor-move select-none\" title=\"Drag to reorder\">≡</div></div></div></div></template><p class=\"text-error text-sm\" x-show=\"errors.authors\" x-text=\"errors.authors\"></p></div></div><div class=\"p-2\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -130,7 +131,7 @@ func CreateBookForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></fieldset></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></fieldset></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -140,7 +141,7 @@ func CreateBookForm() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -50,7 +50,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 
 	for range count {
 		eg.Go(func() error {
-			title := random.Element([]string{fake.BookTitle(), fake.MovieName(), fake.CelebrityActor()})
+			title := random.Element([]string{fake.BookTitle(), fake.MovieName()})
 
 			ownerID, err := s.RandomUserID(ctx)
 			if err != nil {

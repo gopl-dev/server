@@ -8,19 +8,12 @@ import (
 	"github.com/gopl-dev/server/test/factory/random"
 )
 
-// NewBook creates a new Book model instance populated with default
-// randomly generated data.
+// NewBook creates a new Book model populated with fake data.
 func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 	m = &ds.Book{
 		Entity:      f.NewEntity(),
 		CoverFileID: ds.NilID,
-		AuthorName: random.Element([]string{
-			fake.BookAuthor(),
-			fake.CelebrityActor(),
-			fake.CelebritySport(),
-			fake.CelebrityBusiness(),
-		}),
-		AuthorLink:  fake.URL(),
+		Authors:     NewBookAuthors(),
 		Homepage:    fake.URL(),
 		ReleaseDate: fake.Date().Format("2006-01-02"),
 	}
@@ -51,4 +44,31 @@ func (f *Factory) CreateBook(overrideOpt ...ds.Book) (m *ds.Book, err error) {
 
 	err = f.repo.CreateBook(context.Background(), m)
 	return
+}
+
+// NewBookAuthor creates a new BookAuthor model populated with fake data.
+func NewBookAuthor() ds.BookAuthor {
+	return ds.BookAuthor{
+		Name: random.Element([]string{
+			fake.BookAuthor(),
+			fake.CelebrityActor(),
+			fake.CelebrityBusiness(),
+		}),
+		Link: random.Maybe(fake.URL()),
+	}
+}
+
+// NewBookAuthors generates and returns a slice of BookAuthor values.
+func NewBookAuthors(countOpt ...int) []ds.BookAuthor {
+	count := random.Int(1, 3) //nolint:mnd
+	if len(countOpt) == 1 {
+		count = countOpt[0]
+	}
+
+	authors := make([]ds.BookAuthor, count)
+	for i := range authors {
+		authors[i] = NewBookAuthor()
+	}
+
+	return authors
 }
