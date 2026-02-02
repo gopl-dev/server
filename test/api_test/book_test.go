@@ -28,7 +28,7 @@ func TestCreateBook_Basic(t *testing.T) {
 	req := request.CreateBook{
 		Title:       random.Title(),
 		Description: random.String(),
-		ReleaseDate: random.String(),
+		ReleaseDate: random.ReleaseDate(),
 		Authors:     factory.NewBookAuthors(),
 		Homepage:    random.URL(),
 		Topics:      []ds.ID{topic.ID},
@@ -109,7 +109,7 @@ func TestCreateBook_WithCover(t *testing.T) {
 	req := request.CreateBook{
 		Title:       random.Title(),
 		Description: random.String(),
-		ReleaseDate: random.String(),
+		ReleaseDate: random.ReleaseDate(),
 		Authors:     factory.NewBookAuthors(),
 		Homepage:    random.URL(),
 		CoverFileID: cover.ID,

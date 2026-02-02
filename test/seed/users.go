@@ -88,7 +88,7 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = s.db.Exec(ctx, "UPDATE users SET username='test', email='test@test.com', email_confirmed=true, deleted_at=NULL, password=$1 WHERE id=(SELECT id FROM users ORDER BY RANDOM() LIMIT 1)", string(passwordHash))
+	_, err = s.db.Exec(ctx, "UPDATE users SET username='test', email='test', email_confirmed=true, deleted_at=NULL, password=$1 WHERE id=(SELECT id FROM users ORDER BY RANDOM() LIMIT 1)", string(passwordHash))
 	if err != nil {
 		return err
 	}

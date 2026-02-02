@@ -2,6 +2,8 @@ package ds
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	z "github.com/Oudwins/zog"
 )
@@ -39,13 +41,34 @@ func (b *Book) Data() map[string]any {
 	}
 }
 
+// ReleaseDateLayouts defines the allowed date layouts for formatting
+// book release dates.
+var ReleaseDateLayouts = []string{
+	"2006",
+	"January 2006",
+	"January 2, 2006",
+}
+
 // CreateRules provides the validation map used when saving a new book.
 func (b *Book) CreateRules() z.Shape {
 	return z.Shape{
 		"Title":       z.String().Trim().Required(),
 		"Description": z.String().Trim().Required(),
 		"Homepage":    z.String().Trim().URL(),
-		"ReleaseDate": z.String().Trim().Required(),
+		"ReleaseDate": z.CustomFunc(func(val *string, _ z.Ctx) bool {
+			if val == nil || *val == "" {
+				return false
+			}
+
+			for _, layout := range ReleaseDateLayouts {
+				_, err := time.Parse(layout, *val)
+				if err == nil {
+					return true
+				}
+			}
+
+			return false
+		}, z.Message("format must one of: "+strings.Join(ReleaseDateLayouts, "; "))),
 		"Authors": z.Slice(z.Struct(z.Shape{
 			"Name": z.String().Trim().Required(),
 			"Link": z.String().Trim().URL(),

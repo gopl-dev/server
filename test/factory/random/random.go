@@ -10,6 +10,8 @@ import (
 	"math/rand/v2"
 	"strings"
 
+	fake "github.com/brianvoe/gofakeit/v7"
+	"github.com/gopl-dev/server/app/ds"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -234,4 +236,10 @@ func Maybe[T any](val T, probabilityOpt ...int) T {
 	}
 
 	return v
+}
+
+// ReleaseDate returns a randomly generated release date formatted
+// using one of the allowed release date layouts.
+func ReleaseDate() string {
+	return fake.Date().Format(Element(ds.ReleaseDateLayouts))
 }

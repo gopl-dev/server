@@ -115,10 +115,11 @@ func EditBookForm(bookID string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = Input(InputParams{
-				ID:         "release_date",
-				Label:      "Release Date",
-				Model:      "form.release_date",
-				ErrorModel: "errors.release_date",
+				ID:          "release_date",
+				Label:       "Release Date",
+				Model:       "form.release_date",
+				ErrorModel:  "errors.release_date",
+				Description: "Format is one of: 2006; January 2006; January 2, 2006",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

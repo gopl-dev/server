@@ -15,7 +15,7 @@ func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
 		CoverFileID: ds.NilID,
 		Authors:     NewBookAuthors(),
 		Homepage:    fake.URL(),
-		ReleaseDate: fake.Date().Format("2006-01-02"),
+		ReleaseDate: random.ReleaseDate(),
 	}
 
 	if len(overrideOpt) == 1 {

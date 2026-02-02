@@ -16,6 +16,7 @@ import (
 	"github.com/gopl-dev/server/cli"
 	"github.com/gopl-dev/server/trace"
 	"github.com/jackc/pgx/v5"
+	aur "github.com/logrusorgru/aurora"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -47,7 +48,7 @@ type resetDevEnvCmd struct {
 	NoSeed   bool    `arg:"-ns"`
 	Username *string `arg:"-u" default:"admin"`
 	Email    *string `arg:"-e" default:"admin"`
-	Password *string `arg:"-p" default:"1"`
+	Password *string `arg:"-p" default:"admin"`
 }
 
 func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
@@ -196,8 +197,11 @@ func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
 		}
 	}
 
-	cli.OK("New user created\n\tEmail:%s\n\tPassword: %s", *cmd.Email, *cmd.Password)
-	cli.Info("    USER ID: %s", u.ID)
+	cli.OK("New user %s  created\n\tEmail: %s\n\tPassword: %s", aur.Bold("with admin role"), *cmd.Email, *cmd.Password)
+	if !cmd.NoSeed {
+		cli.OK("New test user created\n\tEmail: test\n\tPassword: test")
+	}
+
 	return nil
 }
 
