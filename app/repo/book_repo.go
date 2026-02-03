@@ -21,11 +21,13 @@ func (r *Repo) CreateBook(ctx context.Context, b *ds.Book) error {
 	defer span.End()
 
 	return r.insert(ctx, "books", data{
-		"id":            b.ID,
-		"cover_file_id": b.CoverFileID,
-		"authors":       b.Authors,
-		"homepage":      b.Homepage,
-		"release_date":  b.ReleaseDate,
+		"id":              b.ID,
+		"description_raw": b.DescriptionRaw,
+		"description":     b.Description,
+		"cover_file_id":   b.CoverFileID,
+		"authors":         b.Authors,
+		"homepage":        b.Homepage,
+		"release_date":    b.ReleaseDate,
 	})
 }
 
@@ -74,16 +76,18 @@ func (r *Repo) GetBookByPublicID(ctx context.Context, publicID string) (*ds.Book
 	return book, err
 }
 
-// UpdateBook updates both entity and book tables.
+// UpdateBook updates mutable fields of an existing book record.
 func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 	_, span := r.tracer.Start(ctx, "UpdateBook")
 	defer span.End()
 
 	err := r.update(ctx, b.ID, "books", data{
-		"cover_file_id": b.CoverFileID,
-		"authors":       b.Authors,
-		"homepage":      b.Homepage,
-		"release_date":  b.ReleaseDate,
+		"description_raw": b.DescriptionRaw,
+		"description":     b.Description,
+		"cover_file_id":   b.CoverFileID,
+		"authors":         b.Authors,
+		"homepage":        b.Homepage,
+		"release_date":    b.ReleaseDate,
 	})
 	if err != nil {
 		return fmt.Errorf("update book: %w", err)
@@ -116,7 +120,7 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		  e.public_id,
 		  e.owner_id,
 		  e.title,
-		  e.description,
+		  e.summary,
 		  e.visibility,
 		  e.status,
 		  e.created_at,

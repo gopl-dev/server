@@ -33,11 +33,20 @@ func (s *Service) FilterBooks(ctx context.Context, f ds.BooksFilter) (data []ds.
 }
 
 // CreateBook handles the transactional creation of a book, with its base entity and logs.
-func (s *Service) CreateBook(ctx context.Context, book *ds.Book) error {
+func (s *Service) CreateBook(ctx context.Context, book *ds.Book) (err error) {
 	ctx, span := s.tracer.Start(ctx, "CreateBook")
 	defer span.End()
 
-	err := ValidateCreate(book)
+	book.Summary, err = app.MarkdownToHTML(book.SummaryRaw)
+	if err != nil {
+		return
+	}
+	book.Description, err = app.MarkdownToHTML(book.DescriptionRaw)
+	if err != nil {
+		return
+	}
+
+	err = ValidateCreate(book)
 	if err != nil {
 		return err
 	}
@@ -123,6 +132,15 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	user := ds.UserFromContext(ctx)
 	if user == nil {
 		err = app.ErrUnauthorized()
+		return
+	}
+
+	newBook.Summary, err = app.MarkdownToHTML(newBook.SummaryRaw)
+	if err != nil {
+		return
+	}
+	newBook.Description, err = app.MarkdownToHTML(newBook.DescriptionRaw)
+	if err != nil {
 		return
 	}
 

@@ -13,6 +13,7 @@ templ CreateBookForm() {
 <script>
     const BOOK_FORM_DEFAULTS = {
         title: '',
+        summary: '',
         description: '',
         authors: [{ name: '', link: '' }],
         homepage: '',
@@ -176,11 +177,23 @@ templ CreateBookForm() {
                     })
 
                     @Textarea(InputParams{
+                    ID: "summary",
+                    Label: "Summary",
+                    Model: "form.summary",
+                    ErrorModel: "errors.summary",
+                    Type: "textarea",
+                    Description: "Short summary of the book. You can use Markdown.",
+                    })
+
+
+                    @Textarea(InputParams{
                     ID: "description",
                     Label: "Description",
                     Model: "form.description",
                     ErrorModel: "errors.description",
                     Type: "textarea",
+                    Description: "Full description of the book. You can use Markdown.",
+                    Rows: 9,
                     })
 
                     @Input(InputParams{

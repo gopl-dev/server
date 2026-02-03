@@ -27,6 +27,7 @@ func TestCreateBook_Basic(t *testing.T) {
 
 	req := request.CreateBook{
 		Title:       random.Title(),
+		Summary:     random.String(),
 		Description: random.String(),
 		ReleaseDate: random.ReleaseDate(),
 		Authors:     factory.NewBookAuthors(),
@@ -37,12 +38,21 @@ func TestCreateBook_Basic(t *testing.T) {
 	var resp ds.Book
 	CREATE(t, "books", req, &resp)
 
+	summaryHTML, err := app.MarkdownToHTML(req.Summary)
+	test.CheckErr(t, err)
+	assert.Equal(t, resp.Summary, summaryHTML)
+
+	descriptionHTML, err := app.MarkdownToHTML(req.Description)
+	test.CheckErr(t, err)
+	assert.Equal(t, resp.Description, descriptionHTML)
+
 	// check entity created
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":          resp.ID,
 		"public_id":   app.Slug(req.Title),
 		"title":       req.Title,
-		"description": req.Description,
+		"summary_raw": req.Summary,
+		"summary":     summaryHTML,
 		"owner_id":    user.ID,
 		"type":        ds.EntityTypeBook,
 		"status":      ds.EntityStatusUnderReview,
@@ -50,8 +60,10 @@ func TestCreateBook_Basic(t *testing.T) {
 
 	// check book created
 	test.AssertInDB(t, tt.DB, "books", test.Data{
-		"authors":  req.Authors,
-		"homepage": req.Homepage,
+		"authors":         req.Authors,
+		"homepage":        req.Homepage,
+		"description_raw": req.Description,
+		"description":     descriptionHTML,
 	})
 
 	// check log created
@@ -198,8 +210,8 @@ func TestUpdateBook_WithReview(t *testing.T) {
 	// do update (change only title)
 	updateReq := request.UpdateBook{
 		CreateBook: request.CreateBook{
-			Title: random.Title(),
-
+			Title:       random.Title(),
+			Summary:     book.Summary,
 			Description: book.Description,
 			ReleaseDate: book.ReleaseDate,
 			Authors:     book.Authors,
@@ -262,16 +274,18 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 	imageBytes1, err := random.ImagePNG(10)
 	test.CheckErr(t, err)
 	cover1 := UploadFile(t, fileForm{
-		purpose:  ds.FilePurposeBookCover,
-		filename: "cover.jpg",
-		file:     bytes.NewReader(imageBytes1),
+		authToken: token,
+		purpose:   ds.FilePurposeBookCover,
+		filename:  "cover.jpg",
+		file:      bytes.NewReader(imageBytes1),
 	})
 	imageBytes2, err := random.ImagePNG(10)
 	test.CheckErr(t, err)
 	cover2 := UploadFile(t, fileForm{
-		purpose:  ds.FilePurposeBookCover,
-		filename: "cover.jpg",
-		file:     bytes.NewReader(imageBytes2),
+		authToken: token,
+		purpose:   ds.FilePurposeBookCover,
+		filename:  "cover.jpg",
+		file:      bytes.NewReader(imageBytes2),
 	})
 
 	book := create(t, ds.Book{
@@ -301,16 +315,19 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 
 	assert.Equal(t, 0, resp.Revision)
 
+	descriptionHTML, err := app.MarkdownToHTML(req.Description)
+	test.CheckErr(t, err)
+
 	// book should be updated
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":              book.ID,
 		"title":           req.Title,
-		"description":     req.Description,
 		"preview_file_id": cover2.ID,
 	})
 	test.AssertInDB(t, tt.DB, "books", test.Data{
 		"id":            book.ID,
 		"cover_file_id": cover2.ID,
+		"description":   descriptionHTML,
 	})
 	test.AssertInDB(t, tt.DB, "files", test.Data{
 		"id":   cover2.ID,

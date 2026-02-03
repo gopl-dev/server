@@ -28,6 +28,7 @@ type InputParams struct {
 	Description string
 	Autofocus   bool
 	NoAutoFill  bool
+    Rows        int
 }
 
 templ Input(p InputParams) {
@@ -67,6 +68,9 @@ templ Input(p InputParams) {
 }
 
 templ Textarea(p InputParams) {
+    if p.Rows == 0 {
+        {{ p.Rows = 5 }}
+    }
 	if p.Type == "" {
 		{{ p.Type = InputTypeText }}
 	}
@@ -79,7 +83,7 @@ templ Textarea(p InputParams) {
 			<textarea
 				id={ p.ID }
 				class={ p.Class }
-                rows="7"
+                rows={ p.Rows }
 				x-model={ p.Model }
 				required?={ p.Required }
 				autofocus?={ p.Autofocus }

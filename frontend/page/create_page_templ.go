@@ -31,7 +31,7 @@ func CreatePageForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const PAGE_FORM_DEFAULTS = {\r\n        public_id: '',\r\n        title: '',\r\n        description: '',\r\n    }\r\n\r\n    function createPageForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: PAGE_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const {resp, data} = await HTTP.postJSON('/api/pages/', this.form)\r\n\r\n                    if (resp.status === 201) {\r\n                        this.createdPage = data\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            createdPage: null,\r\n            init() {},\r\n\r\n            get createdPageURL() {\r\n                const pid = this.createdPage?.public_id\r\n                return pid ? `/${pid}/` : ''\r\n            },\r\n        }\r\n    }\r\n\r\n\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Add page</h1><div class=\"bg-base-100 shadow-md card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const PAGE_FORM_DEFAULTS = {\r\n        public_id: '',\r\n        title: '',\r\n        content: '',\r\n    }\r\n\r\n    function createPageForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: PAGE_FORM_DEFAULTS,\r\n                submit: async function () {\r\n                    const {resp, data} = await HTTP.postJSON('/api/pages/', this.form)\r\n\r\n                    if (resp.status === 201) {\r\n                        this.createdPage = data\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) this.error = data.error\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            createdPage: null,\r\n            init() {},\r\n\r\n            get createdPageURL() {\r\n                const pid = this.createdPage?.public_id\r\n                return pid ? `/${pid}/` : ''\r\n            },\r\n        }\r\n    }\r\n\r\n\r\n</script><div class=\"min-w-2xl\"><h1 class=\"text-3xl pb-4\">Add page</h1><div class=\"bg-base-100 shadow-md card-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -53,7 +53,7 @@ func CreatePageForm() templ.Component {
 			}
 			templ_7745c5c3_Err = Input(InputParams{
 				ID:         "public_id",
-				Label:      "Pubcli ID",
+				Label:      "Public ID",
 				Model:      "form.public_id",
 				ErrorModel: "errors.public_id",
 			}).Render(ctx, templ_7745c5c3_Buffer)
@@ -70,11 +70,13 @@ func CreatePageForm() templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = Textarea(InputParams{
-				ID:         "description",
-				Label:      "Description",
-				Model:      "form.description",
-				ErrorModel: "errors.description",
-				Type:       "textarea",
+				ID:          "content",
+				Label:       "Content",
+				Model:       "form.content",
+				ErrorModel:  "errors.content",
+				Type:        "textarea",
+				Rows:        15,
+				Description: "You can use Markdown.",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

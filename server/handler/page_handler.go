@@ -37,7 +37,7 @@ func (h *Handler) RenderPageOrNotFound(w http.ResponseWriter, r *http.Request) {
 
 	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: p.Title,
-		Body:  page.ViewPage(id, p.Title, p.Description),
+		Body:  page.ViewPage(id, p.Title, p.Content),
 	})
 }
 

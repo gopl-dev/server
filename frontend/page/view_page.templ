@@ -3,13 +3,13 @@ package page
 import "github.com/gopl-dev/server/frontend/component/icon"
 
 templ ViewPage(id, title, text string) {
-<article class="prose prose-headings:my-2">
+<article class="prose prose-headings:my-2 min-w-2xl">
     <div class="flex items-baseline justify-between">
         <h2>{ title }</h2>
         <a class="not-prose link text-gray-500" href={ "/edit-page/" + id }>
         @icon.Pencil("mr-1 h-4 w-4")
         Edit</a>
     </div>
-    { text }
+    @templ.Raw(text)
 </article>
 }

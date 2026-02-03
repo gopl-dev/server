@@ -2,6 +2,7 @@ package factory
 
 import (
 	"context"
+	"strings"
 
 	fake "github.com/brianvoe/gofakeit/v7"
 	"github.com/gopl-dev/server/app/ds"
@@ -10,12 +11,16 @@ import (
 
 // NewBook creates a new Book model populated with fake data.
 func (f *Factory) NewBook(overrideOpt ...ds.Book) (m *ds.Book) {
+	text := strings.Repeat(fake.Paragraph(), 5) //nolint:mnd
+
 	m = &ds.Book{
-		Entity:      f.NewEntity(),
-		CoverFileID: ds.NilID,
-		Authors:     NewBookAuthors(),
-		Homepage:    fake.URL(),
-		ReleaseDate: random.ReleaseDate(),
+		Entity:         f.NewEntity(),
+		CoverFileID:    ds.NilID,
+		Authors:        NewBookAuthors(),
+		Homepage:       fake.URL(),
+		ReleaseDate:    random.ReleaseDate(),
+		Description:    text,
+		DescriptionRaw: text,
 	}
 
 	if len(overrideOpt) == 1 {

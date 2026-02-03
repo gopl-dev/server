@@ -9,7 +9,7 @@ templ EditPageForm(pageID string) {
 <script>
     const PAGE_FORM_DEFAULTS = {
         title: '',
-        description: '',
+        content: '',
         public_id: '',
     }
 
@@ -171,7 +171,7 @@ templ EditPageForm(pageID string) {
                 <fieldset class="fieldset" :disabled="submitting">
                     @Input(InputParams{
                     ID: "public_id",
-                    Label: "Pubcli ID",
+                    Label: "Public ID",
                     Model: "form.public_id",
                     ErrorModel: "errors.public_id",
                     })
@@ -182,11 +182,13 @@ templ EditPageForm(pageID string) {
                     ErrorModel: "errors.title",
                     })
                     @Textarea(InputParams{
-                    ID: "description",
-                    Label: "Description",
-                    Model: "form.description",
-                    ErrorModel: "errors.description",
+                    ID: "content",
+                    Label: "Content",
+                    Model: "form.content",
+                    ErrorModel: "errors.content",
                     Type: "textarea",
+                    Rows: 15,
+                    Description: "You can use Markdown.",
                     })
                     <div class="p-2">
                         @SubmitButton("Save changes")

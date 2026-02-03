@@ -31,7 +31,7 @@ func EditPageForm(pageID string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const PAGE_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        public_id: '',\r\n    }\r\n\r\n    const PAGE_ID = \"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const PAGE_FORM_DEFAULTS = {\r\n        title: '',\r\n        content: '',\r\n        public_id: '',\r\n    }\r\n\r\n    const PAGE_ID = \"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -65,7 +65,7 @@ func EditPageForm(pageID string) templ.Component {
 			}
 			templ_7745c5c3_Err = Input(InputParams{
 				ID:         "public_id",
-				Label:      "Pubcli ID",
+				Label:      "Public ID",
 				Model:      "form.public_id",
 				ErrorModel: "errors.public_id",
 			}).Render(ctx, templ_7745c5c3_Buffer)
@@ -82,11 +82,13 @@ func EditPageForm(pageID string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = Textarea(InputParams{
-				ID:         "description",
-				Label:      "Description",
-				Model:      "form.description",
-				ErrorModel: "errors.description",
-				Type:       "textarea",
+				ID:          "content",
+				Label:       "Content",
+				Model:       "form.content",
+				ErrorModel:  "errors.content",
+				Type:        "textarea",
+				Rows:        15,
+				Description: "You can use Markdown.",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

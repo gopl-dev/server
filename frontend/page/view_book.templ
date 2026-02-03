@@ -96,7 +96,7 @@ templ ViewBookPage(user *ds.User, book *ds.Book) {
             }
         </div>
 
-        <p>{ book.Description }</p>
+        @templ.Raw(book.Description)
         <div class="flex flex-wrap gap-2 not-prose">
             for _, t := range book.Topics {
             <a class="badge badge-soft badge-lg" href={"/books/?topics=" + t.PublicID}>{ t.Name }</a>

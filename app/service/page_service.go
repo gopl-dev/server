@@ -15,24 +15,20 @@ func (s *Service) GetPageByPublicID(ctx context.Context, id string) (*ds.Page, e
 	ctx, span := s.tracer.Start(ctx, "GetPageByPublicID")
 	defer span.End()
 
-	e, err := s.db.FindEntityByPublicID(ctx, id, ds.EntityTypePage)
-	if errors.Is(err, repo.ErrEntityNotFound) {
-		// The page is a simple entity, so replace the error for clarity in the call chain.
-		err = repo.ErrPageNotFound
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &ds.Page{Entity: e}, nil
+	return s.db.GetPageByPublicID(ctx, id)
 }
 
 // CreatePage handles creation of a page.
-func (s *Service) CreatePage(ctx context.Context, page *ds.Page) error {
+func (s *Service) CreatePage(ctx context.Context, page *ds.Page) (err error) {
 	ctx, span := s.tracer.Start(ctx, "CreateBook")
 	defer span.End()
 
-	err := ValidateCreate(page)
+	page.Content, err = app.MarkdownToHTML(page.ContentRaw)
+	if err != nil {
+		return
+	}
+
+	err = ValidateCreate(page)
 	if err != nil {
 		return err
 	}
@@ -58,11 +54,10 @@ func (s *Service) CreatePage(ctx context.Context, page *ds.Page) error {
 			return
 		}
 
-		// as for now Page is simply an Entity
-		// err = s.db.CreatePage(ctx, page)
-		// if err != nil {
-		//	return
-		// }
+		err = s.db.CreatePage(ctx, page)
+		if err != nil {
+			return
+		}
 		return nil
 	})
 }
@@ -82,6 +77,11 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 	user := ds.UserFromContext(ctx)
 	if user == nil {
 		err = app.ErrUnauthorized()
+		return
+	}
+
+	newPage.Content, err = app.MarkdownToHTML(newPage.ContentRaw)
+	if err != nil {
 		return
 	}
 
@@ -111,10 +111,10 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 				return err
 			}
 
-			// err = s.db.UpdatePage(ctx, newPage)
-			// if err != nil {
-			//	return err
-			// }
+			err = s.db.UpdatePage(ctx, newPage)
+			if err != nil {
+				return err
+			}
 
 			return s.LogEntityUpdated(ctx, newPage.Entity)
 		})

@@ -156,12 +156,13 @@ func AssertInDB(t *testing.T, db *app.DB, table string, data Data) {
 
 	count := countDatabaseRows(t, db, table, data)
 	if count == 0 {
-		t.Fail()
 		println(aurora.Bold(aurora.Red("❌ Table '" + table + "' missing row with data:")).String())
 
 		for k, v := range data {
 			println("\t" + k + "=" + aurora.Blue(fmt.Sprintf("%+v", v)).String())
 		}
+
+		t.FailNow()
 	}
 }
 

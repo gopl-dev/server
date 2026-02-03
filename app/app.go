@@ -2,6 +2,7 @@
 package app
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -11,6 +12,9 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/gosimple/slug"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 )
 
 const (
@@ -30,10 +34,20 @@ const (
 var (
 	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
-
-	jwtSessionParam = "session"
-	jwtUserParam    = "user"
 )
+
+var mdRenderer = goldmark.New(
+	goldmark.WithExtensions(
+		extension.GFM,
+	),
+)
+
+var htmlPolicy = func() *bluemonday.Policy {
+	p := bluemonday.UGCPolicy()
+	p.RequireNoFollowOnLinks(true)
+	p.RequireNoReferrerOnLinks(true)
+	return p
+}()
 
 var (
 	// ErrInvalidJWT is returned when an authentication token is malformed,
@@ -145,4 +159,17 @@ func Token(lengthOpt ...int) (string, error) {
 // Slug converts any string into a URL-friendly format.
 func Slug(s string) string {
 	return slug.Make(s)
+}
+
+// MarkdownToHTML renders Markdown input into safe HTML.
+func MarkdownToHTML(in string) (out string, err error) {
+	var buf bytes.Buffer
+
+	err = mdRenderer.Convert([]byte(in), &buf)
+	if err != nil {
+		return
+	}
+
+	out = htmlPolicy.Sanitize(buf.String())
+	return
 }

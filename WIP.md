@@ -10,9 +10,8 @@ for simplicity, I keep todo list and progress here for now
   - [ ] delete book
   - [x] list books
   - [x] Add topics to entities
-  - [ ] Add price to book
-  - [ ] Strict format for release date
-  - [ ] Rework book to have multiple authors
+  - [x] Strict format for release date
+  - [x] Rework book to have multiple authors
   - [x] Remove visibility from book
 
 - [ ] Minimal admin dashboard for current needs:

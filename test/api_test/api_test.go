@@ -251,6 +251,7 @@ func loginAs(t *testing.T, u *ds.User) (token string) {
 }
 
 type fileForm struct {
+	authToken    string
 	fields       map[string]string
 	fileField    string
 	purpose      ds.FilePurpose
@@ -268,6 +269,7 @@ func UploadFile(t *testing.T, form fileForm) *ds.File {
 
 	var fileResponse ds.File
 	r := RequestArgs{
+		authToken:    form.authToken,
 		method:       http.MethodPost,
 		path:         "/api/files/",
 		bindResponse: &fileResponse,

@@ -9,7 +9,7 @@ templ CreatePageForm() {
     const PAGE_FORM_DEFAULTS = {
         public_id: '',
         title: '',
-        description: '',
+        content: '',
     }
 
     function createPageForm() {
@@ -71,7 +71,7 @@ templ CreatePageForm() {
                 <fieldset class="fieldset">
                     @Input(InputParams{
                     ID: "public_id",
-                    Label: "Pubcli ID",
+                    Label: "Public ID",
                     Model: "form.public_id",
                     ErrorModel: "errors.public_id",
                     })
@@ -82,11 +82,13 @@ templ CreatePageForm() {
                     ErrorModel: "errors.title",
                     })
                     @Textarea(InputParams{
-                    ID: "description",
-                    Label: "Description",
-                    Model: "form.description",
-                    ErrorModel: "errors.description",
+                    ID: "content",
+                    Label: "Content",
+                    Model: "form.content",
+                    ErrorModel: "errors.content",
                     Type: "textarea",
+                    Rows: 15,
+                    Description: "You can use Markdown.",
                     })
                     <div class="p-2">
                         @SubmitButton("Create page")

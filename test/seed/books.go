@@ -74,10 +74,12 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				return err
 			}
 
+			text := strings.Join([]string{fake.Paragraph(), fake.Paragraph(), fake.Paragraph()}, " ")
 			e := s.factory.NewEntity(ds.Entity{
 				Type:          ds.EntityTypeBook,
 				Title:         title,
-				Description:   strings.Join([]string{fake.Paragraph(), fake.Paragraph(), fake.Paragraph()}, " "),
+				SummaryRaw:    text,
+				Summary:       text,
 				PublicID:      app.Slug(title),
 				OwnerID:       ownerID,
 				PreviewFileID: cover.ID,

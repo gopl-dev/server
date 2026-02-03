@@ -84,7 +84,8 @@ CREATE TABLE entities
     owner_id        UUID             NOT NULL REFERENCES users (id),
     preview_file_id uuid REFERENCES files (id),
     title           TEXT,
-    description     TEXT,
+    summary_raw     TEXT,
+    summary         TEXT,
     type            TEXT             NOT NULL,
     visibility      TEXT             NOT NULL,
     status          TEXT             NOT NULL,
@@ -99,11 +100,20 @@ CREATE UNIQUE INDEX entities_public_id_type_uidx
 
 CREATE TABLE books
 (
-    id            uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
-    authors       JSONB,
-    homepage      TEXT,
-    release_date  TEXT             NOT NULL,
-    cover_file_id uuid REFERENCES files (id)
+    id              uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
+    authors         JSONB,
+    homepage        TEXT,
+    release_date    TEXT             NOT NULL,
+    description_raw TEXT,
+    description     TEXT,
+    cover_file_id   uuid REFERENCES files (id)
+);
+
+CREATE TABLE pages
+(
+    id              uuid PRIMARY KEY NOT NULL REFERENCES entities (id),
+    content_raw TEXT,
+    content     TEXT
 );
 
 CREATE TABLE entity_change_requests

@@ -8,9 +8,9 @@ import (
 
 // CreatePage defines the request payload for creating a new page entity.
 type CreatePage struct {
-	PublicID    string `json:"public_id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	PublicID string `json:"public_id"`
+	Title    string `json:"title"`
+	Content  string `json:"content"`
 }
 
 // ToPage converts the CreatePage request into an Entity model.
@@ -22,7 +22,7 @@ func (r *CreatePage) ToPage() *ds.Page {
 			Type:        ds.EntityTypePage,
 			PublicID:    r.PublicID,
 			Title:       r.Title,
-			Description: r.Description,
+			Summary:     "",
 			Visibility:  ds.EntityVisibilityPublic,
 			Status:      ds.EntityStatusUnderReview,
 			PublishedAt: nil,
@@ -30,6 +30,8 @@ func (r *CreatePage) ToPage() *ds.Page {
 			UpdatedAt:   nil,
 			DeletedAt:   nil,
 		},
+
+		ContentRaw: r.Content,
 	}
 }
 

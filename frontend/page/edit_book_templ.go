@@ -35,13 +35,13 @@ func EditBookForm(bookID string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script src=\"/assets/topic_picker.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        description: '',\r\n        authors: [{ name: '', link: '' }],\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        topics: [],\r\n    }\r\n\r\n    const BOOK_ID = \"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/file_upload_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script src=\"/assets/topic_picker.js\"></script><script>\r\n    const BOOK_FORM_DEFAULTS = {\r\n        title: '',\r\n        summary: '',\r\n        description: '',\r\n        authors: [{ name: '', link: '' }],\r\n        homepage: '',\r\n        release_date: '',\r\n        cover_file_id: '',\r\n        topics: [],\r\n    }\r\n\r\n    const BOOK_ID = \"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Var2, templ_7745c5c3_Err := templruntime.ScriptContentInsideStringLiteral(bookID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/edit_book.templ`, Line: 26, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/edit_book.templ`, Line: 27, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -63,7 +63,7 @@ func EditBookForm(bookID string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div x-init=\"init()\"></div><!-- Loading --> <div x-show=\"loading\"><span class=\"loading loading-spinner\"></span> <span class=\"ml-2\">Loading book...</span></div><!-- Load error --> <p class=\"text-red-500\" x-text=\"loadError\" x-show=\"!loading && loadError !== ''\"></p><!-- Success: applied immediately --> <div role=\"alert\" class=\"alert alert-success\" x-show=\"success && (saveRevision === 0)\" x-cloak><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg><div>Book updated successfully!</div><div x-show=\"bookURL !== ''\"><a class=\"link\" :href=\"bookURL\">View book page</a></div></div><!-- Success: sent for review --> <div role=\"alert\" class=\"alert alert-info\" x-show=\"success && (saveRevision !== null) && (saveRevision > 0)\" x-cloak><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg><div><div>Thank you for your contribution! Your changes will be reviewed shortly.</div><div class=\"opacity-70\">Revision <span x-text=\"saveRevision\"></span> · <span x-text=\"new Date().toLocaleString('en-US', {hour:'2-digit', minute:'2-digit', hour12:false, month:'short', day:'2-digit'})\"></span></div><div x-show=\"bookURL !== ''\"><a class=\"link\" :href=\"bookURL\">View book page</a></div></div></div><!-- Form (only when loaded and no load error and not success) --> <div x-show=\"!loading && loadError === '' && !success\"><div role=\"alert\" class=\"alert alert-warning\" x-show=\"revision !== null && revision_date !== null\" x-cloak><div><h3 class=\"font-bold flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z\"></path></svg> <span>Note:</span></h3><div>You’re working on changes you previously proposed that are still under review.<br>Feel free to continue editing here, or wait until the review is complete before making new changes. Any updates you make now will be reviewed together.</div><div class=\"font-bold  font-italic\">Revision: <span x-text=\"revision\"></span> at <span x-text=\"revisionDateFormatted\"></span> by you</div><!-- TODO: add Revert and View Changes links and implement their functionality --></div></div><p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><fieldset class=\"fieldset\" :disabled=\"submitting\"><div x-show=\"upload !== null\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Loading --> <div x-show=\"loading\"><span class=\"loading loading-spinner\"></span> <span class=\"ml-2\">Loading book...</span></div><!-- Load error --> <p class=\"text-red-500\" x-text=\"loadError\" x-show=\"!loading && loadError !== ''\"></p><!-- Success: applied immediately --> <div role=\"alert\" class=\"alert alert-success\" x-show=\"success && (saveRevision === 0)\" x-cloak><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg><div>Book updated successfully!</div><div x-show=\"bookURL !== ''\"><a class=\"link\" :href=\"bookURL\">View book page</a></div></div><!-- Success: sent for review --> <div role=\"alert\" class=\"alert alert-info\" x-show=\"success && (saveRevision !== null) && (saveRevision > 0)\" x-cloak><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg><div><div>Thank you for your contribution! Your changes will be reviewed shortly.</div><div class=\"opacity-70\">Revision <span x-text=\"saveRevision\"></span> · <span x-text=\"new Date().toLocaleString('en-US', {hour:'2-digit', minute:'2-digit', hour12:false, month:'short', day:'2-digit'})\"></span></div><div x-show=\"bookURL !== ''\"><a class=\"link\" :href=\"bookURL\">View book page</a></div></div></div><!-- Form (only when loaded and no load error and not success) --> <div x-show=\"!loading && loadError === '' && !success\"><div role=\"alert\" class=\"alert alert-warning\" x-show=\"revision !== null && revision_date !== null\" x-cloak><div><h3 class=\"font-bold flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 shrink-0 stroke-current\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z\"></path></svg> <span>Note:</span></h3><div>You’re working on changes you previously proposed that are still under review.<br>Feel free to continue editing here, or wait until the review is complete before making new changes. Any updates you make now will be reviewed together.</div><div class=\"font-bold  font-italic\">Revision: <span x-text=\"revision\"></span> at <span x-text=\"revisionDateFormatted\"></span> by you</div><!-- TODO: add Revert and View Changes links and implement their functionality --></div></div><p class=\"text-red-500\" x-text=\"error\" x-show=\"error !== ''\"></p><fieldset class=\"fieldset\" :disabled=\"submitting\"><div x-show=\"upload !== null\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -95,11 +95,24 @@ func EditBookForm(bookID string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = Textarea(InputParams{
-				ID:         "description",
-				Label:      "Description",
-				Model:      "form.description",
-				ErrorModel: "errors.description",
-				Type:       "textarea",
+				ID:          "summary",
+				Label:       "Summary",
+				Model:       "form.summary",
+				ErrorModel:  "errors.summary",
+				Type:        "textarea",
+				Description: "Short summary of the book. You can use Markdown.",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = Textarea(InputParams{
+				ID:          "description",
+				Label:       "Description",
+				Model:       "form.description",
+				ErrorModel:  "errors.description",
+				Type:        "textarea",
+				Description: "Full description of the book. You can use Markdown.",
+				Rows:        9,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

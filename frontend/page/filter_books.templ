@@ -330,9 +330,7 @@ templ FilterBooksPage() {
                 </template>
 					</span>
 
-                <template x-if="b.description">
-                    <p x-text="b.description"></p>
-                </template>
+                <div x-html="b.summary"></div>
                 <div class="flex flex-wrap gap-2 mb-3">
                     <template x-for="t in (b.topics ?? [])" :key="t.public_id">
     <a :href="'/books/?topics=' + t.public_id"

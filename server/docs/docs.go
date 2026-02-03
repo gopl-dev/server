@@ -45,8 +45,45 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "review",
+                                "approved",
+                                "rejected"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "s",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "topics",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "public",
+                                "private",
+                                "unlisted"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "v",
                         "in": "query"
                     }
                 ],
@@ -570,6 +607,77 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/topics/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "topics"
+                ],
+                "summary": "Filter topics",
+                "operationId": "FilterTopics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "book",
+                            "page"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "EntityTypeBook",
+                            "EntityTypePage"
+                        ],
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.FilterTopics"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/handler.Error"
                         }
@@ -1108,11 +1216,11 @@ const docTemplate = `{
         "ds.Book": {
             "type": "object",
             "properties": {
-                "author_link": {
-                    "type": "string"
-                },
-                "author_name": {
-                    "type": "string"
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ds.BookAuthor"
+                    }
                 },
                 "cover_file_id": {
                     "type": "string"
@@ -1129,7 +1237,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "owner_id": {
+                "owner": {
                     "type": "string"
                 },
                 "preview_file_id": {
@@ -1147,14 +1255,34 @@ const docTemplate = `{
                 "status": {
                     "$ref": "#/definitions/ds.EntityStatus"
                 },
+                "summary": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
+                },
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ds.Topic"
+                    }
                 },
                 "updated_at": {
                     "type": "string"
                 },
                 "visibility": {
                     "$ref": "#/definitions/ds.EntityVisibility"
+                }
+            }
+        },
+        "ds.BookAuthor": {
+            "type": "object",
+            "properties": {
+                "link": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -1169,6 +1297,17 @@ const docTemplate = `{
                 "EntityStatusUnderReview",
                 "EntityStatusApproved",
                 "EntityStatusRejected"
+            ]
+        },
+        "ds.EntityType": {
+            "type": "string",
+            "enum": [
+                "book",
+                "page"
+            ],
+            "x-enum-varnames": [
+                "EntityTypeBook",
+                "EntityTypePage"
             ]
         },
         "ds.EntityVisibility": {
@@ -1221,6 +1360,35 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "FilePurposeBookCover"
             ]
+        },
+        "ds.Topic": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "$ref": "#/definitions/ds.EntityType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
         },
         "file.Type": {
             "type": "string",
@@ -1291,11 +1459,11 @@ const docTemplate = `{
         "request.CreateBook": {
             "type": "object",
             "properties": {
-                "author_link": {
-                    "type": "string"
-                },
-                "author_name": {
-                    "type": "string"
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ds.BookAuthor"
+                    }
                 },
                 "cover_file_id": {
                     "type": "string"
@@ -1309,11 +1477,17 @@ const docTemplate = `{
                 "release_date": {
                     "type": "string"
                 },
+                "summary": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 },
-                "visibility": {
-                    "$ref": "#/definitions/ds.EntityVisibility"
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -1355,11 +1529,11 @@ const docTemplate = `{
         "request.UpdateBook": {
             "type": "object",
             "properties": {
-                "author_link": {
-                    "type": "string"
-                },
-                "author_name": {
-                    "type": "string"
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ds.BookAuthor"
+                    }
                 },
                 "cover_file_id": {
                     "type": "string"
@@ -1373,18 +1547,24 @@ const docTemplate = `{
                 "release_date": {
                     "type": "string"
                 },
+                "summary": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 },
-                "visibility": {
-                    "$ref": "#/definitions/ds.EntityVisibility"
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
         "request.UpdatePage": {
             "type": "object",
             "properties": {
-                "description": {
+                "content": {
                     "type": "string"
                 },
                 "public_id": {
@@ -1424,14 +1604,26 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "count": {
-                    "description": "Count is the total number of matching books.",
                     "type": "integer"
                 },
                 "data": {
-                    "description": "Data is the list of books for the current page.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ds.Book"
+                    }
+                }
+            }
+        },
+        "response.FilterTopics": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ds.Topic"
                     }
                 }
             }

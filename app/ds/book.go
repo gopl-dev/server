@@ -14,10 +14,12 @@ var bookCtxKey ctxKey = "book"
 type Book struct {
 	*Entity
 
-	CoverFileID ID           `json:"cover_file_id"`
-	Authors     []BookAuthor `json:"authors"`
-	Homepage    string       `json:"homepage"`
-	ReleaseDate string       `json:"release_date"`
+	DescriptionRaw string       `json:"-"`
+	Description    string       `json:"description"`
+	CoverFileID    ID           `json:"cover_file_id"`
+	Authors        []BookAuthor `json:"authors"`
+	Homepage       string       `json:"homepage"`
+	ReleaseDate    string       `json:"release_date"`
 }
 
 // Data returns the editable fields of the Book as a key-value map.
@@ -33,7 +35,8 @@ func (b *Book) Data() map[string]any {
 	return map[string]any{
 		"title":         b.Title,
 		"cover_file_id": b.CoverFileID,
-		"description":   b.Description,
+		"summary":       b.SummaryRaw,
+		"description":   b.DescriptionRaw,
 		"homepage":      b.Homepage,
 		"release_date":  b.ReleaseDate,
 		"topics":        b.Topics,
@@ -53,7 +56,7 @@ var ReleaseDateLayouts = []string{
 func (b *Book) CreateRules() z.Shape {
 	return z.Shape{
 		"Title":       z.String().Trim().Required(),
-		"Description": z.String().Trim().Required(),
+		"Description": z.String().Required(),
 		"Homepage":    z.String().Trim().URL(),
 		"ReleaseDate": z.CustomFunc(func(val *string, _ z.Ctx) bool {
 			if val == nil || *val == "" {

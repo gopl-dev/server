@@ -50,7 +50,8 @@ func (r *Repo) CreateEntity(ctx context.Context, e *ds.Entity) error {
 		"owner_id":        e.OwnerID,
 		"type":            e.Type,
 		"title":           e.Title,
-		"description":     e.Description,
+		"summary_raw":     e.SummaryRaw,
+		"summary":         e.Summary,
 		"visibility":      e.Visibility,
 		"status":          e.Status,
 		"created_at":      e.CreatedAt,
@@ -66,7 +67,8 @@ func (r *Repo) UpdateEntity(ctx context.Context, e *ds.Entity) error {
 
 	err := r.update(ctx, e.ID, "entities", data{
 		"title":           e.Title,
-		"description":     e.Description,
+		"summary_raw":     e.SummaryRaw,
+		"summary":         e.Summary,
 		"preview_file_id": e.PreviewFileID,
 		"visibility":      e.Visibility,
 		"updated_at":      time.Now(),

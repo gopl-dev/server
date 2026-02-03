@@ -1,10 +1,10 @@
 definitions:
   ds.Book:
     properties:
-      author_link:
-        type: string
-      author_name:
-        type: string
+      authors:
+        items:
+          $ref: '#/definitions/ds.BookAuthor'
+        type: array
       cover_file_id:
         type: string
       created_at:
@@ -15,7 +15,7 @@ definitions:
         type: string
       id:
         type: string
-      owner_id:
+      owner:
         type: string
       preview_file_id:
         type: string
@@ -27,12 +27,25 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/ds.EntityStatus'
+      summary:
+        type: string
       title:
         type: string
+      topics:
+        items:
+          $ref: '#/definitions/ds.Topic'
+        type: array
       updated_at:
         type: string
       visibility:
         $ref: '#/definitions/ds.EntityVisibility'
+    type: object
+  ds.BookAuthor:
+    properties:
+      link:
+        type: string
+      name:
+        type: string
     type: object
   ds.EntityStatus:
     enum:
@@ -44,6 +57,14 @@ definitions:
     - EntityStatusUnderReview
     - EntityStatusApproved
     - EntityStatusRejected
+  ds.EntityType:
+    enum:
+    - book
+    - page
+    type: string
+    x-enum-varnames:
+    - EntityTypeBook
+    - EntityTypePage
   ds.EntityVisibility:
     enum:
     - public
@@ -79,6 +100,25 @@ definitions:
     type: string
     x-enum-varnames:
     - FilePurposeBookCover
+  ds.Topic:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      entity_type:
+        $ref: '#/definitions/ds.EntityType'
+      id:
+        type: string
+      name:
+        type: string
+      public_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
   file.Type:
     enum:
     - other
@@ -125,10 +165,10 @@ definitions:
     type: object
   request.CreateBook:
     properties:
-      author_link:
-        type: string
-      author_name:
-        type: string
+      authors:
+        items:
+          $ref: '#/definitions/ds.BookAuthor'
+        type: array
       cover_file_id:
         type: string
       description:
@@ -137,10 +177,14 @@ definitions:
         type: string
       release_date:
         type: string
+      summary:
+        type: string
       title:
         type: string
-      visibility:
-        $ref: '#/definitions/ds.EntityVisibility'
+      topics:
+        items:
+          type: string
+        type: array
     type: object
   request.DeleteUser:
     properties:
@@ -166,10 +210,10 @@ definitions:
     type: object
   request.UpdateBook:
     properties:
-      author_link:
-        type: string
-      author_name:
-        type: string
+      authors:
+        items:
+          $ref: '#/definitions/ds.BookAuthor'
+        type: array
       cover_file_id:
         type: string
       description:
@@ -178,14 +222,18 @@ definitions:
         type: string
       release_date:
         type: string
+      summary:
+        type: string
       title:
         type: string
-      visibility:
-        $ref: '#/definitions/ds.EntityVisibility'
+      topics:
+        items:
+          type: string
+        type: array
     type: object
   request.UpdatePage:
     properties:
-      description:
+      content:
         type: string
       public_id:
         type: string
@@ -211,12 +259,19 @@ definitions:
   response.FilterBooks:
     properties:
       count:
-        description: Count is the total number of matching books.
         type: integer
       data:
-        description: Data is the list of books for the current page.
         items:
           $ref: '#/definitions/ds.Book'
+        type: array
+    type: object
+  response.FilterTopics:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/ds.Topic'
         type: array
     type: object
   response.Status:
@@ -265,9 +320,35 @@ paths:
       - in: query
         name: per_page
         type: integer
+      - collectionFormat: csv
+        in: query
+        items:
+          enum:
+          - review
+          - approved
+          - rejected
+          type: string
+        name: s
+        type: array
       - in: query
         name: search
         type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: topics
+        type: array
+      - collectionFormat: csv
+        in: query
+        items:
+          enum:
+          - public
+          - private
+          - unlisted
+          type: string
+        name: v
+        type: array
       produces:
       - application/json
       responses:
@@ -614,6 +695,51 @@ paths:
       summary: Get page for editing
       tags:
       - books
+  /topics/:
+    get:
+      consumes:
+      - application/json
+      operationId: FilterTopics
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: per_page
+        type: integer
+      - enum:
+        - book
+        - page
+        in: query
+        name: type
+        type: string
+        x-enum-varnames:
+        - EntityTypeBook
+        - EntityTypePage
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.FilterTopics'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Filter topics
+      tags:
+      - topics
   /users/:
     delete:
       consumes:

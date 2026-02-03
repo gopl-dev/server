@@ -11,23 +11,26 @@ var pageCtxKey ctxKey = "page"
 // Page defines the data structure for a page.
 type Page struct {
 	*Entity
+
+	ContentRaw string `json:"-"`
+	Content    string `json:"content"`
 }
 
 // Data returns the editable fields of the Page as a key-value map.
 func (p *Page) Data() map[string]any {
 	return map[string]any{
-		"public_id":   p.PublicID,
-		"title":       p.Title,
-		"description": p.Description,
+		"public_id": p.PublicID,
+		"title":     p.Title,
+		"content":   p.ContentRaw,
 	}
 }
 
 // CreateRules provides the validation map used when saving a new book.
 func (p *Page) CreateRules() z.Shape {
 	return z.Shape{
-		"PublicID":    z.String().Trim().Required(),
-		"Title":       z.String().Trim().Required(),
-		"Description": z.String().Trim().Required(),
+		"PublicID": z.String().Trim().Required(),
+		"Title":    z.String().Trim().Required(),
+		"Content":  z.String().Required(),
 	}
 }
 

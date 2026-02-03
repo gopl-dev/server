@@ -15,6 +15,7 @@ templ EditBookForm(bookID string) {
 <script>
     const BOOK_FORM_DEFAULTS = {
         title: '',
+        summary: '',
         description: '',
         authors: [{ name: '', link: '' }],
         homepage: '',
@@ -182,8 +183,6 @@ templ EditBookForm(bookID string) {
     <div class="bg-base-100 w-full shadow-md">
         <div class="card-body">
             @Form("editBookForm") {
-            <div x-init="init()"></div>
-
             <!-- Loading -->
             <div x-show="loading">
                 <span class="loading loading-spinner"></span>
@@ -276,11 +275,23 @@ templ EditBookForm(bookID string) {
                     })
 
                     @Textarea(InputParams{
+                    ID: "summary",
+                    Label: "Summary",
+                    Model: "form.summary",
+                    ErrorModel: "errors.summary",
+                    Type: "textarea",
+                    Description: "Short summary of the book. You can use Markdown.",
+                    })
+
+
+                    @Textarea(InputParams{
                     ID: "description",
                     Label: "Description",
                     Model: "form.description",
                     ErrorModel: "errors.description",
                     Type: "textarea",
+                    Description: "Full description of the book. You can use Markdown.",
+                    Rows: 9,
                     })
 
                     @Input(InputParams{

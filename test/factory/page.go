@@ -1,16 +1,26 @@
 package factory
 
 import (
+	"context"
+	"strings"
+
+	fake "github.com/brianvoe/gofakeit/v7"
 	"github.com/gopl-dev/server/app/ds"
 )
 
 // NewPage constructs a new Page model with default values.
 func (f *Factory) NewPage(overrideOpt ...ds.Page) (m *ds.Page) {
+	text := strings.Repeat(fake.Paragraph(), 5) //nolint:mnd
+
 	m = &ds.Page{
 		Entity: f.NewEntity(ds.Entity{
 			Visibility: ds.EntityVisibilityPublic,
 			Status:     ds.EntityStatusApproved,
+			Type:       ds.EntityTypePage,
 		}),
+
+		ContentRaw: text,
+		Content:    text,
 	}
 
 	if len(overrideOpt) == 1 {
@@ -37,6 +47,6 @@ func (f *Factory) CreatePage(overrideOpt ...ds.Page) (m *ds.Page, err error) {
 		return
 	}
 
-	// err = f.repo.CreatePage(context.Background(), m)
+	err = f.repo.CreatePage(context.Background(), m)
 	return
 }

@@ -12,6 +12,7 @@ import (
 
 // NewEntity ...
 func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
+	text := fake.Paragraph()
 	createdAt := fake.DateRange(time.Now().AddDate(0, -12, 0), time.Now())
 	var publishedAt, updatedAt, deletedAt *time.Time
 
@@ -27,7 +28,8 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 		OwnerID:       ds.NilID,
 		PreviewFileID: ds.NilID,
 		Title:         fake.BookTitle(),
-		Description:   fake.Paragraph(),
+		SummaryRaw:    text,
+		Summary:       text,
 		Visibility:    random.Element(ds.EntityVisibilities),
 		Status:        status,
 		PublishedAt:   publishedAt,

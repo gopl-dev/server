@@ -11,6 +11,7 @@ import (
 // CreateBook defines the request payload for creating a new book entity.
 type CreateBook struct {
 	Title       string          `json:"title"`
+	Summary     string          `json:"summary"`
 	Description string          `json:"description"`
 	ReleaseDate string          `json:"release_date"`
 	Homepage    string          `json:"homepage"`
@@ -51,7 +52,7 @@ func (r *CreateBook) ToBook() *ds.Book {
 			Type:          ds.EntityTypeBook,
 			PublicID:      app.Slug(r.Title),
 			Title:         r.Title,
-			Description:   r.Description,
+			SummaryRaw:    r.Summary,
 			Visibility:    ds.EntityVisibilityPublic,
 			Status:        ds.EntityStatusUnderReview,
 			Topics:        topics,
@@ -60,10 +61,11 @@ func (r *CreateBook) ToBook() *ds.Book {
 			UpdatedAt:     nil,
 			DeletedAt:     nil,
 		},
-		Authors:     r.Authors,
-		Homepage:    r.Homepage,
-		ReleaseDate: r.ReleaseDate,
-		CoverFileID: r.CoverFileID,
+		DescriptionRaw: r.Description,
+		Authors:        r.Authors,
+		Homepage:       r.Homepage,
+		ReleaseDate:    r.ReleaseDate,
+		CoverFileID:    r.CoverFileID,
 	}
 }
 
