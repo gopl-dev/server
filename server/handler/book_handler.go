@@ -116,7 +116,7 @@ func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, book)
 }
 
-// FilterBooks handles the API request for creating a new book.
+// FilterBooks handles API requests for retrieving a filtered list of books.
 //
 //	@ID			FilterBooks
 //	@Summary	Filter books

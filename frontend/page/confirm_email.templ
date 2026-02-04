@@ -1,6 +1,10 @@
 package page
 
-import . "github.com/gopl-dev/server/frontend/component"
+import (
+    . "github.com/gopl-dev/server/frontend/component"
+    "github.com/gopl-dev/server/frontend/component/icon"
+)
+
 
 templ ConfirmEmailForm() {
 <script src="/assets/http_helpers.js"></script>
@@ -39,14 +43,15 @@ templ ConfirmEmailForm() {
         <div class="card-body">
             @Form("confirmEmailForm") {
             <p class="text-red-500" x-text="error" x-show="!success && error !== ''"></p>
-
             <div role="alert" class="alert alert-success" x-show="success" x-cloak>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                     viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>Your email has been confirmed!</span>
+                <div>
+                    <div class="mb-2">Your email has been confirmed!</div>
+                    <div>
+                        <a href="/users/sign-in/" class="btn btn-ghost  rounded-full btn-success">
+                            @icon.LogIn("w-5 h-5 mr-2")
+                            Sign in</a>
+                    </div>
+                </div>
             </div>
 
             <fieldset class="fieldset" x-show="!success" :disabled="submitting">

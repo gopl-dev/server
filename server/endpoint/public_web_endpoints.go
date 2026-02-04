@@ -25,4 +25,7 @@ func (r *Router) PublicWebEndpoints() {
 	r.Group("files/{id}").
 		GET("/", r.handler.RenderFile)
 	// GET("/dl/", r.handler.DownloadFile)
+
+	// activity log
+	r.GET("/activity-log/", r.handler.FilterEventLogsView)
 }

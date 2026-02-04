@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	z "github.com/Oudwins/zog"
 	"github.com/gosimple/slug"
@@ -172,4 +173,47 @@ func MarkdownToHTML(in string) (out string, err error) {
 
 	out = htmlPolicy.Sanitize(buf.String())
 	return
+}
+
+// HumanTime formats a timestamp into a human-readable relative time string.
+//
+// The function compares the given time with the current time and returns
+// a concise, user-friendly representation (e.g. "just now", "yesterday, 15:04").
+// An optional reference time may be provided for deterministic output.
+func HumanTime(t time.Time, relOpt ...time.Time) string {
+	now := time.Now()
+	if len(relOpt) > 0 {
+		now = relOpt[0]
+	}
+	d := now.Sub(t)
+
+	switch {
+	case d < 30*time.Second:
+		return "just now"
+
+	case d < 3*time.Minute:
+		return "few minutes ago"
+
+	case d < 10*time.Minute:
+		return "five minutes ago"
+	}
+
+	ty, tm, td := t.Date()
+	ny, nm, nd := now.Date()
+
+	if ty == ny && tm == nm && td == nd {
+		return t.Format("15:04")
+	}
+
+	yesterday := now.AddDate(0, 0, -1)
+	yy, ym, yd := yesterday.Date()
+	if ty == yy && tm == ym && td == yd {
+		return "yesterday, " + t.Format("15:04")
+	}
+
+	if ty == ny {
+		return t.Format("Jan 2, 15:04")
+	}
+
+	return t.Format("Jan 2, 2006; 15:04")
 }

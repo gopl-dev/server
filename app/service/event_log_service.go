@@ -15,6 +15,14 @@ func (s *Service) createEventLog(ctx context.Context, log *ds.EventLog) error {
 	return s.db.CreateEventLog(ctx, log)
 }
 
+// FilterEventLogs retrieves a paginated list of event logs matching the given filter.
+func (s *Service) FilterEventLogs(ctx context.Context, f ds.EventLogsFilter) (data []ds.EventLog, count int, err error) {
+	ctx, span := s.tracer.Start(ctx, "FilterEventLogs")
+	defer span.End()
+
+	return s.db.FilterEventLogs(ctx, f)
+}
+
 // LogEntityCreated records an event related to entity creation.
 //
 // If the entity requires moderation, a hidden "entity_submitted" event is created.

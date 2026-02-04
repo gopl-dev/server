@@ -178,6 +178,7 @@ type filterBuilder struct {
 	whereDeletedAt bool
 	selectCount    bool
 	orderBy        string
+	withoutSD      bool
 }
 
 func (r *Repo) filter(table string, selectorOpt ...string) *filterBuilder {
@@ -202,7 +203,7 @@ func (b *filterBuilder) columns(columns ...string) *filterBuilder {
 	return b
 }
 
-func (b *filterBuilder) join(clause string, args ...any) *filterBuilder {
+func (b *filterBuilder) join(clause string, args ...any) *filterBuilder { //nolint:unparam
 	b.qb = b.qb.JoinClause(clause, args...)
 
 	return b
@@ -311,6 +312,11 @@ func (b *filterBuilder) order(column string, direction string) *filterBuilder {
 }
 
 func (b *filterBuilder) where(column string, val any) *filterBuilder {
+	if val == nil {
+		b.qb = b.qb.Where(column)
+		return b
+	}
+
 	b.qb = b.qb.Where(sq.Eq{column: val})
 
 	return b
@@ -381,6 +387,10 @@ func (b *filterBuilder) countSQL() (sql string, args []any, err error) {
 //   - otherwise, only non-deleted records are selected
 //     (`deleted_at IS NULL`).
 func (b *filterBuilder) applyDeletedFilter() {
+	if b.withoutSD {
+		return
+	}
+
 	if !b.whereDeletedAt {
 		if b.whereDeleted {
 			b.qb = b.qb.Where(b.selector + "deleted_at IS NOT NULL")
@@ -389,6 +399,11 @@ func (b *filterBuilder) applyDeletedFilter() {
 
 		b.qb = b.qb.Where(b.selector + "deleted_at IS NULL")
 	}
+}
+
+func (b *filterBuilder) withoutSoftDelete() *filterBuilder {
+	b.withoutSD = true
+	return b
 }
 
 func (b *filterBuilder) scan(ctx context.Context, desc any) (count int, err error) {

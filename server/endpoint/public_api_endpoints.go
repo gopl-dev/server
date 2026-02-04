@@ -24,4 +24,7 @@ func (r *Router) PublicAPIEndpoints() {
 
 	// topics
 	r.GET("/topics/", r.handler.FilterTopics)
+
+	// event logs
+	r.Group("event-logs").GET("/", r.handler.FilterEventLogs)
 }

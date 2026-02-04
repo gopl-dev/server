@@ -8,15 +8,17 @@ import (
 // EventLog represents a single event entry used for activity feeds,
 // audits, and system transparency.
 type EventLog struct {
-	ID     ID    `json:"id"`
-	UserID *ID   `json:"user_id"`
-	User   *User `json:"-"`
+	ID           ID      `json:"id"`
+	UserID       *ID     `json:"user_id"`
+	UserUsername *string `json:"-"`
 
 	Type EventLogType `json:"action_type"`
 
-	EntityID       *ID     `json:"entity_id"`
-	Entity         *Entity `json:"-"`
-	EntityChangeID *ID     `json:"entity_change_id"`
+	EntityID       *ID         `json:"entity_id"`
+	EntityType     *EntityType `json:"-"`
+	EntityTitle    *string     `json:"-"`
+	EntityPublicID *string     `json:"-"`
+	EntityChangeID *ID         `json:"entity_change_id"`
 
 	// Message is an optional pre-rendered text for the event.
 	// When set, it takes precedence over automatically generated messages.
@@ -48,8 +50,8 @@ func (l EventLog) RenderMessage() string {
 	var b strings.Builder
 
 	// Actor: username
-	if l.User != nil && l.User.Username != "" {
-		b.WriteString(l.User.Username)
+	if l.UserUsername != nil {
+		b.WriteString(*l.UserUsername)
 		b.WriteString(" ")
 	}
 
@@ -57,18 +59,35 @@ func (l EventLog) RenderMessage() string {
 	b.WriteString(l.Type.Verb())
 
 	// Entity type and title
-	if l.Entity != nil {
-		if l.Entity.Type.Valid() {
-			b.WriteString(" ")
-			b.WriteString(string(l.Entity.Type))
-		}
+	if l.EntityType != nil {
+		b.WriteString(" ")
+		b.WriteString(string(*l.EntityType))
 
-		if l.Entity.Title != "" {
+		if l.EntityTitle != nil {
 			b.WriteString(` "`)
-			b.WriteString(l.Entity.Title)
+			if l.EntityPublicID != nil {
+				b.WriteString(`<a href="/`)
+				if *l.EntityType == EntityTypeBook {
+					b.WriteString("books/")
+				}
+				b.WriteString(*l.EntityPublicID)
+				b.WriteString(`/" class="link">`)
+			}
+			b.WriteString(*l.EntityTitle)
+			if l.EntityPublicID != nil {
+				b.WriteString(`</a>`)
+			}
 			b.WriteString(`"`)
 		}
 	}
 
 	return b.String()
+}
+
+// EventLogsFilter is used to filter and paginate event logs.
+type EventLogsFilter struct {
+	Page       int
+	PerPage    int
+	OnlyPublic bool
+	WithCount  bool
 }
