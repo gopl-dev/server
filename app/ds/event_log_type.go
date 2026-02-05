@@ -63,6 +63,9 @@ const (
 	// EventLogEntityUpdated is recorded when an existing entity
 	// is updated.
 	EventLogEntityUpdated EventLogType = "entity_updated"
+
+	// EventLogEntityRenamed is recorded when an entity is only renamed.
+	EventLogEntityRenamed EventLogType = "entity_renamed"
 )
 
 // EventLogTypes lists all supported event log types.
@@ -84,6 +87,7 @@ var EventLogTypes = []EventLogType{
 	EventLogEntityRejected,
 	EventLogEntityAdded,
 	EventLogEntityUpdated,
+	EventLogEntityRenamed,
 }
 
 // Verb returns a short, human-readable verb describing the event.
@@ -117,6 +121,8 @@ func (t EventLogType) Verb() string {
 		return "added"
 	case EventLogEntityUpdated:
 		return "updated"
+	case EventLogEntityRenamed:
+		return "renamed"
 	}
 
 	return ""

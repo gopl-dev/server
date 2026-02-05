@@ -3,6 +3,8 @@ package ds
 import (
 	"strings"
 	"time"
+
+	"github.com/gopl-dev/server/app"
 )
 
 // EventLog represents a single event entry used for activity feeds,
@@ -26,7 +28,7 @@ type EventLog struct {
 	Message string `json:"message"`
 
 	// Meta holds custom data relevant to log
-	Meta map[string]any `json:"meta"`
+	Meta map[string]any `json:"-"`
 
 	IsPublic  bool      `json:"is_public"`
 	CreatedAt time.Time `json:"created_at"`
@@ -49,6 +51,23 @@ func (l EventLog) RenderMessage() string {
 
 	var b strings.Builder
 
+	writeTitle := func(t string) {
+		b.WriteString(` "`)
+		if l.EntityPublicID != nil {
+			b.WriteString(`<a href="/`)
+			if *l.EntityType == EntityTypeBook {
+				b.WriteString("books/")
+			}
+			b.WriteString(*l.EntityPublicID)
+			b.WriteString(`/" class="link">`)
+		}
+		b.WriteString(t)
+		if l.EntityPublicID != nil {
+			b.WriteString(`</a>`)
+		}
+		b.WriteString(`"`)
+	}
+
 	// Actor: username
 	if l.UserUsername != nil {
 		b.WriteString(*l.UserUsername)
@@ -63,21 +82,20 @@ func (l EventLog) RenderMessage() string {
 		b.WriteString(" ")
 		b.WriteString(string(*l.EntityType))
 
-		if l.EntityTitle != nil {
-			b.WriteString(` "`)
-			if l.EntityPublicID != nil {
-				b.WriteString(`<a href="/`)
-				if *l.EntityType == EntityTypeBook {
-					b.WriteString("books/")
-				}
-				b.WriteString(*l.EntityPublicID)
-				b.WriteString(`/" class="link">`)
+		title := l.EntityTitle
+		if storedTitle, ok := l.Meta["entity_title"]; ok {
+			title = app.Pointer(app.String(storedTitle))
+		}
+
+		if title != nil {
+			writeTitle(*title)
+			if l.Type == EventLogEntityRenamed {
+				b.WriteString(" to ")
 			}
-			b.WriteString(*l.EntityTitle)
-			if l.EntityPublicID != nil {
-				b.WriteString(`</a>`)
+
+			if renamedTo, ok := l.Meta["new_title"]; ok {
+				writeTitle(app.String(renamedTo))
 			}
-			b.WriteString(`"`)
 		}
 	}
 

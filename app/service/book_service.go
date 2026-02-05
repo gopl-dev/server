@@ -244,6 +244,11 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 		return
 	}
 
+	newBook.Topics, err = s.normalizeTopics(ctx, newBook.Topics, ds.EntityTypeBook, 1)
+	if err != nil {
+		return
+	}
+
 	book, err := s.GetBookByID(ctx, id)
 	if err != nil {
 		return
@@ -294,6 +299,10 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 			err = s.db.UpdateBook(ctx, newBook)
 			if err != nil {
 				return err
+			}
+
+			if isRenameOnly(diff) {
+				return s.LogEntityRenamed(ctx, book.Title, newBook.Entity)
 			}
 
 			return s.LogEntityUpdated(ctx, newBook.Entity)
@@ -383,4 +392,10 @@ func hasDiff(oldData, newData map[string]any) bool {
 	}
 
 	return false
+}
+
+// isRenameOnly reports whether the update data represents a title-only change.
+func isRenameOnly(data map[string]any) bool {
+	_, ok := data["title"]
+	return ok && len(data) == 1
 }

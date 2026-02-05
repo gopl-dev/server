@@ -152,11 +152,14 @@ templ FilterEventLogsPage() {
         <div class="text-red-600" x-text="error"></div>
     </template>
 
-    <ul class="list text-lg">
+    <ul class="list bg-base-100 text-lg">
         <template x-for="l in logs" :key="l.id">
-            <li class="list-row hover:bg-base-100">
+            <li class="list-row">
+                <div>
+                    <div x-text="l.date" class="text-gray-500 text-xs"></div>
+
                 <div x-html="l.message"></div>
-                <div x-text="l.date" class="text-gray-500 text-right"></div>
+                </div>
             </li>
         </template>
     </ul>
@@ -167,12 +170,6 @@ templ FilterEventLogsPage() {
 
     <!-- Bottom pagination -->
     <div class="flex items-center justify-between mt-4">
-        <div class="text-sm text-gray-500">
-            <span x-text="'Total: ' + total"></span>
-            <span class="mx-2">•</span>
-            <span x-text="'Page ' + filters.page + ' of ' + totalPages"></span>
-        </div>
-
         <div class="flex items-center gap-2">
             <button
                     class="btn btn-sm"

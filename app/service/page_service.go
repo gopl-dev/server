@@ -116,6 +116,10 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 				return err
 			}
 
+			if isRenameOnly(diff) {
+				return s.LogEntityRenamed(ctx, page.Title, newPage.Entity)
+			}
+
 			return s.LogEntityUpdated(ctx, newPage.Entity)
 		})
 

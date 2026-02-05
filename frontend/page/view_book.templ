@@ -165,7 +165,7 @@ templ ViewBookPage(user *ds.User, book *ds.Book) {
 
         </div>
 
-        <div class="grid grid-cols-2 gap-4 not-prose">
+        <div class="grid grid-cols-2 gap-4 not-prose pb-5">
             <h4>Published { book.ReleaseDate }</h4>
 
             if book.Homepage != "" {
@@ -178,7 +178,7 @@ templ ViewBookPage(user *ds.User, book *ds.Book) {
         </div>
 
         @templ.Raw(book.Description)
-        <div class="flex flex-wrap gap-2 not-prose">
+        <div class="flex flex-wrap gap-2 not-prose mt-5">
             for _, t := range book.Topics {
             <a class="badge badge-soft badge-lg" href={"/books/?topics=" + t.PublicID}>{ t.Name }</a>
             }

@@ -32,6 +32,12 @@ for simplicity, I keep todo list and progress here for now
 - [ ] RELEASE
 ---
 
+AFTER RELEASE CHECKLIST:
+- [ ] Setup & test email
+- [ ] Setup & test auth & registration with google
+- [ ] Setup & test auth & registration with github
+- [ ] Setup & test tracing
+
 NEXT:
 - [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
 - [ ] Create new topic when creating/editing entity

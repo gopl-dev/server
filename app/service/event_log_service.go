@@ -38,6 +38,7 @@ func (s *Service) LogEntityCreated(ctx context.Context, e *ds.Entity) error {
 		UserID:   app.Pointer(e.OwnerID),
 		Type:     ds.EventLogEntitySubmitted,
 		EntityID: app.Pointer(e.ID),
+		Meta:     map[string]any{"entity_title": e.Title},
 		IsPublic: false,
 	}
 
@@ -59,6 +60,26 @@ func (s *Service) LogEntityUpdated(ctx context.Context, e *ds.Entity) error {
 		UserID:   app.Pointer(e.OwnerID),
 		Type:     ds.EventLogEntityUpdated,
 		EntityID: app.Pointer(e.ID),
+		Meta:     map[string]any{"entity_title": e.Title},
+		IsPublic: true,
+	}
+
+	return s.createEventLog(ctx, log)
+}
+
+// LogEntityRenamed records an entity rename event.
+func (s *Service) LogEntityRenamed(ctx context.Context, oldName string, e *ds.Entity) error {
+	ctx, span := s.tracer.Start(ctx, "LogEntityRenamed")
+	defer span.End()
+
+	log := &ds.EventLog{
+		UserID:   app.Pointer(e.OwnerID),
+		Type:     ds.EventLogEntityRenamed,
+		EntityID: app.Pointer(e.ID),
+		Meta: map[string]any{
+			"entity_title": oldName,
+			"new_title":    e.Title,
+		},
 		IsPublic: true,
 	}
 

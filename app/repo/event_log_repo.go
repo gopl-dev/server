@@ -49,6 +49,7 @@ func (r *Repo) FilterEventLogs(ctx context.Context, f ds.EventLogsFilter) (logs 
 			l.message,
 			l.is_public,
 			l.created_at,
+			l.meta,
 			
 			u.username as "user_username",
 
