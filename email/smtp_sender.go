@@ -34,8 +34,27 @@ func NewSMTPSender() (*SMTPSender, error) {
 	}, nil
 }
 
-// Send composes and dispatches an email message to the specified recipient using the configured SMTP server.
+// Send delivers an email composed by the given Composer to the specified
+// recipient address.
+//
+// In production environment, the email is sent asynchronously in a goroutine
+// and any send error is logged but not returned to the caller.
 func (s *SMTPSender) Send(to string, c Composer) (err error) {
+	if app.Config().IsProductionEnv() {
+		go func() {
+			err = s.send(to, c)
+			if err != nil {
+				log.Println("SMTP send error:", err)
+			}
+		}()
+		return nil
+	}
+
+	return s.send(to, c)
+}
+
+// send composes and dispatches an email message to the specified recipient using the configured SMTP server.
+func (s *SMTPSender) send(to string, c Composer) (err error) {
 	body, err := renderTemplate(c)
 	if err != nil {
 		return err

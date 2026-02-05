@@ -210,3 +210,50 @@ func (s *Service) LogUsernameChanged(ctx context.Context, userID ds.ID, oldName,
 
 	return s.createEventLog(ctx, log)
 }
+
+// LogBookApproved writes event logs for a successfully approved book.
+//
+// It creates two event log records:
+//  1. A private log indicating that the book was approved by reviewer.
+//  2. A public log for the book owner indicating that the book was added.
+func (s *Service) LogBookApproved(ctx context.Context, approvedBy ds.ID, book *ds.Book) error {
+	ctx, span := s.tracer.Start(ctx, "LogBookApproved")
+	defer span.End()
+
+	log := &ds.EventLog{
+		UserID:   app.Pointer(approvedBy),
+		Type:     ds.EventLogEntityApproved,
+		EntityID: app.Pointer(book.ID),
+		IsPublic: false,
+	}
+	err := s.createEventLog(ctx, log)
+	if err != nil {
+		return err
+	}
+
+	log2 := &ds.EventLog{
+		UserID:   app.Pointer(book.OwnerID),
+		Type:     ds.EventLogEntityAdded,
+		EntityID: app.Pointer(book.ID),
+		IsPublic: true,
+	}
+	return s.createEventLog(ctx, log2)
+}
+
+// LogBookRejected writes an event log for a rejected book.
+func (s *Service) LogBookRejected(ctx context.Context, rejectedBy ds.ID, note string, book *ds.Book) error {
+	ctx, span := s.tracer.Start(ctx, "LogBookApproved")
+	defer span.End()
+
+	log := &ds.EventLog{
+		UserID:   app.Pointer(rejectedBy),
+		Type:     ds.EventLogEntityRejected,
+		EntityID: app.Pointer(book.ID),
+		Meta: map[string]any{
+			"note": note,
+		},
+		IsPublic: false,
+	}
+
+	return s.createEventLog(ctx, log)
+}

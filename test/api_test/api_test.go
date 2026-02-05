@@ -228,8 +228,8 @@ func login(t *testing.T) *ds.User {
 		return authUser
 	}
 
-	authUser = create[ds.User](t)
-	authToken = loginAs(t, authUser)
+	user := create[ds.User](t)
+	loginAs(t, user)
 
 	return authUser
 }
@@ -247,7 +247,18 @@ func loginAs(t *testing.T, u *ds.User) (token string) {
 		t.Fatal(err)
 	}
 
+	authToken = token
+	authUser = u
+
 	return token
+}
+
+func makeAdmin(u *ds.User) {
+	app.Config().Admins = []string{u.ID.String()}
+}
+
+func removeAdmin() {
+	app.Config().Admins = []string{}
 }
 
 type fileForm struct {

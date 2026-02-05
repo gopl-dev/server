@@ -45,9 +45,7 @@ func TestUserSignUp(t *testing.T) {
 	assert.Equal(t, req.Email, app.String(vars["email"]))
 
 	user, err := tt.Service.FindUserByEmail(context.Background(), req.Email)
-	if err != nil {
-		t.Error(err)
-	}
+	test.CheckErr(t, err)
 
 	test.AssertInDB(t, tt.DB, "email_confirmations", test.Data{
 		"user_id": user.ID,

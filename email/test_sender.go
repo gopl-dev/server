@@ -52,21 +52,18 @@ func LoadTestEmail(to string) (c Composer, err error) {
 	sender, ok := driver.(*TestSender)
 	if !ok {
 		err = ErrDriverIsNotTestSender
-
 		return
 	}
 
 	v, ok := sender.emails.Load(to)
 	if !ok {
 		err = fmt.Errorf("%s: %w", to, ErrEmailNotExists)
-
 		return
 	}
 
 	c, ok = v.(Composer)
 	if !ok {
 		err = ErrEmailIsNotComposerType
-
 		return
 	}
 

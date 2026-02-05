@@ -62,7 +62,7 @@ func (r *Repo) CreateEntity(ctx context.Context, e *ds.Entity) error {
 
 // UpdateEntity updates both entity and book tables.
 func (r *Repo) UpdateEntity(ctx context.Context, e *ds.Entity) error {
-	_, span := r.tracer.Start(ctx, "UpdateBook")
+	_, span := r.tracer.Start(ctx, "UpdateEntity")
 	defer span.End()
 
 	err := r.update(ctx, e.ID, "entities", data{
@@ -78,4 +78,14 @@ func (r *Repo) UpdateEntity(ctx context.Context, e *ds.Entity) error {
 	}
 
 	return nil
+}
+
+// ChangeEntityStatus updates the status field of the specified entity.
+func (r *Repo) ChangeEntityStatus(ctx context.Context, entityID ds.ID, status ds.EntityStatus) error {
+	_, span := r.tracer.Start(ctx, "ChangeEntityStatus")
+	defer span.End()
+
+	return r.update(ctx, entityID, "entities", data{
+		"status": status,
+	})
 }

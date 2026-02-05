@@ -234,6 +234,79 @@ func (h *Handler) GetBookEditState(w http.ResponseWriter, r *http.Request) {
 	jsonOK(w, state)
 }
 
+// ApproveNewBook approves new book
+//
+//	@ID			ApproveNewBook
+//	@Summary	Approve new book
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		string	true	"Book ID"
+//	@Success	200		{object}	response.Status
+//	@Failure	400		{object}	Error
+//	@Failure	401		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/{id}/approve/ [put]
+//	@Security	ApiKeyAuth
+func (h *Handler) ApproveNewBook(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "ApproveNewBook")
+	defer span.End()
+
+	book := ds.BookFromContext(ctx)
+	if book == nil {
+		Abort(w, r, app.ErrBadRequest("book is missing from context"))
+		return
+	}
+
+	err := h.service.ApproveNewBook(ctx, book)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	jsonOK(w, response.Success)
+}
+
+// RejectNewBook approves new book
+//
+//	@ID			RejectNewBook
+//	@Summary	Reject new book
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		string	true	"Book ID"
+//	@Param		request	body		request.RejectBook	true	"Request body"
+//	@Success	201		{object}	response.Status
+//	@Failure	400		{object}	Error
+//	@Failure	401		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/{id}/reject/ [put]
+//	@Security	ApiKeyAuth
+func (h *Handler) RejectNewBook(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "RejectNewBook")
+	defer span.End()
+
+	var req request.RejectBook
+	_, res := handleAuthorizedJSON(w, r, &req)
+	if res.Aborted() {
+		return
+	}
+
+	book := ds.BookFromContext(ctx)
+	if book == nil {
+		Abort(w, r, app.ErrBadRequest("book is missing from context"))
+		return
+	}
+
+	err := h.service.RejectNewBook(ctx, req.Note, book)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	jsonOK(w, response.Success)
+}
+
 // CreateBookView renders the static HTML page with the form for creating a new book.
 func (h *Handler) CreateBookView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "CreateBookView")

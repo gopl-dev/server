@@ -23,9 +23,9 @@ func (h *Handler) FilterEventLogsView(w http.ResponseWriter, r *http.Request) {
 
 // FilterEventLogs handles API requests for retrieving a filtered list of logs.
 //
-//	@ID			FilterBooks
-//	@Summary	Filter books
-//	@Tags		books
+//	@ID			FilterEventLogs
+//	@Summary	Get activity log
+//	@Tags		event-logs
 //	@Accept		json
 //	@Produce	json
 //	@Param		params	query		request.FilterEventLogs			false	"Query parameters"

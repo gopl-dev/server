@@ -3,11 +3,18 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/test/factory/random"
+)
+
+var (
+	// ErrInvalidEntityStatus is returned when an unsupported or unknown
+	// entity status value is encountered.
+	ErrInvalidEntityStatus = errors.New("invalid entity status")
 )
 
 // CreateEntity validates and creates a new entity in the database.
@@ -53,4 +60,16 @@ resolvePublicID:
 	}
 
 	return s.LogEntityCreated(ctx, e)
+}
+
+// ChangeEntityStatus updates the status of the given entity.
+func (s *Service) ChangeEntityStatus(ctx context.Context, entityID ds.ID, status ds.EntityStatus) error {
+	ctx, span := s.tracer.Start(ctx, "ChangeEntityStatus")
+	defer span.End()
+
+	if !status.Valid() {
+		return fmt.Errorf("%w: %s", ErrInvalidEntityStatus, status)
+	}
+
+	return s.db.ChangeEntityStatus(ctx, entityID, status)
 }

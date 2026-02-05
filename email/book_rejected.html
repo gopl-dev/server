@@ -1,0 +1,9 @@
+<p>Hello {{.username}},</p>
+
+<p>Thanks for submitting "{{.book_name}}". Unfortunately, it wasn’t approved this time.</p>
+
+{{ if .note }}
+<p>Reviewer’s note: {{ .note }}</p>
+{{ end }}
+
+<p>Thanks for contributing!</p>

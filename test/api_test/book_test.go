@@ -2,9 +2,11 @@ package api_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
@@ -336,5 +338,90 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 	test.AssertInDB(t, tt.DB, "files", test.Data{
 		"id":         cover1.ID,
 		"deleted_at": test.NotNull,
+	})
+}
+
+func TestApproveNewBook(t *testing.T) {
+	user := login(t)
+	makeAdmin(user)
+
+	book := create(t, ds.Book{
+		Entity: &ds.Entity{
+			Type:   ds.EntityTypeBook,
+			Status: ds.EntityStatusUnderReview,
+		},
+	})
+
+	var resp response.Status
+	UPDATE(t, pf("/books/%s/approve/", book.ID), struct{}{}, &resp)
+
+	test.AssertInDB(t, tt.DB, "entities", test.Data{
+		"id":     book.ID,
+		"status": ds.EntityStatusApproved,
+	})
+
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogEntityApproved,
+		"entity_id": book.ID,
+		"is_public": false,
+	})
+
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   book.OwnerID,
+		"type":      ds.EventLogEntityAdded,
+		"entity_id": book.ID,
+		"is_public": true,
+	})
+
+	owner, err := tt.Service.FindUserByID(context.Background(), book.OwnerID)
+	test.CheckErr(t, err)
+
+	emailVars := test.LoadEmailVars(t, owner.Email)
+	assert.Equal(t, emailVars, map[string]any{
+		"username":      owner.Username,
+		"book_name":     book.Title,
+		"view_book_url": path.Join(app.Config().Server.Addr, "/books/"+book.PublicID+"/"),
+	})
+}
+
+func TestRejectNewBook(t *testing.T) {
+	user := login(t)
+	makeAdmin(user)
+
+	book := create(t, ds.Book{
+		Entity: &ds.Entity{
+			Type:   ds.EntityTypeBook,
+			Status: ds.EntityStatusUnderReview,
+		},
+	})
+
+	req := request.RejectBook{
+		Note: random.String(),
+	}
+	var resp response.Status
+	UPDATE(t, pf("/books/%s/reject/", book.ID), req, &resp)
+
+	test.AssertInDB(t, tt.DB, "entities", test.Data{
+		"id":     book.ID,
+		"status": ds.EntityStatusRejected,
+	})
+
+	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
+		"user_id":   user.ID,
+		"type":      ds.EventLogEntityRejected,
+		"entity_id": book.ID,
+		"meta":      map[string]any{"note": req.Note},
+		"is_public": false,
+	})
+
+	owner, err := tt.Service.FindUserByID(context.Background(), book.OwnerID)
+	test.CheckErr(t, err)
+
+	emailVars := test.LoadEmailVars(t, owner.Email)
+	assert.Equal(t, emailVars, map[string]any{
+		"username":  owner.Username,
+		"book_name": book.Title,
+		"note":      req.Note,
 	})
 }

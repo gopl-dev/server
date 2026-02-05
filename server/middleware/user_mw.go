@@ -64,3 +64,18 @@ func (mw *Middleware) UserAuth(next handler.Fn) handler.Fn {
 		next(w, r)
 	}
 }
+
+// AdminOnly is a middleware that restricts access to admin users only.
+func (mw *Middleware) AdminOnly(next handler.Fn) handler.Fn {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := ds.UserFromContext(r.Context())
+		if user == nil || !user.IsAdmin {
+			if handler.ShouldServeJSON(r) {
+				handler.Abort(w, r, app.ErrUnauthorized())
+				return
+			}
+		}
+
+		next(w, r)
+	}
+}

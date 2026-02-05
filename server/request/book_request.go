@@ -79,3 +79,8 @@ type UpdateBook struct {
 type FilterBooks struct {
 	FilterEntities
 }
+
+// RejectBook represents a request payload for rejecting a book.
+type RejectBook struct {
+	Note string `json:"note"`
+}

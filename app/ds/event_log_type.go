@@ -114,7 +114,7 @@ func (t EventLogType) Verb() string {
 	case EventLogEntityRejected:
 		return "rejected"
 	case EventLogEntityAdded:
-		return "created"
+		return "added"
 	case EventLogEntityUpdated:
 		return "updated"
 	}

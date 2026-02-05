@@ -10,6 +10,7 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
+	"github.com/gopl-dev/server/email"
 )
 
 var (
@@ -22,6 +23,10 @@ var (
 	// cover file is owned by a different user and therefore
 	// cannot be attached to the current user's book.
 	ErrCoverBelongsToAnotherUser = errors.New("cover: not owner")
+
+	// ErrBookIsNotUnderReview is returned when an operation requires a book
+	// to be in the "under review" state.
+	ErrBookIsNotUnderReview = errors.New("book is not under review")
 )
 
 // FilterBooks retrieves a paginated list of books matching the given filter.
@@ -85,6 +90,96 @@ func (s *Service) CreateBook(ctx context.Context, book *ds.Book) (err error) {
 		}
 
 		return nil
+	})
+}
+
+// ApproveNewBook approves a newly submitted book.
+func (s *Service) ApproveNewBook(ctx context.Context, book *ds.Book) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ApproveNewBook")
+	defer span.End()
+
+	if book.Status.Not(ds.EntityStatusUnderReview) {
+		err = ErrBookIsNotUnderReview
+		return
+	}
+
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		err = app.ErrUnauthorized()
+		return
+	}
+
+	if !user.IsAdmin {
+		err = app.ErrUnauthorized()
+		return
+	}
+
+	err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
+		err = s.ChangeEntityStatus(ctx, book.ID, ds.EntityStatusApproved)
+		if err != nil {
+			return
+		}
+
+		return s.LogBookApproved(ctx, user.ID, book)
+	})
+	if err != nil {
+		return
+	}
+
+	owner, err := s.FindUserByID(ctx, book.OwnerID)
+	if err != nil {
+		return
+	}
+
+	return email.Send(owner.Email, email.BookApproved{
+		BookName: book.Title,
+		Username: owner.Username,
+		PublicID: book.PublicID,
+	})
+}
+
+// RejectNewBook rejects a newly submitted book.
+func (s *Service) RejectNewBook(ctx context.Context, note string, book *ds.Book) (err error) {
+	ctx, span := s.tracer.Start(ctx, "RejectNewBook")
+	defer span.End()
+
+	if book.Status.Not(ds.EntityStatusUnderReview) {
+		err = ErrBookIsNotUnderReview
+		return
+	}
+
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		err = app.ErrUnauthorized()
+		return
+	}
+
+	if !user.IsAdmin {
+		err = app.ErrUnauthorized()
+		return
+	}
+
+	err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
+		err = s.ChangeEntityStatus(ctx, book.ID, ds.EntityStatusRejected)
+		if err != nil {
+			return
+		}
+
+		return s.LogBookRejected(ctx, user.ID, note, book)
+	})
+	if err != nil {
+		return
+	}
+
+	owner, err := s.FindUserByID(ctx, book.OwnerID)
+	if err != nil {
+		return
+	}
+
+	return email.Send(owner.Email, email.BookRejected{
+		Note:     note,
+		BookName: book.Title,
+		Username: owner.Username,
 	})
 }
 

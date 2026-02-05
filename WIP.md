@@ -53,3 +53,4 @@ NEXT:
 - [ ] Render initial data on the backend (for example, when the books page is requested, render it fully and return it, instead of letting the frontend fetch data via the API).
 - [ ] Add server version to frontend
 - [ ] Plain theme
+- [ ] Notification system for selecting notification types and delivery channels (web, email, Telegram, etc.)
