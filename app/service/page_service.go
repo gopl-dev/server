@@ -18,6 +18,13 @@ func (s *Service) GetPageByPublicID(ctx context.Context, id string) (*ds.Page, e
 	return s.db.GetPageByPublicID(ctx, id)
 }
 
+func (s *Service) GetPageByID(ctx context.Context, id ds.ID) (*ds.Page, error) {
+	ctx, span := s.tracer.Start(ctx, "GetBookByID")
+	defer span.End()
+
+	return s.db.GetPageByID(ctx, id)
+}
+
 // CreatePage handles creation of a page.
 func (s *Service) CreatePage(ctx context.Context, page *ds.Page) (err error) {
 	ctx, span := s.tracer.Start(ctx, "CreateBook")

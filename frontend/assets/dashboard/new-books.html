@@ -12,11 +12,10 @@
     </div>
 
     <!-- Table -->
-    <div x-show="!loading && !error" class="overflow-x-auto bg-white rounded-lg shadow" x-cloak>
+    <div x-show="!loading && !error" class="overflow-x-auto bg-white shadow" x-cloak>
         <table class="table table-zebra">
             <thead>
             <tr>
-                <th> </th>
                 <th>Title</th>
                 <th>User</th>
                 <th>Created At</th>
@@ -25,39 +24,6 @@
             <tbody>
             <template x-for="book in data.data" :key="book.id">
                 <tr>
-                    <td>
-                            <button class="btn btn-ghost btn-success rounded-full" @click="approveBook(book.id)">
-                                <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="w-5 h-5"
-                                        aria-hidden="true"
-                                >
-                                    <path d="M20 6 9 17l-5-5"/>
-                                </svg>
-                            </button>
-                            <button class="btn btn-ghost btn-error rounded-full "@click="rejectBook(book.id)">
-                                <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="w-5 h-5"
-                                        aria-hidden="true"
-                                >
-                                    <path d="M4.929 4.929 19.07 19.071"/>
-                                    <circle cx="12" cy="12" r="10"/>
-                                </svg>
-                            </button>
-                        </div>
                     </td>
                     <td><a :href="`/books/${book.public_id}/`" x-text="book.title" class="link-info" target="_blank"></a></td>
                     <td><a :href="`/users/${book.owner}/`" x-text="book.owner" class="link-info" target="_blank"></a></td>

@@ -318,7 +318,6 @@ func (b *filterBuilder) where(column string, val any) *filterBuilder {
 	}
 
 	b.qb = b.qb.Where(sq.Eq{column: val})
-
 	return b
 }
 

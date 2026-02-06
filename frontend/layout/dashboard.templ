@@ -69,6 +69,7 @@ templ Dashboard(d Data) {
                         Dashboard
                     </a>
                 </li>
+
                 <li>
                     <a @click.prevent="navigate('new-books')" href="#new-books"
                        :class="{'dashboard-menu-active': currentRoute === 'new-books'}">
@@ -76,28 +77,15 @@ templ Dashboard(d Data) {
                         New books
                     </a>
                 </li>
+
                 <li>
-                    <a @click.prevent="navigate('book-edits')" href="#book-edits"
-                       :class="{'dashboard-menu-active': currentRoute === 'book-edits'}">
+                    <a @click.prevent="navigate('change-requests')" href="#change-requests"
+                       :class="{'dashboard-menu-active': currentRoute === 'change-requests'}">
                         @icon.BookCheck()
-                        Book edits
-                    </a>
-                </li>
-                <li>
-                    <a @click.prevent="navigate('page-edits')" href="#page-edits"
-                       :class="{'dashboard-menu-active': currentRoute === 'page-edits'}">
-                        @icon.FileCheck()
-                        Page edits
+                        Edits
                     </a>
                 </li>
 
-                <li>
-                    <a @click.prevent="navigate('log')" href="#log"
-                       :class="{'dashboard-menu-active': currentRoute === 'log'}">
-                        @icon.Log()
-                        Log
-                    </a>
-                </li>
                 <hr class="my-1 border-neutral-content/30">
                 <li><a href="/">
                     @icon.Home()

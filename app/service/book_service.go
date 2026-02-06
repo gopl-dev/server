@@ -267,7 +267,7 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	// But for now, we need some kind of raw authority check.
 	if user.IsAdmin {
 		err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
-			// TODO create change request, so we can have a diff
+			// TODO create change request, so we can have a diff for history
 
 			if newBook.CoverFileID != book.CoverFileID {
 				err = s.resolveBookCover(ctx, newBook, true)

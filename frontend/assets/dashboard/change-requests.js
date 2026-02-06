@@ -1,4 +1,4 @@
-window.dashboardComponents['new-books'] = function newBooksComponent() {
+window.dashboardComponents['change-requests'] = function changeRequestsComponent() {
     return {
         loading: false,
         error: null,
@@ -8,7 +8,7 @@ window.dashboardComponents['new-books'] = function newBooksComponent() {
             total_pages: 0
         },
         filters: {
-            s: 'review', // status
+            status: 'pending',
             search: ''
         },
         pagination: {
@@ -31,13 +31,18 @@ window.dashboardComponents['new-books'] = function newBooksComponent() {
                     ...this.filters
                 });
 
-                const response = await fetch(`/api/books/?${params}`);
+                const response = await fetch(`/api/change-requests/?${params}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                this.data = await response.json();
+                this.data = { data: [], count: 0 };
+
+                const payload = await response.json();
+
+                this.data.data = Array.isArray(payload.data) ? payload.data : [];
+                this.data.count = payload.count ?? 0;
 
             } catch (error) {
                 console.error('Error loading data:', error);

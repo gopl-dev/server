@@ -32,7 +32,7 @@ func (s *Service) GetEntityChangeState(ctx context.Context, entityID ds.ID, data
 		return nil, app.ErrUnauthorized()
 	}
 
-	req, err := s.db.FindPendingEntityChangeRequest(ctx, entityID, user.ID)
+	req, err := s.db.FindPendingChangeRequest(ctx, entityID, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,17 +75,17 @@ func (s *Service) GetEntityChangeState(ctx context.Context, entityID ds.ID, data
 // has changed, the existing request is updated and its revision is incremented.
 // If the diff is identical, no action is performed.
 func (s *Service) UpdateEntityChangeRequest(ctx context.Context, m *ds.EntityChangeRequest) (err error) {
-	ctx, span := s.tracer.Start(ctx, "UpdateEntityChangeRequest")
+	ctx, span := s.tracer.Start(ctx, "UpdateChangeRequest")
 	defer span.End()
 
-	req, err := s.db.FindPendingEntityChangeRequest(ctx, m.EntityID, m.UserID)
+	req, err := s.db.FindPendingChangeRequest(ctx, m.EntityID, m.UserID)
 	if err != nil {
 		return err
 	}
 
 	if req == nil {
 		m.Revision = 1
-		return s.db.CreateEntityChangeRequest(ctx, m)
+		return s.db.CreateChangeRequest(ctx, m)
 	}
 
 	if !hasDiff(req.Diff, m.Diff) {
@@ -98,6 +98,64 @@ func (s *Service) UpdateEntityChangeRequest(ctx context.Context, m *ds.EntityCha
 	m.CreatedAt = req.CreatedAt
 	m.UpdatedAt = app.Pointer(time.Now())
 
-	err = s.db.UpdateEntityChangeRequest(ctx, m)
+	err = s.db.UpdateChangeRequest(ctx, m)
 	return
+}
+
+// FilterChangeRequests retrieves a paginated list of change requests matching the given filter.
+func (s *Service) FilterChangeRequests(ctx context.Context, f ds.ChangeRequestsFilter) (data []ds.EntityChangeRequest, count int, err error) {
+	ctx, span := s.tracer.Start(ctx, "FilterChangeRequests")
+	defer span.End()
+
+	return s.db.FilterChangeRequests(ctx, f)
+}
+
+type ChangeDiff struct {
+	Current  map[string]any `json:"current"`
+	Proposed map[string]any `json:"proposed"`
+}
+
+func (s *Service) GetChangeRequestReviewDiff(ctx context.Context, reqID ds.ID) (*ChangeDiff, error) {
+	ctx, span := s.tracer.Start(ctx, "GetChangeRequestReviewDiff")
+	defer span.End()
+
+	req, err := s.db.GetChangeRequestByID(ctx, reqID)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := s.GetDataProviderFromEntityType(ctx, req.EntityID, req.EntityType)
+	if err != nil {
+		return nil, err
+	}
+
+	data := entity.Data()
+	diff := &ChangeDiff{
+		Proposed: req.Diff,
+		Current:  make(map[string]any),
+	}
+	for k := range req.Diff {
+		v, ok := data[k]
+		if ok {
+			diff.Current[k] = v
+		}
+	}
+
+	return diff, nil
+}
+
+func (s *Service) GetDataProviderFromEntityType(ctx context.Context, id ds.ID, t ds.EntityType) (dp ds.DataProvider, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetDataProviderFromEntityType")
+	defer span.End()
+
+	switch t {
+	case ds.EntityTypeBook:
+		dp, err = s.GetBookByID(ctx, id)
+	case ds.EntityTypePage:
+		dp, err = s.GetPageByID(ctx, id)
+	default:
+		err = ErrInvalidEntityType
+	}
+
+	return dp, err
 }

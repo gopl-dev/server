@@ -64,7 +64,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "New books</a></li><li><a @click.prevent=\"navigate('book-edits')\" href=\"#book-edits\" :class=\"{'dashboard-menu-active': currentRoute === 'book-edits'}\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "New books</a></li><li><a @click.prevent=\"navigate('change-requests')\" href=\"#change-requests\" :class=\"{'dashboard-menu-active': currentRoute === 'change-requests'}\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -72,23 +72,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "Book edits</a></li><li><a @click.prevent=\"navigate('page-edits')\" href=\"#page-edits\" :class=\"{'dashboard-menu-active': currentRoute === 'page-edits'}\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = icon.FileCheck().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Page edits</a></li><li><a @click.prevent=\"navigate('log')\" href=\"#log\" :class=\"{'dashboard-menu-active': currentRoute === 'log'}\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = icon.Log().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "Log</a></li><hr class=\"my-1 border-neutral-content/30\"><li><a href=\"/\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "Edits</a></li><hr class=\"my-1 border-neutral-content/30\"><li><a href=\"/\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -96,7 +80,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "Home</a></li><li><a href=\"/users/sign-out/\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Home</a></li><li><a href=\"/users/sign-out/\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -104,7 +88,7 @@ func Dashboard(d Data) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "Sign out</a></li></ul></div></div></div><script src=\"/assets/dashboard/dashboard.js\"></script><style>\r\n    [x-cloak] { display: none !important; }\r\n</style></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "Sign out</a></li></ul></div></div></div><script src=\"/assets/dashboard/dashboard.js\"></script><style>\r\n    [x-cloak] { display: none !important; }\r\n</style></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

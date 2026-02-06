@@ -112,6 +112,52 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				}
 			}
 
+			// change requests
+			if random.Bool() {
+				maybeData := map[string]any{
+					"title":        random.ValOrNil(random.Title()),
+					"summary":      random.ValOrNil(fake.Paragraph()),
+					"description":  random.ValOrNil(fake.Paragraph()),
+					"homepage":     random.ValOrNil(fake.URL()),
+					"release_date": random.ValOrNil(random.ReleaseDate()),
+					// TODO topics & authors
+				}
+
+				data := make(map[string]any)
+				for k, v := range maybeData {
+					if v != nil {
+						data[k] = v
+					}
+				}
+
+				if len(data) == 0 {
+					return nil
+				}
+
+				actorID, err := s.RandomUserID(ctx)
+				if err != nil {
+					return err
+				}
+				req := &ds.EntityChangeRequest{
+					ID:         ds.NewID(),
+					EntityID:   e.ID,
+					UserID:     actorID,
+					Status:     ds.EntityChangePending,
+					Diff:       data,
+					Message:    "",
+					Revision:   random.Int(1, 10),
+					ReviewerID: nil,
+					ReviewedAt: nil,
+					ReviewNote: "",
+					CreatedAt:  fake.DateRange(e.CreatedAt, time.Now()),
+					UpdatedAt:  nil,
+				}
+				err = s.repo.CreateChangeRequest(ctx, req)
+				if err != nil {
+					return err
+				}
+			}
+
 			return err
 		})
 	}

@@ -1,0 +1,79 @@
+<div x-data="window.dashboardComponents['change-requests']()">
+    <div x-show="loading" class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <!-- Error state -->
+    <div x-show="error" class="alert alert-error mb-4" x-cloak>
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span x-text="error"></span>
+    </div>
+
+    <!-- Table -->
+    <div x-show="!loading && !error" class="overflow-x-auto bg-white" x-cloak>
+        <table class="table table-zebra">
+            <thead>
+            <tr>
+                <th></th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>User</th>
+                <th>Created At</th>
+            </tr>
+            </thead>
+            <tbody>
+            <template x-for="req in data.data" :key="req.id">
+                <tr>
+                    </td>
+                    <td>
+                        <button class="btn btn-ghost btn-success rounded-full" title="Review" @click="">
+                            <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="w-5 h-5"
+                                    aria-hidden="true"
+                            >
+                                <circle cx="5" cy="6" r="3"/>
+                                <path d="M5 9v12"/>
+                                <circle cx="19" cy="18" r="3"/>
+                                <path d="m15 9-3-3 3-3"/>
+                                <path d="M12 6h5a2 2 0 0 1 2 2v7"/>
+                                </svg>
+                            </svg>
+                        </button>
+                    </td>
+                    <td>
+                        <a :href="`/books/${req.entity_public_id}/`" x-text="req.entity_title" class="link-info" target="_blank"></a>
+                    </td>
+                    <td x-text="req.entity_type"></td>
+                    <td><a :href="`/users/${req.username}/`" x-text="req.username" class="link-info" target="_blank"></a></td>
+                    <td x-text="formatDate(req.created_at)"></td>
+                </tr>
+            </template>
+            </tbody>
+        </table>
+
+        <!-- Empty state -->
+        <div x-show="data.data.length === 0" class="text-center py-8 text-gray-500">
+            Nothing to review
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div x-show="data.total_pages > 1" class="flex justify-center mt-4" x-cloak>
+        <div class="join">
+            <button class="join-item btn" @click="changePage(pagination.page - 1)"
+                    :disabled="pagination.page <= 1">«</button>
+            <button class="join-item btn">Page <span x-text="pagination.page"></span></button>
+            <button class="join-item btn" @click="changePage(pagination.page + 1)"
+                    :disabled="pagination.page >= data.total_pages">»</button>
+        </div>
+    </div>
+</div>

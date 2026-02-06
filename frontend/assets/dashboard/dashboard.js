@@ -10,6 +10,7 @@ window.dashboardComponents = {
 window.formatDate = function (dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
+        hour12: false,
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -116,6 +117,7 @@ function dashboardApp() {
         formatDate(dateString) {
             const date = new Date(dateString);
             return date.toLocaleDateString('en-US', {
+                hour12: false,
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
@@ -128,9 +130,7 @@ function dashboardApp() {
             const titles = {
                 'home': 'Dashboard',
                 'new-books': 'New Books',
-                'book-edits': 'Book Edits',
-                'page-edits': 'Page Edits',
-                'log': 'Activity Log'
+                'change-requests': 'Change requests',
             };
             return titles[route] || 'Dashboard';
         }

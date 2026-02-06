@@ -15,6 +15,10 @@ var (
 	// ErrInvalidEntityStatus is returned when an unsupported or unknown
 	// entity status value is encountered.
 	ErrInvalidEntityStatus = errors.New("invalid entity status")
+
+	// ErrInvalidEntityType is returned when an unsupported or unknown
+	// entity type value is encountered.
+	ErrInvalidEntityType = errors.New("invalid entity type")
 )
 
 // CreateEntity validates and creates a new entity in the database.
