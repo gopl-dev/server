@@ -11,7 +11,6 @@ import (
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/server/handler"
 	"github.com/gopl-dev/server/server/request"
-	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory/random"
 )
@@ -109,10 +108,11 @@ func TestUpdatePage_WithReview(t *testing.T) {
 			Content:  random.String(),
 		},
 	}
-	var updateResp response.UpdateRevision
+	var updateResp ds.EntityChangeRequest
 	UPDATE(t, pf("/pages/%s/", page.PublicID), updateReq, &updateResp)
 
 	assert.Equal(t, 1, updateResp.Revision)
+	assert.Equal(t, ds.EntityChangePending, updateResp.Status)
 
 	// new change request should be created
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
@@ -169,7 +169,7 @@ func TestUpdatePage_WithoutReview(t *testing.T) {
 			Content:  random.String(),
 		},
 	}
-	var resp response.UpdateRevision
+	var resp ds.EntityChangeRequest
 	Request(t, RequestArgs{
 		method:       http.MethodPut,
 		path:         pf("/pages/%s/", page.PublicID),
@@ -179,11 +179,20 @@ func TestUpdatePage_WithoutReview(t *testing.T) {
 		assertStatus: http.StatusOK,
 	})
 
-	assert.Equal(t, 0, resp.Revision)
+	assert.Equal(t, 1, resp.Revision)
+	assert.Equal(t, ds.EntityChangeCommitted, resp.Status)
 
 	// page should be updated
 	test.AssertInDB(t, tt.DB, "pages", test.Data{
 		"id":          page.ID,
 		"content_raw": req.Content,
+	})
+
+	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
+		"user_id":   user.ID,
+		"entity_id": page.ID,
+		"status":    ds.EntityChangeCommitted,
+		"revision":  1,
+		"diff":      map[string]any{"content": req.Content},
 	})
 }

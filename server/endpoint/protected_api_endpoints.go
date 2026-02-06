@@ -30,5 +30,6 @@ func (r *Router) ProtectedAPIEndpoints() {
 	// change requests
 	r.Group("/change-requests/", r.mw.AdminOnly).
 		GET("/", r.handler.FilterChangeRequests).
-		GET("/{id}/diff/", r.handler.GetChangeRequestReviewDiff)
+		PUT("/{id}/apply/", r.handler.ApplyChangeRequest).
+		PUT("/{id}/reject/", r.handler.RejectChangeRequest)
 }

@@ -27,4 +27,8 @@ func (r *Router) PublicAPIEndpoints() {
 
 	// event logs
 	r.Group("event-logs").GET("/", r.handler.FilterEventLogs)
+
+	// change requests
+	r.Group("/change-requests/").
+		GET("/{id}/diff/", r.handler.GetChangeRequestDiff)
 }

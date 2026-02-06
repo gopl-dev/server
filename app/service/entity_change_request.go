@@ -2,11 +2,18 @@ package service
 
 import (
 	"context"
+	"errors"
 	"maps"
 	"time"
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/email"
+)
+
+var (
+	// ErrChangeRequestAlreadyCommited indicates that a change request has already been applied and cannot be modified.
+	ErrChangeRequestAlreadyCommited = errors.New("change request already committed")
 )
 
 // EntityChange represents the effective editable state of an entity.
@@ -110,40 +117,120 @@ func (s *Service) FilterChangeRequests(ctx context.Context, f ds.ChangeRequestsF
 	return s.db.FilterChangeRequests(ctx, f)
 }
 
+// ChangeDiff represents the difference between current and proposed values in an entity change request.
 type ChangeDiff struct {
 	Current  map[string]any `json:"current"`
 	Proposed map[string]any `json:"proposed"`
 }
 
-func (s *Service) GetChangeRequestReviewDiff(ctx context.Context, reqID ds.ID) (*ChangeDiff, error) {
-	ctx, span := s.tracer.Start(ctx, "GetChangeRequestReviewDiff")
+// GetChangeRequestDiff retrieves a change request and computes the diff between proposed and current values.
+// Returns the diff containing both proposed changes and current values, along with the change request.
+func (s *Service) GetChangeRequestDiff(ctx context.Context, reqID ds.ID) (diff *ChangeDiff, req *ds.EntityChangeRequest, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetChangeRequestDiff")
 	defer span.End()
 
-	req, err := s.db.GetChangeRequestByID(ctx, reqID)
+	req, err = s.db.GetChangeRequestByID(ctx, reqID)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	entity, err := s.GetDataProviderFromEntityType(ctx, req.EntityID, req.EntityType)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	data := entity.Data()
-	diff := &ChangeDiff{
-		Proposed: req.Diff,
+	diff = &ChangeDiff{
+		Proposed: make(map[string]any),
 		Current:  make(map[string]any),
 	}
-	for k := range req.Diff {
-		v, ok := data[k]
+	for k := range data {
+		v, ok := req.Diff[k]
 		if ok {
-			diff.Current[k] = v
+			diff.Current[k] = data[k]
+			diff.Proposed[k] = v
 		}
 	}
 
-	return diff, nil
+	req.Diff = diff.Proposed
+	return
 }
 
+// ApplyChangeRequest applies a pending change request to its associated entity.
+func (s *Service) ApplyChangeRequest(ctx context.Context, reqID ds.ID) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ApplyChangeRequest")
+	defer span.End()
+
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		return app.ErrUnauthorized()
+	}
+
+	_, req, err := s.GetChangeRequestDiff(ctx, reqID)
+	if err != nil {
+		return err
+	}
+	req.ReviewerID = app.Pointer(user.ID)
+
+	if req.Status == ds.EntityChangeCommitted {
+		return ErrChangeRequestAlreadyCommited
+	}
+
+	switch req.EntityType {
+	case ds.EntityTypeBook:
+		err = s.ApplyChangesToBook(ctx, req)
+	case ds.EntityTypePage:
+		err = s.ApplyChangesToPage(ctx, req)
+	default:
+		err = ErrInvalidEntityType
+	}
+
+	return
+}
+
+// RejectChangeRequest rejects a pending change request with a review note.
+func (s *Service) RejectChangeRequest(ctx context.Context, id, reviewerID ds.ID, note string) (err error) {
+	ctx, span := s.tracer.Start(ctx, "RejectChangeRequest")
+	defer span.End()
+
+	req, err := s.db.GetChangeRequestByID(ctx, id)
+	if err != nil {
+		return
+	}
+
+	author, err := s.FindUserByID(ctx, req.UserID)
+	if err != nil {
+		return
+	}
+
+	entity, err := s.GetEntityByID(ctx, req.EntityID)
+	if err != nil {
+		return
+	}
+
+	err = s.db.RejectChangeRequest(ctx, id, reviewerID, note)
+	if err != nil {
+		return nil
+	}
+
+	return email.Send(author.Email, email.ChangesRejected{
+		Username:    author.Username,
+		EntityTitle: entity.Title,
+		Note:        note,
+		ViewURL:     entity.ViewURL(),
+	})
+}
+
+// CommitChangeRequest marks a change request as committed in the database.
+func (s *Service) CommitChangeRequest(ctx context.Context, req *ds.EntityChangeRequest) error {
+	ctx, span := s.tracer.Start(ctx, "RejectChangeRequest")
+	defer span.End()
+
+	req.Status = ds.EntityChangeCommitted
+	return s.db.CommitChangeRequest(ctx, req)
+}
+
+// GetDataProviderFromEntityType retrieves an entity by ID and type, returning it as a DataProvider interface.
 func (s *Service) GetDataProviderFromEntityType(ctx context.Context, id ds.ID, t ds.EntityType) (dp ds.DataProvider, err error) {
 	ctx, span := s.tracer.Start(ctx, "GetDataProviderFromEntityType")
 	defer span.End()

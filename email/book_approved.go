@@ -1,8 +1,6 @@
 package email
 
 import (
-	"path"
-
 	"github.com/gopl-dev/server/app"
 )
 
@@ -29,6 +27,6 @@ func (c BookApproved) Variables() map[string]any {
 	return map[string]any{
 		"username":      c.Username,
 		"book_name":     c.BookName,
-		"view_book_url": path.Join(app.Config().Server.Addr, "/books/"+c.PublicID+"/"),
+		"view_book_url": app.ServerURL("/books/" + c.PublicID + "/"),
 	}
 }

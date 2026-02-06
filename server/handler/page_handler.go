@@ -11,7 +11,6 @@ import (
 	"github.com/gopl-dev/server/frontend/layout"
 	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/request"
-	"github.com/gopl-dev/server/server/response"
 )
 
 // RenderPageOrNotFound ...
@@ -79,7 +78,7 @@ func (h *Handler) CreatePage(w http.ResponseWriter, r *http.Request) {
 //	@Produce	json
 //	@Param		id	path		string	true	"Page ID"
 //	@Param		request	body		request.UpdatePage	true	"Request body"
-//	@Success	200		{object}	response.UpdateRevision
+//	@Success	200		{object}	ds.EntityChangeRequest
 //	@Failure	400		{object}	Error
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
@@ -96,15 +95,13 @@ func (h *Handler) UpdatePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := r.PathValue("id")
-	revision, err := h.service.UpdatePage(ctx, id, req.ToPage())
+	changeRequest, err := h.service.UpdatePage(ctx, id, req.ToPage())
 	if err != nil {
 		res.Abort(err)
 		return
 	}
 
-	res.jsonOK(response.UpdateRevision{
-		Revision: revision,
-	})
+	res.jsonOK(changeRequest)
 }
 
 // GetPageEditState return state of page changes for current user

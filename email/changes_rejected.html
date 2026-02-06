@@ -1,0 +1,7 @@
+<p>Hello {{.username}},</p>
+<p>Thank you for your submission. Unfortunately, the changes you proposed for
+    "<a href="{{.view_url}}">{{.entity_title}}</a>" were not approved this time.</p>
+{{ if .note }}
+<p>Reviewer’s note: {{ .note }}</p>
+{{ end }}
+<p>We appreciate your contribution and hope you'll continue improving the content.</p>

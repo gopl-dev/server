@@ -56,7 +56,7 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 //	@Produce	json
 //	@Param		id	path		string	true	"Book ID"
 //	@Param		request	body		request.UpdateBook	true	"Request body"
-//	@Success	200		{object}	response.UpdateRevision
+//	@Success	200		{object}	ds.EntityChangeRequest
 //	@Failure	400		{object}	Error
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
@@ -78,15 +78,13 @@ func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	revision, err := h.service.UpdateBook(ctx, id, req.ToBook())
+	changeRequest, err := h.service.UpdateBook(ctx, id, req.ToBook())
 	if err != nil {
 		res.Abort(err)
 		return
 	}
 
-	res.jsonOK(response.UpdateRevision{
-		Revision: revision,
-	})
+	res.jsonOK(changeRequest)
 }
 
 // GetBook handles the API request for creating a new book.

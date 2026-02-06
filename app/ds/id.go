@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// ErrInvalidIDFormat indicates that a provided ID string is not a valid UUID format.
 var ErrInvalidIDFormat = errors.New("invalid UUID format")
 
 // ID is a domain-specific UUID (v7).

@@ -125,7 +125,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 
 				data := make(map[string]any)
 				for k, v := range maybeData {
-					if v != nil {
+					if !app.IsNil(v) {
 						data[k] = v
 					}
 				}

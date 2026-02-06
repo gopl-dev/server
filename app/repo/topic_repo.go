@@ -25,10 +25,11 @@ func (r *Repo) FilterTopics(ctx context.Context, f ds.TopicsFilter) (data []ds.T
 
 	count, err = r.filter("topics").
 		columns(`*`).
-		whereValue("type", f.Type).
+		where("type", f.Type).
 		paginate(f.Page, f.PerPage).
 		order(f.OrderBy, f.OrderDirection).
 		withCount(f.WithCount).
+		apply(whereIn("public_id", f.PublicIDs)).
 		scan(ctx, &data)
 
 	return
@@ -64,7 +65,7 @@ func (r *Repo) CreateTopic(ctx context.Context, t *ds.Topic) error {
 
 // AttachTopics creates associations between an entity and the given topics.
 func (r *Repo) AttachTopics(ctx context.Context, entityID ds.ID, topics []ds.Topic) error {
-	_, span := r.tracer.Start(ctx, "CreateBook")
+	_, span := r.tracer.Start(ctx, "AttachTopics")
 	defer span.End()
 
 	if len(topics) == 0 {
@@ -80,6 +81,15 @@ func (r *Repo) AttachTopics(ctx context.Context, entityID ds.ID, topics []ds.Top
 	}
 
 	return r.insert(ctx, "entity_topics", ts...)
+}
+
+// DetachTopics drops associations between an entity and topics.
+func (r *Repo) DetachTopics(ctx context.Context, entityID ds.ID) error {
+	_, span := r.tracer.Start(ctx, "DetachTopics")
+	defer span.End()
+
+	const q = "DELETE FROM entity_topics WHERE entity_id = $1"
+	return r.exec(ctx, q, entityID)
 }
 
 // EntityTopics returns all non-deleted topics associated with the given entity.

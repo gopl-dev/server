@@ -70,6 +70,18 @@ func (e *Entity) SetPublicID() {
 	}
 }
 
+// ViewURL returns the public-facing URL path for viewing the entity.
+func (e *Entity) ViewURL() string {
+	switch e.Type {
+	case EntityTypeBook:
+		return "/books/" + e.PublicID
+	case EntityTypePage:
+		return "/" + e.PublicID
+	}
+
+	return "/"
+}
+
 // EntitiesFilter is used to filter entities.
 type EntitiesFilter struct {
 	Page           int

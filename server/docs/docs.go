@@ -263,7 +263,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.UpdateRevision"
+                            "$ref": "#/definitions/ds.EntityChangeRequest"
                         }
                     },
                     "400": {
@@ -274,6 +274,61 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/{id}/approve/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Approve new book",
+                "operationId": "ApproveNewBook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/handler.Error"
                         }
@@ -329,6 +384,318 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/{id}/reject/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Reject new book",
+                "operationId": "RejectNewBook",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.RejectBook"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/change-requests/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "change-requests"
+                ],
+                "summary": "Get change requests",
+                "operationId": "FilterChangeRequests",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "pending",
+                            "committed",
+                            "rejected"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "EntityChangePending",
+                            "EntityChangeCommitted",
+                            "EntityChangeRejected"
+                        ],
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.FilterChangeRequests"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/change-requests/{id}/diff/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "change-requests"
+                ],
+                "summary": "Get change requests diff for review",
+                "operationId": "GetChangeRequestDiff",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Change request ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.ChangeDiff"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "change-requests"
+                ],
+                "summary": "Reject a pending change request",
+                "operationId": "RejectChangeRequest",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.RejectBook"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Change request ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.ChangeDiff"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/event-logs/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "event-logs"
+                ],
+                "summary": "Get activity log",
+                "operationId": "FilterEventLogs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.FilterEventLogs"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/handler.Error"
                         }
@@ -541,7 +908,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.UpdateRevision"
+                            "$ref": "#/definitions/ds.EntityChangeRequest"
                         }
                     },
                     "400": {
@@ -1286,6 +1653,75 @@ const docTemplate = `{
                 }
             }
         },
+        "ds.EntityChangeRequest": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "diff": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "entity_id": {
+                    "type": "string"
+                },
+                "entity_public_id": {
+                    "type": "string"
+                },
+                "entity_title": {
+                    "type": "string"
+                },
+                "entity_type": {
+                    "$ref": "#/definitions/ds.EntityType"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "description": "State      map[string]any     ` + "`" + `json:\"state\"` + "`" + `",
+                    "type": "string"
+                },
+                "review_note": {
+                    "type": "string"
+                },
+                "reviewed_at": {
+                    "type": "string"
+                },
+                "reviewer_id": {
+                    "type": "string"
+                },
+                "revision": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/ds.EntityChangeStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "description": "props needed to be returned from filter action",
+                    "type": "string"
+                }
+            }
+        },
+        "ds.EntityChangeStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "committed",
+                "rejected"
+            ],
+            "x-enum-varnames": [
+                "EntityChangePending",
+                "EntityChangeCommitted",
+                "EntityChangeRejected"
+            ]
+        },
         "ds.EntityStatus": {
             "type": "string",
             "enum": [
@@ -1526,6 +1962,14 @@ const docTemplate = `{
                 }
             }
         },
+        "request.RejectBook": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
         "request.UpdateBook": {
             "type": "object",
             "properties": {
@@ -1600,6 +2044,20 @@ const docTemplate = `{
                 }
             }
         },
+        "response.EventLog": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "response.FilterBooks": {
             "type": "object",
             "properties": {
@@ -1610,6 +2068,34 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ds.Book"
+                    }
+                }
+            }
+        },
+        "response.FilterChangeRequests": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ds.EntityChangeRequest"
+                    }
+                }
+            }
+        },
+        "response.FilterEventLogs": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.EventLog"
                     }
                 }
             }
@@ -1636,14 +2122,6 @@ const docTemplate = `{
                 }
             }
         },
-        "response.UpdateRevision": {
-            "type": "object",
-            "properties": {
-                "revision": {
-                    "type": "integer"
-                }
-            }
-        },
         "response.UserSignIn": {
             "type": "object",
             "properties": {
@@ -1655,6 +2133,19 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "service.ChangeDiff": {
+            "type": "object",
+            "properties": {
+                "current": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "proposed": {
+                    "type": "object",
+                    "additionalProperties": {}
                 }
             }
         },

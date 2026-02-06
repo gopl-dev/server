@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path"
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
@@ -221,10 +220,12 @@ func TestUpdateBook_WithReview(t *testing.T) {
 			CoverFileID: book.CoverFileID,
 		},
 	}
-	var updateResp response.UpdateRevision
+
+	var updateResp ds.EntityChangeRequest
 	UPDATE(t, pf("/books/%s/", book.ID), updateReq, &updateResp)
 
 	assert.Equal(t, 1, updateResp.Revision)
+	assert.Equal(t, ds.EntityChangePending, updateResp.Status)
 
 	// new change request should be created
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
@@ -268,15 +269,13 @@ func TestUpdateBook_WithReview(t *testing.T) {
 }
 
 func TestUpdateBook_WithoutReview(t *testing.T) {
-	user := create[ds.User](t)
-	token := loginAs(t, user)
-
-	app.Config().Admins = []string{user.ID.String()}
+	user := login(t)
+	makeAdmin(user)
 
 	imageBytes1, err := random.ImagePNG(10)
 	test.CheckErr(t, err)
 	cover1 := UploadFile(t, fileForm{
-		authToken: token,
+		authToken: authToken,
 		purpose:   ds.FilePurposeBookCover,
 		filename:  "cover.jpg",
 		file:      bytes.NewReader(imageBytes1),
@@ -284,7 +283,7 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 	imageBytes2, err := random.ImagePNG(10)
 	test.CheckErr(t, err)
 	cover2 := UploadFile(t, fileForm{
-		authToken: token,
+		authToken: authToken,
 		purpose:   ds.FilePurposeBookCover,
 		filename:  "cover.jpg",
 		file:      bytes.NewReader(imageBytes2),
@@ -305,17 +304,18 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 			CoverFileID: cover2.ID,
 		},
 	}
-	var resp response.UpdateRevision
+	var resp ds.EntityChangeRequest
 	Request(t, RequestArgs{
 		method:       http.MethodPut,
 		path:         pf("/books/%s/", book.ID),
 		body:         req,
-		authToken:    token,
+		authToken:    authToken,
 		bindResponse: &resp,
 		assertStatus: http.StatusOK,
 	})
 
-	assert.Equal(t, 0, resp.Revision)
+	assert.Equal(t, 1, resp.Revision)
+	assert.Equal(t, ds.EntityChangeCommitted, resp.Status)
 
 	descriptionHTML, err := app.MarkdownToHTML(req.Description)
 	test.CheckErr(t, err)
@@ -381,7 +381,7 @@ func TestApproveNewBook(t *testing.T) {
 	assert.Equal(t, emailVars, map[string]any{
 		"username":      owner.Username,
 		"book_name":     book.Title,
-		"view_book_url": path.Join(app.Config().Server.Addr, "/books/"+book.PublicID+"/"),
+		"view_book_url": app.ServerURL("/books/" + book.PublicID + "/"),
 	})
 }
 

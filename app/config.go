@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"sync"
 
@@ -126,6 +127,11 @@ func Config() *ConfigT {
 	loadConfigOnce.Do(func() {
 		var err error
 		conf, err = ConfigFromFile(defaultConfigFile)
+		if err != nil {
+			panic(err)
+		}
+
+		serverURL, err = url.Parse(conf.Server.Addr)
 		if err != nil {
 			panic(err)
 		}

@@ -70,10 +70,8 @@ func (mw *Middleware) AdminOnly(next handler.Fn) handler.Fn {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ds.UserFromContext(r.Context())
 		if user == nil || !user.IsAdmin {
-			if handler.ShouldServeJSON(r) {
-				handler.Abort(w, r, app.ErrUnauthorized())
-				return
-			}
+			handler.Abort(w, r, app.ErrUnauthorized())
+			return
 		}
 
 		next(w, r)

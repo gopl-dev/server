@@ -51,16 +51,16 @@ func (s *Service) LogEntityCreated(ctx context.Context, e *ds.Entity) error {
 }
 
 // LogEntityUpdated records a public-facing entity update event.
-func (s *Service) LogEntityUpdated(ctx context.Context, e *ds.Entity) error {
+func (s *Service) LogEntityUpdated(ctx context.Context, userID, entityID ds.ID, title any) error {
 	ctx, span := s.tracer.Start(ctx, "LogEntityUpdated")
 	defer span.End()
 
 	// TODO: attach change request reference (ChangeRequestID)
 	log := &ds.EventLog{
-		UserID:   app.Pointer(e.OwnerID),
+		UserID:   app.Pointer(userID),
 		Type:     ds.EventLogEntityUpdated,
-		EntityID: app.Pointer(e.ID),
-		Meta:     map[string]any{"entity_title": e.Title},
+		EntityID: app.Pointer(entityID),
+		Meta:     map[string]any{"entity_title": title},
 		IsPublic: true,
 	}
 
@@ -68,17 +68,17 @@ func (s *Service) LogEntityUpdated(ctx context.Context, e *ds.Entity) error {
 }
 
 // LogEntityRenamed records an entity rename event.
-func (s *Service) LogEntityRenamed(ctx context.Context, oldName string, e *ds.Entity) error {
+func (s *Service) LogEntityRenamed(ctx context.Context, userID, entityID ds.ID, oldTitle, newTitle any) error {
 	ctx, span := s.tracer.Start(ctx, "LogEntityRenamed")
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(e.OwnerID),
+		UserID:   app.Pointer(userID),
 		Type:     ds.EventLogEntityRenamed,
-		EntityID: app.Pointer(e.ID),
+		EntityID: app.Pointer(entityID),
 		Meta: map[string]any{
-			"entity_title": oldName,
-			"new_title":    e.Title,
+			"entity_title": oldTitle,
+			"new_title":    newTitle,
 		},
 		IsPublic: true,
 	}

@@ -5,7 +5,7 @@ for simplicity, I keep todo list and progress here for now
 - [ ] books
   - [x] create book
   - [x] update book
-  - [ ] review changes: accept|reject
+  - [x] review changes: accept|reject
   - [x] view book
   - [ ] delete book
   - [x] list books
@@ -14,21 +14,23 @@ for simplicity, I keep todo list and progress here for now
   - [x] Rework book to have multiple authors
   - [x] Remove visibility from book
 
-- [ ] Minimal admin dashboard for current needs:
+- [x] Minimal admin dashboard for current needs:
   - [x] List of new books to review
-  - [ ] List of edit requests for books
-  - [ ] List of edit requests for books
-  - [ ] List activity log
+  - [x] List of edit requests for books
 
-- [x] Rework user_action_log and entity_change_log into event_log
+- [ ] Change requests 
+    - [x] Review, apply, and test complex types (pictures — need preview; topics — references to another entity; authors — array: what was added, removed, or updated)
+    - [ ] In the public activity log, let everyone see what was changed (at the moment the changes are applied)
+    - [ ] Learn how to create a patch (when a typo is fixed within a large text, there’s no need to display the whole diff, but only the area around the fix)
+
 - [ ] Maybe group services by entity not by action (Ask opinions)
 - [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
-- [x] Make tools to seed data
 
 **Before release**:
 - [ ] Review "TODO!"s
 - [ ] enable "unused" linter 
 - [ ] Homepage
+- [ ] Licence
 - [ ] RELEASE
 ---
 
@@ -60,3 +62,6 @@ NEXT:
 - [ ] Add server version to frontend
 - [ ] Plain theme
 - [ ] Notification system for selecting notification types and delivery channels (web, email, Telegram, etc.)
+- [ ] Selective approve changes (user might reject some properties from request and apply some)
+- [ ] Let user continue work on reject entity and proposed changes
+- [ ] Review "delete account" test. Right now, it passes even if models belonging to the user still exist.

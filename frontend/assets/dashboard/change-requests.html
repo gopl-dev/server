@@ -26,26 +26,19 @@
             <tbody>
             <template x-for="req in data.data" :key="req.id">
                 <tr>
-                    </td>
                     <td>
-                        <button class="btn btn-ghost btn-success rounded-full" title="Review" @click="">
-                            <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="w-5 h-5"
-                                    aria-hidden="true"
-                            >
-                                <circle cx="5" cy="6" r="3"/>
-                                <path d="M5 9v12"/>
-                                <circle cx="19" cy="18" r="3"/>
-                                <path d="m15 9-3-3 3-3"/>
-                                <path d="M12 6h5a2 2 0 0 1 2 2v7"/>
-                                </svg>
+                        <button
+                                class="btn btn-ghost btn-success rounded-full"
+                                title="Review"
+                                @click="openReview(req)"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                 class="w-5 h-5" aria-hidden="true">
+                                <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/>
+                                <path d="M9 10h6"/>
+                                <path d="M12 13V7"/>
+                                <path d="M9 17h6"/>
                             </svg>
                         </button>
                     </td>
@@ -53,7 +46,9 @@
                         <a :href="`/books/${req.entity_public_id}/`" x-text="req.entity_title" class="link-info" target="_blank"></a>
                     </td>
                     <td x-text="req.entity_type"></td>
-                    <td><a :href="`/users/${req.username}/`" x-text="req.username" class="link-info" target="_blank"></a></td>
+                    <td>
+                        <a :href="`/users/${req.username}/`" x-text="req.username" class="link-info" target="_blank"></a>
+                    </td>
                     <td x-text="formatDate(req.created_at)"></td>
                 </tr>
             </template>
@@ -69,11 +64,123 @@
     <!-- Pagination -->
     <div x-show="data.total_pages > 1" class="flex justify-center mt-4" x-cloak>
         <div class="join">
-            <button class="join-item btn" @click="changePage(pagination.page - 1)"
-                    :disabled="pagination.page <= 1">«</button>
+            <button class="join-item btn" @click="changePage(pagination.page - 1)" :disabled="pagination.page <= 1">«</button>
             <button class="join-item btn">Page <span x-text="pagination.page"></span></button>
-            <button class="join-item btn" @click="changePage(pagination.page + 1)"
-                    :disabled="pagination.page >= data.total_pages">»</button>
+            <button class="join-item btn" @click="changePage(pagination.page + 1)" :disabled="pagination.page >= data.total_pages">»</button>
         </div>
     </div>
+
+    <!-- Review modal (daisyUI: dialog.modal) -->
+    <dialog class="modal" x-ref="reviewModal" @close="resetReviewState()">
+        <div class="modal-box w-11/12 max-w-5xl">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="Close">✕</button>
+            </form>
+
+            <h3 class="font-bold text-lg">Review changes</h3>
+            <div class="mt-4" x-show="diffLoading">
+                <span class="loading loading-spinner loading-md"></span>
+                <span class="ml-2">Loading diff…</span>
+            </div>
+
+            <div class="mt-4 alert alert-error" x-show="diffError" x-cloak>
+                <span x-text="diffError"></span>
+            </div>
+
+            <div class="mt-4 overflow-x-auto" x-show="!diffLoading && !diffError" x-cloak>
+                <table class="table table-zebra">
+                    <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Current</th>
+                        <th>Proposed</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="row in diffRows" :key="row.key">
+                        <tr>
+                            <td class="align-top font-mono text-sm" x-text="row.key"></td>
+
+                            <td class="align-top">
+                                <template x-if="row.current.kind === 'image'">
+                                    <img :src="row.current.src" :alt="row.current.alt" class="max-h-40" />
+                                </template>
+                                <template x-if="row.current.kind === 'text'">
+                                    <pre class="whitespace-pre-wrap text-sm" x-text="row.current.text"></pre>
+                                </template>
+                            </td>
+
+                            <td class="align-top">
+                                <template x-if="row.proposed.kind === 'image'">
+                                    <img :src="row.proposed.src" :alt="row.proposed.alt" class="max-h-40" />
+                                </template>
+                                <template x-if="row.proposed.kind === 'text'">
+                                    <pre class="whitespace-pre-wrap text-sm" x-text="row.proposed.text"></pre>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr x-show="diffRows.length === 0" x-cloak>
+                        <td colspan="3" class="text-center opacity-60">No differences</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6">
+                <!-- Action buttons -->
+                <div class="flex gap-2 justify-end" x-show="!rejectMode" x-cloak>
+                    <button class="btn btn-info" :disabled="actionLoading || diffLoading || !!diffError" @click.prevent="applySelected()">
+                        <span class="loading loading-spinner loading-sm" x-show="actionLoading && actionType === 'apply'" x-cloak></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             class="w-5 h-5" aria-hidden="true">
+                            <circle cx="5" cy="6" r="3"/>
+                            <path d="M5 9v12"/>
+                            <circle cx="19" cy="18" r="3"/>
+                            <path d="m15 9-3-3 3-3"/>
+                            <path d="M12 6h5a2 2 0 0 1 2 2v7"/>
+                        </svg> Apply changes
+                    </button>
+                    <button class="btn btn-error" :disabled="actionLoading || diffLoading || !!diffError" @click.prevent="startReject()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             class="w-5 h-5" aria-hidden="true">
+                            <path d="M10 11v6"/>
+                            <path d="M14 11v6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                            <path d="M3 6h18"/>
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg> Reject
+                    </button>
+                </div>
+
+                <!-- Reject form -->
+                <div x-show="rejectMode" x-cloak>
+                    <label class="form-control w-full">
+                        <div class="label">
+                            <span class="label-text">Review note (optional)</span>
+                        </div>
+                        <textarea class="textarea textarea-bordered w-full"
+                                  x-ref="reviewNote"
+                                  x-effect="if (rejectMode) $nextTick(() => $refs.reviewNote?.focus())"
+                                  rows="3" placeholder="Write a note…"
+                                  x-model="reviewNote" :disabled="actionLoading"></textarea>
+                    </label>
+
+                    <div class="flex gap-2 justify-end mt-3">
+                        <button class="btn" :disabled="actionLoading" @click.prevent="cancelReject()">Cancel</button>
+                        <button class="btn btn-error" :disabled="actionLoading" @click.prevent="submitReject()">
+                            <span class="loading loading-spinner loading-sm" x-show="actionLoading && actionType === 'reject'" x-cloak></span>
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="dialog" class="modal-backdrop">
+            <button aria-label="Close backdrop">close</button>
+        </form>
+    </dialog>
 </div>

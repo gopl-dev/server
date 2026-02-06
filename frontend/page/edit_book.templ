@@ -11,7 +11,6 @@ templ EditBookForm(bookID string) {
 <script src="/assets/file_upload_helpers.js"></script>
 <script src="/assets/form_helpers.js"></script>
 <script src="/assets/topic_picker.js"></script>
-
 <script>
     const BOOK_FORM_DEFAULTS = {
         title: '',
@@ -121,8 +120,11 @@ templ EditBookForm(bookID string) {
                         if (k in (data.data || {})) this.form[k] = data.data[k] ?? BOOK_FORM_DEFAULTS[k]
                     }
 
-                    const bookTopics = (data.data?.topics ?? [])
-                    this.form.topics = bookTopics.map(t => t.id).filter(Boolean)
+                    const topicByPublicID = new Map((this.topics ?? []).map(t => [t.public_id, t.id]))
+                    const bookTopicPublicIDs = data.data?.topics ?? []
+                    this.form.topics = bookTopicPublicIDs
+                        .map(pid => topicByPublicID.get(pid))
+                        .filter(Boolean)
                 } catch (err) {
                     console.error(err)
                     this.loadError = 'Failed to load book'

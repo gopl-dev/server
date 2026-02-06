@@ -47,6 +47,54 @@ definitions:
       name:
         type: string
     type: object
+  ds.EntityChangeRequest:
+    properties:
+      created_at:
+        type: string
+      diff:
+        additionalProperties: {}
+        type: object
+      entity_id:
+        type: string
+      entity_public_id:
+        type: string
+      entity_title:
+        type: string
+      entity_type:
+        $ref: '#/definitions/ds.EntityType'
+      id:
+        type: string
+      message:
+        description: State      map[string]any     `json:"state"`
+        type: string
+      review_note:
+        type: string
+      reviewed_at:
+        type: string
+      reviewer_id:
+        type: string
+      revision:
+        type: integer
+      status:
+        $ref: '#/definitions/ds.EntityChangeStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      username:
+        description: props needed to be returned from filter action
+        type: string
+    type: object
+  ds.EntityChangeStatus:
+    enum:
+    - pending
+    - committed
+    - rejected
+    type: string
+    x-enum-varnames:
+    - EntityChangePending
+    - EntityChangeCommitted
+    - EntityChangeRejected
   ds.EntityStatus:
     enum:
     - review
@@ -208,6 +256,11 @@ definitions:
       email:
         type: string
     type: object
+  request.RejectBook:
+    properties:
+      note:
+        type: string
+    type: object
   request.UpdateBook:
     properties:
       authors:
@@ -256,6 +309,15 @@ definitions:
       username:
         type: string
     type: object
+  response.EventLog:
+    properties:
+      date:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+    type: object
   response.FilterBooks:
     properties:
       count:
@@ -263,6 +325,24 @@ definitions:
       data:
         items:
           $ref: '#/definitions/ds.Book'
+        type: array
+    type: object
+  response.FilterChangeRequests:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/ds.EntityChangeRequest'
+        type: array
+    type: object
+  response.FilterEventLogs:
+    properties:
+      count:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/response.EventLog'
         type: array
     type: object
   response.FilterTopics:
@@ -279,11 +359,6 @@ definitions:
       success:
         type: boolean
     type: object
-  response.UpdateRevision:
-    properties:
-      revision:
-        type: integer
-    type: object
   response.UserSignIn:
     properties:
       id:
@@ -292,6 +367,15 @@ definitions:
         type: string
       username:
         type: string
+    type: object
+  service.ChangeDiff:
+    properties:
+      current:
+        additionalProperties: {}
+        type: object
+      proposed:
+        additionalProperties: {}
+        type: object
     type: object
   service.EntityChange:
     properties:
@@ -465,7 +549,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.UpdateRevision'
+            $ref: '#/definitions/ds.EntityChangeRequest'
         "400":
           description: Bad Request
           schema:
@@ -481,6 +565,41 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Update book
+      tags:
+      - books
+  /books/{id}/approve/:
+    put:
+      consumes:
+      - application/json
+      operationId: ApproveNewBook
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Status'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Approve new book
       tags:
       - books
   /books/{id}/edit/:
@@ -518,6 +637,205 @@ paths:
       summary: Get book for editing
       tags:
       - books
+  /books/{id}/reject/:
+    put:
+      consumes:
+      - application/json
+      operationId: RejectNewBook
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.RejectBook'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Status'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Reject new book
+      tags:
+      - books
+  /change-requests/:
+    get:
+      consumes:
+      - application/json
+      operationId: FilterChangeRequests
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: per_page
+        type: integer
+      - enum:
+        - pending
+        - committed
+        - rejected
+        in: query
+        name: status
+        type: string
+        x-enum-varnames:
+        - EntityChangePending
+        - EntityChangeCommitted
+        - EntityChangeRejected
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.FilterChangeRequests'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get change requests
+      tags:
+      - change-requests
+  /change-requests/{id}/diff/:
+    get:
+      consumes:
+      - application/json
+      operationId: GetChangeRequestDiff
+      parameters:
+      - description: Change request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.ChangeDiff'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get change requests diff for review
+      tags:
+      - change-requests
+    put:
+      consumes:
+      - application/json
+      operationId: RejectChangeRequest
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.RejectBook'
+      - description: Change request ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.ChangeDiff'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Reject a pending change request
+      tags:
+      - change-requests
+  /event-logs/:
+    get:
+      consumes:
+      - application/json
+      operationId: FilterEventLogs
+      parameters:
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.FilterEventLogs'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get activity log
+      tags:
+      - event-logs
   /files/:
     post:
       consumes:
@@ -642,7 +960,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.UpdateRevision'
+            $ref: '#/definitions/ds.EntityChangeRequest'
         "400":
           description: Bad Request
           schema:

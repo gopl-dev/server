@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app"
@@ -14,7 +15,7 @@ var (
 	ErrEntityChangeRequestNotFound = app.ErrNotFound("change request not found")
 )
 
-// FindPendingChangeRequest ...
+// FindPendingChangeRequest retrieves the most recent pending change request for a specific entity and user.
 func (r *Repo) FindPendingChangeRequest(ctx context.Context, entityID, userID ds.ID) (*ds.EntityChangeRequest, error) {
 	ctx, span := r.tracer.Start(ctx, "FindPendingChangeRequest")
 	defer span.End()
@@ -68,7 +69,7 @@ func (r *Repo) UpdateChangeRequest(ctx context.Context, m *ds.EntityChangeReques
 		"updated_at": m.UpdatedAt,
 	})
 	if err != nil {
-		return fmt.Errorf("update entity change request: %w", err)
+		return fmt.Errorf("update change request: %w", err)
 	}
 
 	return nil
@@ -95,6 +96,7 @@ func (r *Repo) FilterChangeRequests(ctx context.Context, f ds.ChangeRequestsFilt
 `).
 		paginate(f.Page, f.PerPage).
 		where("r.status", f.Status).
+		whereRaw("e.deleted_at IS NULL").
 		withCount(f.WithCount).
 		order("r.created_at", "asc").
 		withoutSoftDelete()
@@ -103,6 +105,7 @@ func (r *Repo) FilterChangeRequests(ctx context.Context, f ds.ChangeRequestsFilt
 	return
 }
 
+// GetChangeRequestByID retrieves an entity change request by its ID.
 func (r *Repo) GetChangeRequestByID(ctx context.Context, id ds.ID) (req *ds.EntityChangeRequest, err error) {
 	_, span := r.tracer.Start(ctx, "GetChangeRequestByID")
 	defer span.End()
@@ -110,14 +113,16 @@ func (r *Repo) GetChangeRequestByID(ctx context.Context, id ds.ID) (req *ds.Enti
 	req = new(ds.EntityChangeRequest)
 	const query = `SELECT 
     		r.id as "id",
+    		r.entity_id,
+    		r.user_id,
 			r.status,
 			r.diff,
 			r.created_at,
 
 			e.type as "entity_type"
     FROM entity_change_requests r 
-    JOIN entities e ON r.entity_id = r.id
-    WHERE id = $1`
+    JOIN entities e ON r.entity_id = e.id
+    WHERE r.id = $1`
 
 	err = pgxscan.Get(ctx, r.getDB(ctx), req, query, id)
 	if noRows(err) {
@@ -125,4 +130,41 @@ func (r *Repo) GetChangeRequestByID(ctx context.Context, id ds.ID) (req *ds.Enti
 	}
 
 	return req, err
+}
+
+// CommitChangeRequest marks a change request as committed.
+func (r *Repo) CommitChangeRequest(ctx context.Context, req *ds.EntityChangeRequest) error {
+	_, span := r.tracer.Start(ctx, "CommitChangeRequest")
+	defer span.End()
+
+	err := r.update(ctx, req.ID, "entity_change_requests", data{
+		"status":      ds.EntityChangeCommitted,
+		"reviewer_id": req.ReviewerID,
+		"reviewed_at": time.Now(),
+		"updated_at":  time.Now(),
+	})
+	if err != nil {
+		return fmt.Errorf("commit change request: %w", err)
+	}
+
+	return nil
+}
+
+// RejectChangeRequest marks a change request as rejected.
+func (r *Repo) RejectChangeRequest(ctx context.Context, id, reviewerID ds.ID, note string) (err error) {
+	_, span := r.tracer.Start(ctx, "RejectChangeRequest")
+	defer span.End()
+
+	err = r.update(ctx, id, "entity_change_requests", data{
+		"status":      ds.EntityChangeRejected,
+		"reviewer_id": reviewerID,
+		"review_note": note,
+		"reviewed_at": time.Now(),
+		"updated_at":  time.Now(),
+	})
+	if err != nil {
+		return fmt.Errorf("reject change request: %w", err)
+	}
+
+	return nil
 }

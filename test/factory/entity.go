@@ -59,5 +59,16 @@ func (f *Factory) CreateEntity(overrideOpt ...ds.Entity) (m *ds.Entity, err erro
 	}
 
 	err = f.repo.CreateEntity(context.Background(), m)
-	return
+	if err != nil {
+		return
+	}
+
+	if len(m.Topics) > 0 {
+		err = f.repo.AttachTopics(context.Background(), m.ID, m.Topics)
+		if err != nil {
+			return
+		}
+	}
+
+	return m, nil
 }

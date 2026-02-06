@@ -73,3 +73,16 @@ func (r *Repo) UpdatePage(ctx context.Context, p *ds.Page) error {
 
 	return nil
 }
+
+// ApplyChangesToPage applies a map of changes to a Page record.
+func (r *Repo) ApplyChangesToPage(ctx context.Context, id ds.ID, changes map[string]any) error {
+	_, span := r.tracer.Start(ctx, "ApplyChangesToPage")
+	defer span.End()
+
+	err := r.update(ctx, id, "pages", changes)
+	if err != nil {
+		return fmt.Errorf("update page: %w", err)
+	}
+
+	return nil
+}

@@ -9,7 +9,7 @@ type Topic struct {
 	Type        EntityType `json:"entity_type,omitempty"`
 	PublicID    string     `json:"public_id,omitempty"`
 	Name        string     `json:"name"`
-	Description string     `json:"description"`
+	Description string     `json:"description,omitzero"`
 	CreatedAt   time.Time  `json:"created_at,omitzero"`
 	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
@@ -28,6 +28,7 @@ type TopicsFilter struct {
 	Page           int
 	PerPage        int
 	Type           EntityType
+	PublicIDs      []string
 	WithCount      bool
 	OrderBy        string
 	OrderDirection string

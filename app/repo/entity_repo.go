@@ -38,6 +38,22 @@ func (r *Repo) FindEntityByPublicID(ctx context.Context, publicID string, t ds.E
 	return ent, err
 }
 
+// GetEntityByID retrieves an entity by its ID.
+func (r *Repo) GetEntityByID(ctx context.Context, id ds.ID) (*ds.Entity, error) {
+	_, span := r.tracer.Start(ctx, "GetEntityByID")
+	defer span.End()
+
+	ent := new(ds.Entity)
+	const query = `SELECT * FROM entities WHERE id = $1`
+
+	err := pgxscan.Get(ctx, r.getDB(ctx), ent, query, id)
+	if noRows(err) {
+		return nil, ErrEntityNotFound
+	}
+
+	return ent, err
+}
+
 // CreateEntity inserts entity.
 func (r *Repo) CreateEntity(ctx context.Context, e *ds.Entity) error {
 	_, span := r.tracer.Start(ctx, "CreateEntity")
@@ -73,6 +89,21 @@ func (r *Repo) UpdateEntity(ctx context.Context, e *ds.Entity) error {
 		"visibility":      e.Visibility,
 		"updated_at":      time.Now(),
 	})
+	if err != nil {
+		return fmt.Errorf("update entity: %w", err)
+	}
+
+	return nil
+}
+
+// ApplyChangesToEntity applies a map of changes to an Entity record.
+func (r *Repo) ApplyChangesToEntity(ctx context.Context, id ds.ID, changes map[string]any) error {
+	_, span := r.tracer.Start(ctx, "UpdateEntity")
+	defer span.End()
+
+	changes["updated_at"] = time.Now()
+
+	err := r.update(ctx, id, "entities", changes)
 	if err != nil {
 		return fmt.Errorf("update entity: %w", err)
 	}

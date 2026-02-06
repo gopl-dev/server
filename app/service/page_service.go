@@ -8,6 +8,7 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
+	"github.com/gopl-dev/server/email"
 )
 
 // GetPageByPublicID retrieves a page by its public identifier.
@@ -18,6 +19,7 @@ func (s *Service) GetPageByPublicID(ctx context.Context, id string) (*ds.Page, e
 	return s.db.GetPageByPublicID(ctx, id)
 }
 
+// GetPageByID retrieves a page by its ID from the database.
 func (s *Service) GetPageByID(ctx context.Context, id ds.ID) (*ds.Page, error) {
 	ctx, span := s.tracer.Start(ctx, "GetBookByID")
 	defer span.End()
@@ -72,12 +74,8 @@ func (s *Service) CreatePage(ctx context.Context, page *ds.Page) (err error) {
 // UpdatePage updates an existing page identified by its public ID.
 //
 // If the caller is an admin, changes are applied immediately and recorded
-// in the entity change log. For non-admin users, a pending change request
-// is created instead, and the update must be reviewed before being applied.
-//
-// The method returns the resulting revision number. For direct admin
-// updates, the revision is always 0.
-func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (revision int, err error) {
+// in the entity change log.
+func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (req *ds.EntityChangeRequest, err error) {
 	ctx, span := s.tracer.Start(ctx, "UpdatePage")
 	defer span.End()
 
@@ -110,30 +108,7 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 		return
 	}
 
-	if user.IsAdmin {
-		err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
-			// TODO create change request, so we can have a diff
-			err = s.db.UpdateEntity(ctx, newPage.Entity)
-			if err != nil {
-				return err
-			}
-
-			err = s.db.UpdatePage(ctx, newPage)
-			if err != nil {
-				return err
-			}
-
-			if isRenameOnly(diff) {
-				return s.LogEntityRenamed(ctx, page.Title, newPage.Entity)
-			}
-
-			return s.LogEntityUpdated(ctx, newPage.Entity)
-		})
-
-		return 0, err
-	}
-
-	req := &ds.EntityChangeRequest{
+	req = &ds.EntityChangeRequest{
 		ID:         ds.NewID(),
 		EntityID:   page.ID,
 		UserID:     user.ID,
@@ -153,5 +128,97 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 		return
 	}
 
-	return req.Revision, nil
+	if user.IsAdmin {
+		err = s.ApplyChangesToPage(ctx, req)
+		if err != nil {
+			return
+		}
+	}
+
+	return req, nil
+}
+
+// ApplyChangesToPage applies approved changes from a change request to a page entity.
+func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRequest) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ApplyChangesToPage")
+	defer span.End()
+
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		return app.ErrUnauthorized()
+	}
+
+	page, err := s.GetPageByID(ctx, req.EntityID)
+	if err != nil {
+		return
+	}
+
+	author, err := s.FindUserByID(ctx, req.UserID)
+	if err != nil {
+		return
+	}
+
+	editable := []string{"content"}
+	data := make(map[string]any)
+	for _, k := range editable {
+		v, ok := req.Diff[k]
+		if ok {
+			data[k] = v
+		}
+	}
+
+	content, ok := data["content"]
+	if ok {
+		contentMD, err := app.MarkdownToHTML(app.String(content))
+		if err != nil {
+			return err
+		}
+
+		data["content_raw"] = content
+		data["content"] = contentMD
+	}
+
+	err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
+		err = s.ApplyChangesToEntity(ctx, req.EntityID, req.Diff)
+		if err != nil {
+			return
+		}
+
+		if len(data) > 0 {
+			err = s.db.ApplyChangesToPage(ctx, req.EntityID, data)
+			if err != nil {
+				return
+			}
+		}
+
+		err = s.CommitChangeRequest(ctx, req)
+		if err != nil {
+			return err
+		}
+		req.Status = ds.EntityChangeCommitted
+
+		if isRenameOnly(req.Diff) {
+			return s.LogEntityRenamed(ctx, req.UserID, req.EntityID, page.Title, req.Diff["title"])
+		}
+
+		err = s.LogEntityUpdated(ctx, req.UserID, req.EntityID, page.Title)
+		if err != nil {
+			return
+		}
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	if publicID, ok := req.Diff["public_id"]; ok {
+		page.PublicID = app.String(publicID)
+	}
+
+	return email.Send(author.Email, email.ChangesApproved{
+		Username:    author.Username,
+		EntityTitle: page.Title,
+		ViewURL:     page.PublicID,
+	})
 }

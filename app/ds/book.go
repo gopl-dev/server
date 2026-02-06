@@ -2,6 +2,7 @@ package ds
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"time"
 
@@ -32,6 +33,12 @@ func (b *Book) Data() map[string]any {
 		b.Authors = make([]BookAuthor, 0)
 	}
 
+	topics := make([]string, len(b.Topics))
+	for i, t := range b.Topics {
+		topics[i] = t.PublicID
+	}
+	sort.Strings(topics)
+
 	return map[string]any{
 		"title":         b.Title,
 		"cover_file_id": b.CoverFileID,
@@ -39,7 +46,7 @@ func (b *Book) Data() map[string]any {
 		"description":   b.DescriptionRaw,
 		"homepage":      b.Homepage,
 		"release_date":  b.ReleaseDate,
-		"topics":        b.Topics,
+		"topics":        topics,
 		"authors":       b.Authors,
 	}
 }

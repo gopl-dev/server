@@ -16,6 +16,27 @@ func (s *Service) FilterTopics(ctx context.Context, f ds.TopicsFilter) (data []d
 	return s.db.FilterTopics(ctx, f)
 }
 
+// ReplaceTopicsUsingPublicIDs replaces all topics associated with an entity using public IDs.
+func (s *Service) ReplaceTopicsUsingPublicIDs(ctx context.Context, e *ds.Entity, ids []string) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ReplaceTopicsUsingPublicIDs")
+	defer span.End()
+
+	topics, _, err := s.FilterTopics(ctx, ds.TopicsFilter{
+		Type:      e.Type,
+		PublicIDs: ids,
+	})
+	if err != nil || len(topics) == 0 {
+		return err
+	}
+
+	err = s.db.DetachTopics(ctx, e.ID)
+	if err != nil {
+		return err
+	}
+
+	return s.AttachTopics(ctx, e.ID, topics)
+}
+
 // AttachTopics associates the given topics with the specified entity.
 func (s *Service) AttachTopics(ctx context.Context, entityID ds.ID, topics []ds.Topic) (err error) {
 	ctx, span := s.tracer.Start(ctx, "AttachTopics")

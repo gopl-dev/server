@@ -96,6 +96,19 @@ func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 	return nil
 }
 
+// ApplyChangesToBook applies a map of changes to a Book record.
+func (r *Repo) ApplyChangesToBook(ctx context.Context, id ds.ID, changes map[string]any) error {
+	_, span := r.tracer.Start(ctx, "ApplyChangesToBook")
+	defer span.End()
+
+	err := r.update(ctx, id, "books", changes)
+	if err != nil {
+		return fmt.Errorf("update book: %w", err)
+	}
+
+	return nil
+}
+
 // FilterBooks retrieves a paginated list of books matching the given filter.
 func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Book, count int, err error) {
 	_, span := r.tracer.Start(ctx, "FilterBooks")

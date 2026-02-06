@@ -48,6 +48,23 @@ func (f *Factory) CreateBook(overrideOpt ...ds.Book) (m *ds.Book, err error) {
 	}
 
 	err = f.repo.CreateBook(context.Background(), m)
+	if err != nil {
+		return
+	}
+
+	// book required to have at least one topic
+	if len(m.Topics) == 0 {
+		topic, err := f.CreateTopic(ds.Topic{Type: ds.EntityTypeBook})
+		if err != nil {
+			return nil, err
+		}
+		m.Topics = []ds.Topic{*topic}
+		err = f.repo.AttachTopics(context.Background(), m.ID, m.Topics)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return
 }
 

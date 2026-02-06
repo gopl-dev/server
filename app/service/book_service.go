@@ -220,7 +220,7 @@ func (s *Service) resolveBookCover(ctx context.Context, book *ds.Book, edit bool
 //
 // The method returns the resulting revision number. For direct admin
 // updates, the revision is always 0.
-func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (revision int, err error) {
+func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (req *ds.EntityChangeRequest, err error) {
 	ctx, span := s.tracer.Start(ctx, "UpdateBook")
 	defer span.End()
 
@@ -244,12 +244,15 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 		return
 	}
 
-	newBook.Topics, err = s.normalizeTopics(ctx, newBook.Topics, ds.EntityTypeBook, 1)
+	book, err := s.GetBookByID(ctx, id)
 	if err != nil {
 		return
 	}
 
-	book, err := s.GetBookByID(ctx, id)
+	if len(newBook.Topics) == 0 {
+		newBook.Topics = book.Topics
+	}
+	newBook.Topics, err = s.normalizeTopics(ctx, newBook.Topics, ds.EntityTypeBook, 1)
 	if err != nil {
 		return
 	}
@@ -262,56 +265,7 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 		return
 	}
 
-	// If an authorized user makes changes, apply them right away and mark them as well-done.
-	// Note: "user.IsAdmin" is not how we're going to handle this long term — proper RBAC will be implemented.
-	// But for now, we need some kind of raw authority check.
-	if user.IsAdmin {
-		err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
-			// TODO create change request, so we can have a diff for history
-
-			if newBook.CoverFileID != book.CoverFileID {
-				err = s.resolveBookCover(ctx, newBook, true)
-				if err != nil {
-					return
-				}
-
-				if !book.CoverFileID.IsNil() {
-					err = s.DeleteFile(ctx, book.CoverFileID)
-					if errors.Is(err, repo.ErrFileNotFound) {
-						err = nil
-					}
-					if err != nil {
-						return err
-					}
-				}
-
-				err = s.db.CommitFile(ctx, newBook.CoverFileID)
-				if err != nil {
-					return
-				}
-			}
-
-			err = s.db.UpdateEntity(ctx, newBook.Entity)
-			if err != nil {
-				return err
-			}
-
-			err = s.db.UpdateBook(ctx, newBook)
-			if err != nil {
-				return err
-			}
-
-			if isRenameOnly(diff) {
-				return s.LogEntityRenamed(ctx, book.Title, newBook.Entity)
-			}
-
-			return s.LogEntityUpdated(ctx, newBook.Entity)
-		})
-
-		return 0, err
-	}
-
-	req := &ds.EntityChangeRequest{
+	req = &ds.EntityChangeRequest{
 		ID:         ds.NewID(),
 		EntityID:   book.ID,
 		UserID:     user.ID,
@@ -331,7 +285,149 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 		return
 	}
 
-	return req.Revision, nil
+	if user.IsAdmin {
+		err = s.ApplyChangesToBook(ctx, req)
+		if err != nil {
+			return
+		}
+	}
+
+	return req, nil
+}
+
+// ApplyChangesToBook applies approved changes from a change request to a book entity.
+func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRequest) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ApplyChangesToBook")
+	defer span.End()
+
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		return app.ErrUnauthorized()
+	}
+
+	book, err := s.GetBookByID(ctx, req.EntityID)
+	if err != nil {
+		return
+	}
+
+	author, err := s.FindUserByID(ctx, req.UserID)
+	if err != nil {
+		return
+	}
+
+	editable := []string{
+		"description", "homepage", "release_date", // string
+		"authors",       // slice
+		"cover_file_id", // file
+		"topics",        // external ref
+	}
+	data := make(map[string]any)
+	for _, k := range editable {
+		v, ok := req.Diff[k]
+		if ok {
+			data[k] = v
+		}
+	}
+
+	desc, ok := data["description"]
+	if ok {
+		descMD, err := app.MarkdownToHTML(app.String(desc))
+		if err != nil {
+			return err
+		}
+
+		data["description_raw"] = desc
+		data["description"] = descMD
+	}
+
+	err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
+		// handle book cover
+		if coverID, ok := data["cover_file_id"]; ok {
+			uuidID, err := ds.ParseID(app.String(coverID))
+			if err != nil {
+				return err
+			}
+
+			if uuidID != book.CoverFileID {
+				oldCover := book.CoverFileID
+				book.CoverFileID = uuidID
+				// TODO resolveBookCover accepts whole book, need to review this
+				err = s.resolveBookCover(ctx, book, true)
+				if err != nil {
+					return err
+				}
+
+				if !book.CoverFileID.IsNil() {
+					err = s.DeleteFile(ctx, oldCover)
+					if errors.Is(err, repo.ErrFileNotFound) {
+						err = nil
+					}
+					if err != nil {
+						return err
+					}
+				}
+
+				err = s.db.CommitFile(ctx, uuidID)
+				if err != nil {
+					return err
+				}
+
+				req.Diff["preview_file_id"] = uuidID
+			}
+		}
+
+		// handle topics
+		if topicsAny, ok := data["topics"]; ok {
+			topics, err := app.StringSliceFromAny(topicsAny)
+			if err != nil {
+				return err
+			}
+
+			err = s.ReplaceTopicsUsingPublicIDs(ctx, book.Entity, topics)
+			if err != nil {
+				return err
+			}
+
+			delete(data, "topics")
+		}
+
+		err = s.ApplyChangesToEntity(ctx, req.EntityID, req.Diff)
+		if err != nil {
+			return
+		}
+
+		if len(data) > 0 {
+			err = s.db.ApplyChangesToBook(ctx, req.EntityID, data)
+			if err != nil {
+				return
+			}
+		}
+
+		err = s.CommitChangeRequest(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		if isRenameOnly(req.Diff) {
+			return s.LogEntityRenamed(ctx, req.UserID, req.EntityID, book.Title, req.Diff["title"])
+		}
+
+		err = s.LogEntityUpdated(ctx, req.UserID, req.EntityID, book.Title)
+		if err != nil {
+			return
+		}
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	return email.Send(author.Email, email.ChangesApproved{
+		Username:    author.Username,
+		EntityTitle: book.Title,
+		ViewURL:     "/books/" + book.PublicID,
+	})
 }
 
 // makeDiff compares two DataProvider states and returns a diff map that contains

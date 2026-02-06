@@ -77,3 +77,46 @@ func (s *Service) ChangeEntityStatus(ctx context.Context, entityID ds.ID, status
 
 	return s.db.ChangeEntityStatus(ctx, entityID, status)
 }
+
+// ApplyChangesToEntity applies approved changes to an entity's editable fields.
+func (s *Service) ApplyChangesToEntity(ctx context.Context, id ds.ID, changes map[string]any) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ApplyChangesToEntity")
+	defer span.End()
+
+	editable := []string{
+		"title", "summary", "public_id", "preview_file_id",
+	}
+	data := make(map[string]any)
+	for _, k := range editable {
+		v, ok := changes[k]
+		if ok {
+			data[k] = v
+		}
+	}
+
+	summary, ok := data["summary"]
+	if ok {
+		summaryMD, err := app.MarkdownToHTML(app.String(summary))
+		if err != nil {
+			return err
+		}
+
+		data["summary_raw"] = summary
+		data["summary"] = summaryMD
+	}
+
+	if len(data) == 0 {
+		return nil
+	}
+
+	err = s.db.ApplyChangesToEntity(ctx, id, data)
+	return
+}
+
+// GetEntityByID retrieves an Entity by its ID from the database.
+func (s *Service) GetEntityByID(ctx context.Context, id ds.ID) (*ds.Entity, error) {
+	ctx, span := s.tracer.Start(ctx, "GetEntityByID")
+	defer span.End()
+
+	return s.db.GetEntityByID(ctx, id)
+}

@@ -25,7 +25,7 @@ type EntityChangeRequest struct {
 	UserID   ID                 `json:"user_id,omitzero"`
 	Status   EntityChangeStatus `json:"status"`
 	Diff     map[string]any     `json:"diff"`
-	//State      map[string]any     `json:"state"`
+	// State      map[string]any     `json:"state"`
 	Message    string     `json:"message,omitempty"`
 	Revision   int        `json:"revision"`
 	ReviewerID *ID        `json:"reviewer_id,omitempty"`

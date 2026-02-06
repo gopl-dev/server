@@ -6,7 +6,10 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net/url"
+	"path"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -54,7 +57,17 @@ var (
 	// ErrInvalidJWT is returned when an authentication token is malformed,
 	// invalidly signed, or contains unexpected claims.
 	ErrInvalidJWT = ErrForbidden("invalid token")
+
+	// ErrNotString indicates that a value is not of string type.
+	ErrNotString = ErrForbidden("is not string")
+
+	// ErrExpectedStringSliceOrAny indicates that a value is not a slice of strings or a slice of any type.
+	ErrExpectedStringSliceOrAny = ErrForbidden("expected []string or []any")
 )
+
+// serverURL holds parsed conf.Server.Addr.
+// It is initialized during application startup and must not be modified.
+var serverURL *url.URL
 
 // CamelCaseToSnakeCase converts a string from CamelCase to snake_case.
 func CamelCaseToSnakeCase(str string) string {
@@ -216,4 +229,57 @@ func HumanTime(t time.Time, relOpt ...time.Time) string {
 	}
 
 	return t.Format("Jan 2, 2006; 15:04")
+}
+
+// IsNil checks if a value is nil.
+func IsNil(v any) bool {
+	if v == nil {
+		return true
+	}
+
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Ptr,
+		reflect.Map,
+		reflect.Slice,
+		reflect.Interface:
+		return rv.IsNil()
+	}
+
+	return false
+}
+
+// ServerURL constructs an absolute URL by joining a relative path with the configured server URL.
+func ServerURL(rel string) string {
+	abs := *serverURL
+	abs.Path = path.Join(abs.Path, rel)
+
+	return abs.String()
+}
+
+// StringSliceFromAny converts a dynamically typed value into a []string.
+func StringSliceFromAny(v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+
+	if ss, ok := v.([]string); ok {
+		return ss, nil
+	}
+
+	raw, ok := v.([]any)
+	if !ok {
+		return nil, fmt.Errorf("%w, got %T", ErrExpectedStringSliceOrAny, v)
+	}
+
+	out := make([]string, len(raw))
+	for i, x := range raw {
+		s, ok := x.(string)
+		if !ok {
+			return nil, fmt.Errorf("element[%d] %w, but %T", i, ErrNotString, x)
+		}
+		out[i] = s
+	}
+
+	return out, nil
 }
