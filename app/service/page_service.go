@@ -129,7 +129,7 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 	}
 
 	if user.IsAdmin {
-		err = s.ApplyChangesToPage(ctx, req)
+		err = s.ApplyChangesToPage(ctx, req, false)
 		if err != nil {
 			return
 		}
@@ -139,7 +139,7 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 }
 
 // ApplyChangesToPage applies approved changes from a change request to a page entity.
-func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRequest) (err error) {
+func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRequest, sendNotification bool) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ApplyChangesToPage")
 	defer span.End()
 
@@ -216,9 +216,16 @@ func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRe
 		page.PublicID = app.String(publicID)
 	}
 
-	return email.Send(author.Email, email.ChangesApproved{
-		Username:    author.Username,
-		EntityTitle: page.Title,
-		ViewURL:     page.PublicID,
-	})
+	if sendNotification {
+		err = email.Send(author.Email, email.ChangesApproved{
+			Username:    author.Username,
+			EntityTitle: page.Title,
+			ViewURL:     page.PublicID,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

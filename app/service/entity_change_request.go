@@ -178,9 +178,9 @@ func (s *Service) ApplyChangeRequest(ctx context.Context, reqID ds.ID) (err erro
 
 	switch req.EntityType {
 	case ds.EntityTypeBook:
-		err = s.ApplyChangesToBook(ctx, req)
+		err = s.ApplyChangesToBook(ctx, req, true)
 	case ds.EntityTypePage:
-		err = s.ApplyChangesToPage(ctx, req)
+		err = s.ApplyChangesToPage(ctx, req, true)
 	default:
 		err = ErrInvalidEntityType
 	}

@@ -24,6 +24,7 @@ templ EditPageForm(pageID string) {
 
                     if (resp.status === 200) {
                         this.saveRevision = data?.revision ?? 0
+                        this.needReview = data?.status === `pending` ?? false
                         this.success = true
                         return
                     }
@@ -36,6 +37,7 @@ templ EditPageForm(pageID string) {
             revision: null,
             revision_date: null,
             saveRevision: null,
+            needReview: true,
 
             // page state
             loading: true,
@@ -108,7 +110,7 @@ templ EditPageForm(pageID string) {
 
             <!-- Success: applied immediately -->
             <div role="alert" class="alert alert-success"
-                 x-show="success && (saveRevision === 0)"
+                 x-show="success && !needReview"
                  x-cloak>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
                      viewBox="0 0 24 24">
@@ -123,7 +125,7 @@ templ EditPageForm(pageID string) {
 
             <!-- Success: sent for review -->
             <div role="alert" class="alert alert-info"
-                 x-show="success && (saveRevision !== null) && (saveRevision > 0)"
+                 x-show="success && needReview"
                  x-cloak>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
                      viewBox="0 0 24 24">

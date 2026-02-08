@@ -286,7 +286,7 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	}
 
 	if user.IsAdmin {
-		err = s.ApplyChangesToBook(ctx, req)
+		err = s.ApplyChangesToBook(ctx, req, false)
 		if err != nil {
 			return
 		}
@@ -296,7 +296,7 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 }
 
 // ApplyChangesToBook applies approved changes from a change request to a book entity.
-func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRequest) (err error) {
+func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRequest, sendNotification bool) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ApplyChangesToBook")
 	defer span.End()
 
@@ -423,11 +423,18 @@ func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRe
 		return
 	}
 
-	return email.Send(author.Email, email.ChangesApproved{
-		Username:    author.Username,
-		EntityTitle: book.Title,
-		ViewURL:     "/books/" + book.PublicID,
-	})
+	if sendNotification {
+		err = email.Send(author.Email, email.ChangesApproved{
+			Username:    author.Username,
+			EntityTitle: book.Title,
+			ViewURL:     book.ViewURL(),
+		})
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 // makeDiff compares two DataProvider states and returns a diff map that contains
