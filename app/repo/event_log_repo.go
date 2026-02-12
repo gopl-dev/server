@@ -4,7 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+)
+
+var (
+	// ErrEventLogNotFound is a sentinel error returned when EventLog not found.
+	ErrEventLogNotFound = app.ErrNotFound("event log not found")
 )
 
 // CreateEventLog persists an EventLog entry to the database.
@@ -67,5 +74,22 @@ func (r *Repo) FilterEventLogs(ctx context.Context, f ds.EventLogsFilter) (logs 
 	}
 
 	count, err = b.scan(ctx, &logs)
+	return
+}
+
+// GetEventLogByID retrieves an event log by its ID.
+func (r *Repo) GetEventLogByID(ctx context.Context, id ds.ID) (log *ds.EventLog, err error) {
+	_, span := r.tracer.Start(ctx, "GetEventLogByID")
+	defer span.End()
+
+	log = new(ds.EventLog)
+	const query = `
+		SELECT * FROM event_logs WHERE id = $1`
+
+	err = pgxscan.Get(ctx, r.getDB(ctx), log, query, id)
+	if noRows(err) {
+		return nil, ErrEventLogNotFound
+	}
+
 	return
 }

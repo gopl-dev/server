@@ -13,9 +13,10 @@ type FilterEventLogs struct {
 
 // EventLog represents a serialized event log entry for API responses.
 type EventLog struct {
-	ID      ds.ID  `json:"id"`
-	Message string `json:"message"`
-	Date    string `json:"date"`
+	ID         ds.ID  `json:"id"`
+	Message    string `json:"message"`
+	Date       string `json:"date"`
+	HasChanges bool   `json:"has_changes"`
 }
 
 // NewFilterEventLog converts domain event logs into a response model.
@@ -27,11 +28,17 @@ func NewFilterEventLog(data []ds.EventLog, count int) FilterEventLogs {
 
 	for i, d := range data {
 		r.Data[i] = EventLog{
-			ID:      d.ID,
-			Message: d.RenderMessage(),
-			Date:    app.HumanTime(d.CreatedAt),
+			ID:         d.ID,
+			Message:    d.RenderMessage(),
+			Date:       app.HumanTime(d.CreatedAt),
+			HasChanges: d.Type == ds.EventLogEntityUpdated,
 		}
 	}
 
 	return r
+}
+
+// EventLogChanges represents the change in an event log.
+type EventLogChanges struct {
+	Changes any `json:"changes"`
 }

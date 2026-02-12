@@ -53,6 +53,7 @@ definitions:
         type: string
       diff:
         additionalProperties: {}
+        description: Diff contains the proposed changes.
         type: object
       entity_id:
         type: string
@@ -65,7 +66,6 @@ definitions:
       id:
         type: string
       message:
-        description: State      map[string]any     `json:"state"`
         type: string
       review_note:
         type: string
@@ -192,6 +192,24 @@ definitions:
           type: string
         type: object
     type: object
+  prop.Type:
+    enum:
+    - unknown
+    - string
+    - text
+    - markdown
+    - url
+    - image
+    - list
+    type: string
+    x-enum-varnames:
+    - Unknown
+    - String
+    - Text
+    - Markdown
+    - URL
+    - Image
+    - List
   request.ChangePassword:
     properties:
       new_password:
@@ -309,14 +327,27 @@ definitions:
       username:
         type: string
     type: object
+  response.ChangeRequestDiff:
+    properties:
+      diff:
+        items:
+          $ref: '#/definitions/service.ChangeDiff'
+        type: array
+    type: object
   response.EventLog:
     properties:
       date:
         type: string
+      has_changes:
+        type: boolean
       id:
         type: string
       message:
         type: string
+    type: object
+  response.EventLogChanges:
+    properties:
+      changes: {}
     type: object
   response.FilterBooks:
     properties:
@@ -370,12 +401,14 @@ definitions:
     type: object
   service.ChangeDiff:
     properties:
-      current:
-        additionalProperties: {}
-        type: object
-      proposed:
-        additionalProperties: {}
-        type: object
+      current: {}
+      diff:
+        type: string
+      key:
+        type: string
+      proposed: {}
+      type:
+        $ref: '#/definitions/prop.Type'
     type: object
   service.EntityChange:
     properties:
@@ -742,7 +775,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.ChangeDiff'
+            $ref: '#/definitions/response.ChangeRequestDiff'
         "400":
           description: Bad Request
           schema:
@@ -804,21 +837,20 @@ paths:
     get:
       consumes:
       - application/json
-      operationId: FilterEventLogs
+      operationId: EventLogChanges
       parameters:
-      - in: query
-        name: page
-        type: integer
-      - in: query
-        name: per_page
-        type: integer
+      - description: Event log ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.FilterEventLogs'
+            $ref: '#/definitions/response.EventLogChanges'
         "400":
           description: Bad Request
           schema:
@@ -833,7 +865,7 @@ paths:
             $ref: '#/definitions/handler.Error'
       security:
       - ApiKeyAuth: []
-      summary: Get activity log
+      summary: Get changes in an event log
       tags:
       - event-logs
   /files/:

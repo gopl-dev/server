@@ -26,7 +26,6 @@ type EntityChangeRequest struct {
 	Status   EntityChangeStatus `json:"status"`
 
 	// Diff contains the proposed changes.
-	// Once applied, it is replaced with the diff from proposed to what was current at that point.
 	Diff map[string]any `json:"diff"`
 
 	Message    string     `json:"message,omitempty"`

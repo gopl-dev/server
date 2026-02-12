@@ -216,12 +216,8 @@ func (s *Service) resolveBookCover(ctx context.Context, book *ds.Book, edit bool
 // UpdateBook updates an existing book by its identifier.
 //
 // For admin users, changes are applied immediately.
-//
 // For non-admin users, a pending entity change request is created instead,
 // and the update must be reviewed before being applied.
-//
-// The method returns the resulting revision number. For direct admin
-// updates, the revision is always 0.
 func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (req *ds.EntityChangeRequest, err error) {
 	ctx, span := s.tracer.Start(ctx, "UpdateBook")
 	defer span.End()
@@ -262,6 +258,7 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	newBook.ID = book.ID
 	newBook.OwnerID = book.OwnerID
 	newBook.PublicID = book.PublicID
+	newBook.PreviewFileID = book.PreviewFileID
 
 	diff, ok := makeDiff(book, newBook)
 	if !ok {
@@ -289,9 +286,13 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	}
 
 	if user.IsAdmin {
-		err = s.ApplyChangesToBook(ctx, req, false)
+		changes, err := makeChangesDiff(book, diff)
 		if err != nil {
-			return
+			return nil, err
+		}
+		err = s.ApplyChangesToBook(ctx, changes, req, false)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -357,7 +358,7 @@ func normalizeDataFromChangeRequest(dp ds.DataProvider, diff map[string]any) (ba
 }
 
 // ApplyChangesToBook applies approved changes from a change request to a book entity.
-func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRequest, sendNotification bool) (err error) {
+func (s *Service) ApplyChangesToBook(ctx context.Context, changes []ChangeDiff, req *ds.EntityChangeRequest, sendNotification bool) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ApplyChangesToBook")
 	defer span.End()
 
@@ -435,10 +436,10 @@ func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRe
 		}
 
 		if isRenameOnly(req.Diff) {
-			return s.LogEntityRenamed(ctx, req.UserID, req.EntityID, book.Title, req.Diff["title"])
+			return s.LogEntityRenamed(ctx, req.UserID, req.EntityID, book.Title, entityData["title"])
 		}
 
-		err = s.LogEntityUpdated(ctx, req.UserID, req.EntityID, book.Title)
+		err = s.LogEntityUpdated(ctx, req.UserID, req.EntityID, book.Title, changes)
 		if err != nil {
 			return
 		}

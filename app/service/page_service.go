@@ -129,9 +129,13 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 	}
 
 	if user.IsAdmin {
-		err = s.ApplyChangesToPage(ctx, req, false)
+		changes, err := makeChangesDiff(page, diff)
 		if err != nil {
-			return
+			return nil, err
+		}
+		err = s.ApplyChangesToPage(ctx, changes, req, false)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -139,7 +143,7 @@ func (s *Service) UpdatePage(ctx context.Context, id string, newPage *ds.Page) (
 }
 
 // ApplyChangesToPage applies approved changes from a change request to a page entity.
-func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRequest, sendNotification bool) (err error) {
+func (s *Service) ApplyChangesToPage(ctx context.Context, changes []ChangeDiff, req *ds.EntityChangeRequest, sendNotification bool) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ApplyChangesToPage")
 	defer span.End()
 
@@ -182,10 +186,10 @@ func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRe
 		}
 
 		if isRenameOnly(req.Diff) {
-			return s.LogEntityRenamed(ctx, req.UserID, req.EntityID, page.Title, req.Diff["title"])
+			return s.LogEntityRenamed(ctx, req.UserID, req.EntityID, page.Title, entityData["title"])
 		}
 
-		err = s.LogEntityUpdated(ctx, req.UserID, req.EntityID, page.Title)
+		err = s.LogEntityUpdated(ctx, req.UserID, req.EntityID, page.Title, changes)
 		if err != nil {
 			return
 		}

@@ -565,7 +565,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.ChangeDiff"
+                            "$ref": "#/definitions/response.ChangeRequestDiff"
                         }
                     },
                     "400": {
@@ -667,25 +667,22 @@ const docTemplate = `{
                 "tags": [
                     "event-logs"
                 ],
-                "summary": "Get activity log",
-                "operationId": "FilterEventLogs",
+                "summary": "Get changes in an event log",
+                "operationId": "EventLogChanges",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "name": "per_page",
-                        "in": "query"
+                        "type": "string",
+                        "description": "Event log ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.FilterEventLogs"
+                            "$ref": "#/definitions/response.EventLogChanges"
                         }
                     },
                     "400": {
@@ -1660,6 +1657,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "diff": {
+                    "description": "Diff contains the proposed changes.",
                     "type": "object",
                     "additionalProperties": {}
                 },
@@ -1679,7 +1677,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "message": {
-                    "description": "State      map[string]any     ` + "`" + `json:\"state\"` + "`" + `",
                     "type": "string"
                 },
                 "review_note": {
@@ -1861,6 +1858,27 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "prop.Type": {
+            "type": "string",
+            "enum": [
+                "unknown",
+                "string",
+                "text",
+                "markdown",
+                "url",
+                "image",
+                "list"
+            ],
+            "x-enum-varnames": [
+                "Unknown",
+                "String",
+                "Text",
+                "Markdown",
+                "URL",
+                "Image",
+                "List"
+            ]
         },
         "request.ChangePassword": {
             "type": "object",
@@ -2044,11 +2062,25 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ChangeRequestDiff": {
+            "type": "object",
+            "properties": {
+                "diff": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.ChangeDiff"
+                    }
+                }
+            }
+        },
         "response.EventLog": {
             "type": "object",
             "properties": {
                 "date": {
                     "type": "string"
+                },
+                "has_changes": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "string"
@@ -2056,6 +2088,12 @@ const docTemplate = `{
                 "message": {
                     "type": "string"
                 }
+            }
+        },
+        "response.EventLogChanges": {
+            "type": "object",
+            "properties": {
+                "changes": {}
             }
         },
         "response.FilterBooks": {
@@ -2139,13 +2177,16 @@ const docTemplate = `{
         "service.ChangeDiff": {
             "type": "object",
             "properties": {
-                "current": {
-                    "type": "object",
-                    "additionalProperties": {}
+                "current": {},
+                "diff": {
+                    "type": "string"
                 },
-                "proposed": {
-                    "type": "object",
-                    "additionalProperties": {}
+                "key": {
+                    "type": "string"
+                },
+                "proposed": {},
+                "type": {
+                    "$ref": "#/definitions/prop.Type"
                 }
             }
         },

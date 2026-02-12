@@ -67,11 +67,42 @@ func Compute(text1, text2 string, contextWordsOpt ...int) *Diff {
 	dmp := diffmatchpatch.New()
 	dmp.DiffTimeout = 0
 
-	d.Diff = dmp.DiffCleanupSemanticLossless(
-		dmp.DiffMain(text1, text2, true),
-	)
+	diff := dmp.DiffMain(text1, text2, true)
+	diff = dmp.DiffCleanupSemanticLossless(diff)
+	diff = dmp.DiffCleanupSemantic(diff)
 
+	// If changes are too extensive, simplify to full replacement
+	if shouldSimplifyDiff(diff) {
+		diff = []diffmatchpatch.Diff{
+			{Type: diffmatchpatch.DiffDelete, Text: text1},
+			{Type: diffmatchpatch.DiffInsert, Text: text2},
+		}
+	}
+
+	d.Diff = diff
 	return d
+}
+
+// shouldSimplifyDiff determines if the diff is too complex and should be simplified
+// to a full replacement. Returns true if the ratio of changed characters to total
+// characters exceeds 50%.
+func shouldSimplifyDiff(diff []diffmatchpatch.Diff) bool {
+	var equalChars, totalChars int
+
+	for _, d := range diff {
+		totalChars += len(d.Text)
+		if d.Type == diffmatchpatch.DiffEqual {
+			equalChars += len(d.Text)
+		}
+	}
+
+	if totalChars == 0 {
+		return false
+	}
+
+	// If less than 50% of characters are unchanged, show full replacement
+	changeRatio := float64(totalChars-equalChars) / float64(totalChars)
+	return changeRatio > 0.5 //nolint:mnd
 }
 
 // ComputeFromPatch applies a patch to text1 and computes the difference.

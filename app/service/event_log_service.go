@@ -23,6 +23,20 @@ func (s *Service) FilterEventLogs(ctx context.Context, f ds.EventLogsFilter) (da
 	return s.db.FilterEventLogs(ctx, f)
 }
 
+// EventLogChanges returns the changes data from an event log's metadata.
+func (s *Service) EventLogChanges(ctx context.Context, id ds.ID) (changes any, err error) {
+	ctx, span := s.tracer.Start(ctx, "FilterEventLogs")
+	defer span.End()
+
+	log, err := s.db.GetEventLogByID(ctx, id)
+	if err != nil {
+		return
+	}
+
+	changes = log.Meta["changes"]
+	return
+}
+
 // LogEntityCreated records an event related to entity creation.
 //
 // If the entity requires moderation, a hidden "entity_submitted" event is created.
@@ -51,16 +65,18 @@ func (s *Service) LogEntityCreated(ctx context.Context, e *ds.Entity) error {
 }
 
 // LogEntityUpdated records a public-facing entity update event.
-func (s *Service) LogEntityUpdated(ctx context.Context, userID, entityID ds.ID, title any) error {
+func (s *Service) LogEntityUpdated(ctx context.Context, userID, entityID ds.ID, title, changes any) error {
 	ctx, span := s.tracer.Start(ctx, "LogEntityUpdated")
 	defer span.End()
 
-	// TODO: attach change request reference (ChangeRequestID)
 	log := &ds.EventLog{
 		UserID:   app.Pointer(userID),
 		Type:     ds.EventLogEntityUpdated,
 		EntityID: app.Pointer(entityID),
-		Meta:     map[string]any{"entity_title": title},
+		Meta: map[string]any{
+			"entity_title": title,
+			"changes":      changes,
+		},
 		IsPublic: true,
 	}
 

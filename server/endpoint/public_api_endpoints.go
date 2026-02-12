@@ -26,7 +26,9 @@ func (r *Router) PublicAPIEndpoints() {
 	r.GET("/topics/", r.handler.FilterTopics)
 
 	// event logs
-	r.Group("event-logs").GET("/", r.handler.FilterEventLogs)
+	r.Group("event-logs").
+		GET("/", r.handler.FilterEventLogs).
+		GET("/{id}/changes/", r.handler.EventLogChanges)
 
 	// change requests
 	r.Group("/change-requests/").

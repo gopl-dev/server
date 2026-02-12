@@ -153,32 +153,9 @@ func (s *Service) GetChangeRequestDiff(ctx context.Context, reqID ds.ID) (diffs 
 		return
 	}
 
-	data := entity.Data()
-	diffs = make([]ChangeDiff, 0, len(data))
-	for k := range data {
-		v, ok := req.Diff[k]
-		if ok {
-			d := ChangeDiff{
-				Key:      k,
-				Type:     entity.PropertyType(k),
-				Diff:     "",
-				Current:  nil,
-				Proposed: nil,
-			}
-
-			if d.Type.Patchable() {
-				dc, err := diff.ComputeFromPatch(app.String(data[k]), app.String(v))
-				if err != nil {
-					return nil, nil, err
-				}
-				d.Diff = dc.HTML()
-			} else {
-				d.Current = data[k]
-				d.Proposed = v
-			}
-
-			diffs = append(diffs, d)
-		}
+	diffs, err = makeChangesDiff(entity, req.Diff)
+	if err != nil {
+		return
 	}
 
 	return diffs, req, nil
@@ -194,7 +171,7 @@ func (s *Service) ApplyChangeRequest(ctx context.Context, reqID ds.ID) (err erro
 		return app.ErrUnauthorized()
 	}
 
-	_, req, err := s.GetChangeRequestDiff(ctx, reqID)
+	changes, req, err := s.GetChangeRequestDiff(ctx, reqID)
 	if err != nil {
 		return err
 	}
@@ -206,9 +183,9 @@ func (s *Service) ApplyChangeRequest(ctx context.Context, reqID ds.ID) (err erro
 
 	switch req.EntityType {
 	case ds.EntityTypeBook:
-		err = s.ApplyChangesToBook(ctx, req, true)
+		err = s.ApplyChangesToBook(ctx, changes, req, true)
 	case ds.EntityTypePage:
-		err = s.ApplyChangesToPage(ctx, req, true)
+		err = s.ApplyChangesToPage(ctx, changes, req, true)
 	default:
 		err = ErrInvalidEntityType
 	}
@@ -273,4 +250,36 @@ func (s *Service) GetDataProviderFromEntityType(ctx context.Context, id ds.ID, t
 	}
 
 	return dp, err
+}
+
+func makeChangesDiff(orig ds.DataProvider, changes map[string]any) (diffs []ChangeDiff, err error) {
+	data := orig.Data()
+	diffs = make([]ChangeDiff, 0, len(data))
+	for k := range data {
+		v, ok := changes[k]
+		if ok {
+			d := ChangeDiff{
+				Key:      k,
+				Type:     orig.PropertyType(k),
+				Diff:     "",
+				Current:  nil,
+				Proposed: nil,
+			}
+
+			if d.Type.Patchable() {
+				dc, err := diff.ComputeFromPatch(app.String(data[k]), app.String(v))
+				if err != nil {
+					return nil, err
+				}
+				d.Diff = dc.HTML()
+			} else {
+				d.Current = data[k]
+				d.Proposed = v
+			}
+
+			diffs = append(diffs, d)
+		}
+	}
+
+	return diffs, nil
 }

@@ -87,7 +87,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 			})
 
 		createBook:
-			_, err = s.factory.CreateBook(ds.Book{
+			book, err := s.factory.CreateBook(ds.Book{
 				Entity:      e,
 				CoverFileID: cover.ID,
 			})
@@ -118,12 +118,11 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 			// change requests
 			if random.Bool() {
 				maybeData := map[string]any{
-					"title":        random.ValOrNil(random.Title()),
-					"summary":      random.ValOrNil(fake.Paragraph()),
-					"description":  random.ValOrNil(fake.Paragraph()),
-					"homepage":     random.ValOrNil(fake.URL()),
-					"release_date": random.ValOrNil(random.ReleaseDate()),
-					// TODO topics & authors
+					"title":        random.ValOrNil(random.Patch(book.Title)),
+					"summary":      random.ValOrNil(random.Patch(book.Summary)),
+					"description":  random.ValOrNil(random.Patch(book.Description)),
+					"homepage":     random.ValOrNil(random.Patch(book.Homepage)),
+					"release_date": random.ValOrNil(app.MakePatch(book.ReleaseDate, random.ReleaseDate())),
 				}
 
 				data := make(map[string]any)
