@@ -79,37 +79,31 @@ func (s *Service) ChangeEntityStatus(ctx context.Context, entityID ds.ID, status
 }
 
 // ApplyChangesToEntity applies approved changes to an entity's editable fields.
-func (s *Service) ApplyChangesToEntity(ctx context.Context, id ds.ID, changes map[string]any) (err error) {
+func (s *Service) ApplyChangesToEntity(ctx context.Context, e *ds.Entity, changes map[string]any) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ApplyChangesToEntity")
 	defer span.End()
 
-	editable := []string{
-		"title", "summary", "public_id", "preview_file_id",
-	}
-	data := make(map[string]any)
-	for _, k := range editable {
-		v, ok := changes[k]
-		if ok {
-			data[k] = v
-		}
-	}
-
-	summary, ok := data["summary"]
-	if ok {
-		summaryMD, err := app.MarkdownToHTML(app.String(summary))
+	// TODO do a proper update (delete deleted and insert new)
+	if topicsAny, ok := changes["topics"]; ok {
+		topics, err := app.StringSliceFromAny(topicsAny)
 		if err != nil {
 			return err
 		}
 
-		data["summary_raw"] = summary
-		data["summary"] = summaryMD
+		err = s.ReplaceTopicsUsingPublicIDs(ctx, e, topics)
+		if err != nil {
+			return err
+		}
+
+		// topics is an external model
+		delete(changes, "topics")
 	}
 
-	if len(data) == 0 {
+	if len(changes) == 0 {
 		return nil
 	}
 
-	err = s.db.ApplyChangesToEntity(ctx, id, data)
+	err = s.db.ApplyChangesToEntity(ctx, e.ID, changes)
 	return
 }
 

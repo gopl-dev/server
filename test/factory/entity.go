@@ -3,9 +3,11 @@ package factory
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	fake "github.com/brianvoe/gofakeit/v7"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/test/factory/random"
 )
@@ -22,12 +24,14 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 		updatedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 50)
 	}
 
+	title := fake.BookTitle()
+
 	m = &ds.Entity{
 		ID:            ds.NewID(),
-		PublicID:      fake.UrlSlug(random.Int(3, 5)),
+		PublicID:      app.Slug(title),
 		OwnerID:       ds.NilID,
 		PreviewFileID: ds.NilID,
-		Title:         fake.BookTitle(),
+		Title:         title,
 		SummaryRaw:    text,
 		Summary:       text,
 		Visibility:    random.Element(ds.EntityVisibilities),
@@ -40,6 +44,11 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 
 	if len(overrideOpt) == 1 {
 		merge(m, overrideOpt[0])
+	}
+
+	if m.Type == ds.EntityTypePage {
+		m.Summary = ""
+		m.SummaryRaw = ""
 	}
 
 	return
@@ -58,7 +67,23 @@ func (f *Factory) CreateEntity(overrideOpt ...ds.Entity) (m *ds.Entity, err erro
 		m.OwnerID = u.ID
 	}
 
+createEntity:
 	err = f.repo.CreateEntity(context.Background(), m)
+	if column, ok := app.IsUniqueViolation(err); ok {
+		switch column {
+		case "public_id":
+			m.PublicID, err = LookupIUnique(context.Background(), f.db, "entities", "public_id", m.PublicID, func(s string) string {
+				return s + "-" + fake.UrlSlug(1)
+			})
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("%w: column: %q", app.ErrUniqueViolation, column)
+		}
+
+		goto createEntity
+	}
 	if err != nil {
 		return
 	}

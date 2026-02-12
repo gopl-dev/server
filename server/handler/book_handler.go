@@ -78,7 +78,8 @@ func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	changeRequest, err := h.service.UpdateBook(ctx, id, req.ToBook())
+	updatedBook := req.ToBook()
+	changeRequest, err := h.service.UpdateBook(ctx, id, updatedBook)
 	if err != nil {
 		res.Abort(err)
 		return

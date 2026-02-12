@@ -26,3 +26,13 @@ footer {
     }
 }
 
+.changes-diff {
+    ins {
+        background: #a0e48e;
+        text-decoration: none;
+    }
+    del {
+        background: #ff7970;
+        text-decoration: none;
+    }
+}

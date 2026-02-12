@@ -53,8 +53,8 @@ func (h *Handler) FilterChangeRequests(w http.ResponseWriter, r *http.Request) {
 //	@Tags		change-requests
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path		string	true	"Change request ID"
-//	@Success	200		{object}	service.ChangeDiff
+//	@Param		id	path string	true "Change request ID"
+//	@Success	200		{object}	response.ChangeRequestDiff
 //	@Failure	400		{object}	Error
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
@@ -76,7 +76,9 @@ func (h *Handler) GetChangeRequestDiff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonOK(w, diff)
+	jsonOK(w, response.ChangeRequestDiff{
+		Diff: diff,
+	})
 }
 
 // ApplyChangeRequest applies a pending change request to the entity.

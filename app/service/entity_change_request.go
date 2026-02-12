@@ -8,6 +8,8 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/app/ds/prop"
+	"github.com/gopl-dev/server/diff"
 	"github.com/gopl-dev/server/email"
 )
 
@@ -58,6 +60,14 @@ func (s *Service) GetEntityChangeState(ctx context.Context, entityID ds.ID, data
 
 	// apply changes to data
 	newData := data.Data()
+	for k, v := range newData {
+		if data.PropertyType(k).Patchable() {
+			req.Diff[k], err = app.ApplyPatch(app.String(v), app.String(req.Diff[k]))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	maps.Copy(newData, req.Diff)
 
 	revisionDate := req.UpdatedAt
@@ -118,14 +128,18 @@ func (s *Service) FilterChangeRequests(ctx context.Context, f ds.ChangeRequestsF
 }
 
 // ChangeDiff represents the difference between current and proposed values in an entity change request.
+// For type "diff" Diff property should be set, for other types Current and Proposed should be set.
 type ChangeDiff struct {
-	Current  map[string]any `json:"current"`
-	Proposed map[string]any `json:"proposed"`
+	Key      string    `json:"key"`
+	Type     prop.Type `json:"type"`
+	Diff     string    `json:"diff,omitempty"`
+	Current  any       `json:"current,omitempty"`
+	Proposed any       `json:"proposed,omitempty"`
 }
 
 // GetChangeRequestDiff retrieves a change request and computes the diff between proposed and current values.
 // Returns the diff containing both proposed changes and current values, along with the change request.
-func (s *Service) GetChangeRequestDiff(ctx context.Context, reqID ds.ID) (diff *ChangeDiff, req *ds.EntityChangeRequest, err error) {
+func (s *Service) GetChangeRequestDiff(ctx context.Context, reqID ds.ID) (diffs []ChangeDiff, req *ds.EntityChangeRequest, err error) {
 	ctx, span := s.tracer.Start(ctx, "GetChangeRequestDiff")
 	defer span.End()
 
@@ -140,20 +154,34 @@ func (s *Service) GetChangeRequestDiff(ctx context.Context, reqID ds.ID) (diff *
 	}
 
 	data := entity.Data()
-	diff = &ChangeDiff{
-		Proposed: make(map[string]any),
-		Current:  make(map[string]any),
-	}
+	diffs = make([]ChangeDiff, 0, len(data))
 	for k := range data {
 		v, ok := req.Diff[k]
 		if ok {
-			diff.Current[k] = data[k]
-			diff.Proposed[k] = v
+			d := ChangeDiff{
+				Key:      k,
+				Type:     entity.PropertyType(k),
+				Diff:     "",
+				Current:  nil,
+				Proposed: nil,
+			}
+
+			if d.Type.Patchable() {
+				dc, err := diff.ComputeFromPatch(app.String(data[k]), app.String(v))
+				if err != nil {
+					return nil, nil, err
+				}
+				d.Diff = dc.HTML()
+			} else {
+				d.Current = data[k]
+				d.Proposed = v
+			}
+
+			diffs = append(diffs, d)
 		}
 	}
 
-	req.Diff = diff.Proposed
-	return
+	return diffs, req, nil
 }
 
 // ApplyChangeRequest applies a pending change request to its associated entity.

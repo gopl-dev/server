@@ -101,21 +101,80 @@
                         <tr>
                             <td class="align-top font-mono text-sm" x-text="row.key"></td>
 
-                            <td class="align-top">
+                            <!-- Current column -->
+                            <td class="align-top" :colspan="row.hasDiff ? 2 : 1">
+                                <!-- Diff type: shows in full width -->
+                                <template x-if="row.current.kind === 'diff'">
+                                    <div x-html="row.current.html" class="max-w-none changes-diff"></div>
+                                </template>
+
+                                <!-- Empty (for diff type in current column) -->
+                                <template x-if="row.current.kind === 'empty'">
+                                    <span class="text-gray-400 italic">—</span>
+                                </template>
+
+                                <!-- Image -->
                                 <template x-if="row.current.kind === 'image'">
                                     <img :src="row.current.src" :alt="row.current.alt" class="max-h-40" />
                                 </template>
+
+                                <!-- Text -->
                                 <template x-if="row.current.kind === 'text'">
                                     <pre class="whitespace-pre-wrap text-sm" x-text="row.current.text"></pre>
                                 </template>
+
+                                <!-- List -->
+                                <template x-if="row.current.kind === 'list'">
+                                    <ul class="list-disc list-inside">
+                                        <template x-for="item in row.current.items" :key="item">
+                                            <li x-text="item"></li>
+                                        </template>
+                                    </ul>
+                                </template>
+
+                                <!-- List of objects -->
+                                <template x-if="row.current.kind === 'list-objects'">
+                                    <ul class="list-disc list-inside">
+                                        <template x-for="item in row.current.items" :key="item">
+                                            <li x-text="item"></li>
+                                        </template>
+                                    </ul>
+                                </template>
                             </td>
 
-                            <td class="align-top">
+                            <!-- Proposed column (only if not diff) -->
+                            <td class="align-top" x-show="!row.hasDiff">
+                                <!-- Diff type: shown in current column with colspan -->
+                                <template x-if="row.proposed.kind === 'diff'">
+                                    <div x-html="row.proposed.html" class="prose max-w-none"></div>
+                                </template>
+
+                                <!-- Image -->
                                 <template x-if="row.proposed.kind === 'image'">
                                     <img :src="row.proposed.src" :alt="row.proposed.alt" class="max-h-40" />
                                 </template>
+
+                                <!-- Text -->
                                 <template x-if="row.proposed.kind === 'text'">
                                     <pre class="whitespace-pre-wrap text-sm" x-text="row.proposed.text"></pre>
+                                </template>
+
+                                <!-- List -->
+                                <template x-if="row.proposed.kind === 'list'">
+                                    <ul class="list-disc list-inside">
+                                        <template x-for="item in row.proposed.items" :key="item">
+                                            <li x-text="item"></li>
+                                        </template>
+                                    </ul>
+                                </template>
+
+                                <!-- List of objects -->
+                                <template x-if="row.proposed.kind === 'list-objects'">
+                                    <ul class="list-disc list-inside">
+                                        <template x-for="item in row.proposed.items" :key="item">
+                                            <li x-text="item"></li>
+                                        </template>
+                                    </ul>
                                 </template>
                             </td>
                         </tr>

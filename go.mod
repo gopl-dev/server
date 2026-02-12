@@ -81,6 +81,7 @@ require (
 	github.com/natefinch/atomic v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.63.0 // indirect

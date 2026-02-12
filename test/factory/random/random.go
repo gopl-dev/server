@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	fake "github.com/brianvoe/gofakeit/v7"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
 
@@ -221,4 +222,84 @@ func Maybe[T any](val T, probabilityOpt ...int) T {
 // using one of the allowed release date layouts.
 func ReleaseDate() string {
 	return fake.Date().Format(Element(ds.ReleaseDateLayouts))
+}
+
+// Patch applies an Edit to the input string and returns a patch.
+func Patch(input string) (patch string) {
+	return app.MakePatch(input, Edit(input))
+}
+
+// Edit applies a random modification to the input string that is nicely fit to diff comparison and patch creation.
+// The function randomly performs one of six operations:
+//   - For multi-word strings (split by spaces): adds/removes entire words
+//   - For single-word strings: adds/removes individual characters
+//
+// If input is empty, it generates a random title first.
+//
+//nolint:mnd,gosec
+func Edit(input string) (out string) {
+	if input == "" {
+		input = Title()
+	}
+
+	parts := strings.Split(input, " ")
+	isMultiWord := len(parts) > 1
+
+	switch Int(1, 6) {
+	case 1: // add fragment to start
+		if isMultiWord {
+			parts = append([]string{Title()}, parts...)
+		} else {
+			parts[0] = Letter() + parts[0]
+		}
+
+	case 2: // add fragment to end
+		if isMultiWord {
+			parts = append(parts, Title())
+		} else {
+			parts[0] += Letter()
+		}
+	case 3: // add fragment in the middle
+		if isMultiWord {
+			idx := rand.IntN(len(parts)-1) + 1
+			parts = append(parts[:idx], append([]string{Title()}, parts[idx:]...)...)
+		} else {
+			word := parts[0]
+			pos := 0
+			if len(word) > 0 {
+				pos = rand.IntN(len(word))
+			}
+			parts[0] = word[:pos] + Letter() + word[pos:]
+		}
+
+	case 4: // remove fragment from start
+		if isMultiWord {
+			parts = parts[1:]
+		} else if len(parts[0]) > 1 {
+			parts[0] = parts[0][1:]
+		}
+
+	case 5: // remove fragment from end
+		if isMultiWord {
+			parts = parts[:len(parts)-1]
+		} else if len(parts[0]) > 1 {
+			parts[0] = parts[0][:len(parts[0])-1]
+		}
+
+	case 6: // remove fragment from inside
+		if isMultiWord {
+			if len(parts) == 2 {
+				parts = parts[1:]
+			} else {
+				idx := rand.IntN(len(parts)-2) + 1
+				parts = append(parts[:idx], parts[idx+1:]...)
+			}
+		} else if len(parts[0]) > 2 {
+			pos := rand.IntN(len(parts[0])-2) + 1
+			word := parts[0]
+			parts[0] = word[:pos] + word[pos+1:]
+		}
+	}
+
+	return strings.Join(parts, " ")
 }

@@ -158,28 +158,13 @@ func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRe
 		return
 	}
 
-	editable := []string{"content"}
-	data := make(map[string]any)
-	for _, k := range editable {
-		v, ok := req.Diff[k]
-		if ok {
-			data[k] = v
-		}
-	}
-
-	content, ok := data["content"]
-	if ok {
-		contentMD, err := app.MarkdownToHTML(app.String(content))
-		if err != nil {
-			return err
-		}
-
-		data["content_raw"] = content
-		data["content"] = contentMD
+	entityData, data, err := normalizeDataFromChangeRequest(page, req.Diff)
+	if err != nil {
+		return
 	}
 
 	err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
-		err = s.ApplyChangesToEntity(ctx, req.EntityID, req.Diff)
+		err = s.ApplyChangesToEntity(ctx, page.Entity, entityData)
 		if err != nil {
 			return
 		}
@@ -195,7 +180,6 @@ func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRe
 		if err != nil {
 			return err
 		}
-		req.Status = ds.EntityChangeCommitted
 
 		if isRenameOnly(req.Diff) {
 			return s.LogEntityRenamed(ctx, req.UserID, req.EntityID, page.Title, req.Diff["title"])
@@ -212,7 +196,7 @@ func (s *Service) ApplyChangesToPage(ctx context.Context, req *ds.EntityChangeRe
 		return
 	}
 
-	if publicID, ok := req.Diff["public_id"]; ok {
+	if publicID, ok := entityData["public_id"]; ok {
 		page.PublicID = app.String(publicID)
 	}
 

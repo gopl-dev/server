@@ -91,7 +91,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				Entity:      e,
 				CoverFileID: cover.ID,
 			})
-			if _, ok := isUniqueViolation(err); ok {
+			if _, ok := app.IsUniqueViolation(err); ok {
 				newID, err := uniqueSlug(e.PublicID)
 				if err != nil {
 					return err
@@ -99,12 +99,15 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				e.PublicID = newID
 				goto createBook
 			}
+			if err != nil {
+				return err
+			}
 
 			// topics
 			for range random.Int(1, 3) {
 				t := random.Element(topics)
 				err := s.repo.CreateEntityTopic(ctx, e.ID, t.ID)
-				if _, ok := isUniqueViolation(err); ok {
+				if _, ok := app.IsUniqueViolation(err); ok {
 					continue
 				}
 				if err != nil {

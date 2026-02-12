@@ -7,6 +7,7 @@ import (
 	"time"
 
 	fake "github.com/brianvoe/gofakeit/v7"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/test/factory"
 	"github.com/gopl-dev/server/test/factory/random"
@@ -54,7 +55,7 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 
 		createUser:
 			_, err = s.factory.CreateUser(u)
-			if column, ok := isUniqueViolation(err); ok {
+			if column, ok := app.IsUniqueViolation(err); ok {
 				switch column {
 				case "username":
 					u.Username, err = uniqueUsername(u.Username)
@@ -67,7 +68,7 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 						return err
 					}
 				default:
-					return fmt.Errorf("%w: column: %q", ErrUniqueViolation, column)
+					return fmt.Errorf("%w: column: %q", app.ErrUniqueViolation, column)
 				}
 
 				goto createUser

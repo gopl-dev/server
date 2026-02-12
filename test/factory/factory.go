@@ -1,4 +1,3 @@
-// Package factory ...
 package factory
 
 import (
@@ -14,17 +13,22 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
+	"github.com/gopl-dev/server/trace"
 	"github.com/jackc/pgx/v5"
 )
 
 // Factory holds dependencies required by factory methods.
 type Factory struct {
+	db   *app.DB
 	repo *repo.Repo
 }
 
 // New is a factory function that creates and returns a new Factory instance.
-func New(r *repo.Repo) *Factory {
-	return &Factory{repo: r}
+func New(db *app.DB) *Factory {
+	return &Factory{
+		db:   db,
+		repo: repo.New(db, trace.NewNoOpTracer()),
+	}
 }
 
 func merge(dst, src any) {
@@ -112,8 +116,7 @@ func Ten[T any](fn func(m ...T) (*T, error), override ...T) ([]*T, error) {
 // (for example, by appending a suffix or incrementing a counter) and must eventually
 // lead to a value that does not exist in the database, otherwise the function will
 // recurse indefinitely (angry emoji).
-func LookupIUnique[T any](ctx context.Context, db *app.DB,
-	table, column string, value T,
+func LookupIUnique[T any](ctx context.Context, db *app.DB, table, column string, value T,
 	transformFn func(T) T) (T, error) {
 	res := new(T)
 

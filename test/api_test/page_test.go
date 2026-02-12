@@ -100,12 +100,14 @@ func TestUpdatePage_WithReview(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("%v", v), fmt.Sprintf("%v", resp.Data[k]))
 	}
 
+	newContent := random.Edit(page.ContentRaw)
+
 	// do update (change only content)
 	updateReq := request.UpdatePage{
 		CreatePage: request.CreatePage{
 			PublicID: page.PublicID,
 			Title:    page.Title,
-			Content:  random.String(),
+			Content:  newContent,
 		},
 	}
 	var updateResp ds.EntityChangeRequest
@@ -114,13 +116,15 @@ func TestUpdatePage_WithReview(t *testing.T) {
 	assert.Equal(t, 1, updateResp.Revision)
 	assert.Equal(t, ds.EntityChangePending, updateResp.Status)
 
+	contentPacth := app.MakePatch(page.ContentRaw, newContent)
+
 	// new change request should be created
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
 		"user_id":   user.ID,
 		"entity_id": page.ID,
 		"status":    ds.EntityChangePending,
 		"revision":  1,
-		"diff":      map[string]any{"content": updateReq.Content},
+		"diff":      map[string]any{"content": contentPacth},
 	})
 
 	// page itself should not be changed
@@ -138,7 +142,9 @@ func TestUpdatePage_WithReview(t *testing.T) {
 
 	// updating page that already have change request for review
 	// should only update that request
-	updateReq.Title = random.String()
+	newTitle := random.Edit(page.Title)
+	titlePatch := app.MakePatch(page.Title, newTitle)
+	updateReq.Title = newTitle
 	UPDATE(t, pf("/pages/%s/", page.PublicID), updateReq, &updateResp)
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
 		"user_id":    user.ID,
@@ -147,52 +153,49 @@ func TestUpdatePage_WithReview(t *testing.T) {
 		"revision":   2,            // revision should be incremented
 		"updated_at": test.NotNull, // updated_at should be set
 		"diff": map[string]any{
-			"title":   updateReq.Title,
-			"content": updateReq.Content,
+			"title":   titlePatch,
+			"content": contentPacth,
 		},
 	})
 }
 
 func TestUpdatePage_WithoutReview(t *testing.T) {
-	user := create[ds.User](t)
-	token := loginAs(t, user)
-
-	app.Config().Admins = []string{user.ID.String()}
+	user := login(t)
+	makeAdmin(user)
 
 	page := create[ds.Page](t)
+	newContent := random.Edit(page.ContentRaw)
 
 	// do update (change only content)
 	req := request.UpdatePage{
 		CreatePage: request.CreatePage{
 			PublicID: page.PublicID,
 			Title:    page.Title,
-			Content:  random.String(),
+			Content:  newContent,
 		},
 	}
 	var resp ds.EntityChangeRequest
-	Request(t, RequestArgs{
-		method:       http.MethodPut,
-		path:         pf("/pages/%s/", page.PublicID),
-		body:         req,
-		authToken:    token,
-		bindResponse: &resp,
-		assertStatus: http.StatusOK,
-	})
+	UPDATE(t, pf("/pages/%s/", page.PublicID), req, &resp)
 
 	assert.Equal(t, 1, resp.Revision)
 	assert.Equal(t, ds.EntityChangeCommitted, resp.Status)
 
+	newContentHTML, err := app.MarkdownToHTML(newContent)
+	test.CheckErr(t, err)
+
 	// page should be updated
 	test.AssertInDB(t, tt.DB, "pages", test.Data{
 		"id":          page.ID,
-		"content_raw": req.Content,
+		"content_raw": newContent,
+		"content":     newContentHTML,
 	})
 
+	contentPatch := app.MakePatch(page.ContentRaw, newContent)
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
 		"user_id":   user.ID,
 		"entity_id": page.ID,
 		"status":    ds.EntityChangeCommitted,
 		"revision":  1,
-		"diff":      map[string]any{"content": req.Content},
+		"diff":      map[string]any{"content": contentPatch},
 	})
 }

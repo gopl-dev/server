@@ -20,7 +20,7 @@ window.dashboardComponents['change-requests'] = function changeRequestsComponent
         selectedReq: null,
         diffLoading: false,
         diffError: null,
-        diff: { current: {}, proposed: {} },
+        diff: { diff: [] },
 
         rejectMode: false,
         reviewNote: '',
@@ -29,26 +29,57 @@ window.dashboardComponents['change-requests'] = function changeRequestsComponent
         actionType: null, // 'apply' | 'reject'
 
         get diffRows() {
-            const cur = this.diff?.current && typeof this.diff.current === 'object' ? this.diff.current : {};
-            const prop = this.diff?.proposed && typeof this.diff.proposed === 'object' ? this.diff.proposed : {};
+            const fields = this.diff?.diff && Array.isArray(this.diff.diff) ? this.diff.diff : [];
 
-            const keys = new Set([...Object.keys(cur), ...Object.keys(prop)]);
-            const sorted = Array.from(keys).sort((a, b) => a.localeCompare(b));
-
-            return sorted.map((key) => ({
-                key,
-                current: this.renderValueForKey(key, cur[key]),
-                proposed: this.renderValueForKey(key, prop[key]),
+            return fields.map((field) => ({
+                key: field.key,
+                type: field.type,
+                hasDiff: !!(field.diff && field.diff !== ''),
+                current: this.renderValue(field, 'current'),
+                proposed: this.renderValue(field, 'proposed'),
             }));
         },
 
-        formatCellValue(v) {
-            if (v === null || v === undefined) return '';
-            if (typeof v === 'string') return v;
-            try {
-                return JSON.stringify(v, null, 2);
-            } catch (_) {
-                return String(v);
+        renderValue(field, side) {
+            // If field has diff property and it's not empty, show diff
+            if (field.diff && field.diff !== '') {
+                const html = (field.diff || '').replace(/\n/g, '<br/>');
+                return { kind: 'diff', html: html };
+            }
+
+            const value = field[side];
+            if (value === null || value === undefined || value === '') {
+                return { kind: 'text', text: '' };
+            }
+
+            switch (field.type) {
+                case 'image':
+                    return { kind: 'image', src: `/files/${value}/?preview`, alt: 'preview' };
+                case 'list':
+                    const items = Array.isArray(value) ? value : [];
+                    // Check if items are objects
+                    const hasObjects = items.length > 0 && typeof items[0] === 'object' && items[0] !== null;
+
+                    if (hasObjects) {
+                        // Convert objects to key-value pairs
+                        return {
+                            kind: 'list-objects',
+                            items: items.map(item => {
+                                if (typeof item === 'object' && item !== null) {
+                                    return Object.entries(item)
+                                        .filter(([key, val]) => val !== null && val !== undefined && val !== '')
+                                        .map(([key, val]) => `${key}: ${val}`)
+                                        .join(', ');
+                                }
+                                return String(item);
+                            })
+                        };
+                    }
+
+                    return { kind: 'list', items: items };
+                case 'text':
+                default:
+                    return { kind: 'text', text: String(value) };
             }
         },
 
@@ -99,7 +130,7 @@ window.dashboardComponents['change-requests'] = function changeRequestsComponent
             this.selectedReq = null;
             this.diffLoading = false;
             this.diffError = null;
-            this.diff = { current: {}, proposed: {} };
+            this.diff = { diff: [] };
             this.rejectMode = false;
             this.reviewNote = '';
             this.actionLoading = false;
@@ -120,15 +151,14 @@ window.dashboardComponents['change-requests'] = function changeRequestsComponent
         async loadDiff(id) {
             this.diffLoading = true;
             this.diffError = null;
-            this.diff = { current: {}, proposed: {} };
+            this.diff = { diff: [] };
 
             try {
                 const resp = await fetch(`/api/change-requests/${id}/diff/`);
                 if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
 
                 const payload = await resp.json();
-                this.diff.current = payload?.current && typeof payload.current === 'object' ? payload.current : {};
-                this.diff.proposed = payload?.proposed && typeof payload.proposed === 'object' ? payload.proposed : {};
+                this.diff.diff = Array.isArray(payload?.diff) ? payload.diff : [];
             } catch (e) {
                 console.error('Error loading diff:', e);
                 this.diffError = 'Failed to load diff. Please try again.';
@@ -178,17 +208,6 @@ window.dashboardComponents['change-requests'] = function changeRequestsComponent
         cancelReject() {
             this.rejectMode = false;
             this.reviewNote = '';
-        },
-
-        renderValueForKey(key, v) {
-            if (v === null || v === undefined || v === '') return { kind: 'text', text: '' };
-
-            if (key === 'cover_file_id') {
-                return { kind: 'image', src: `/files/${v}/?preview`, alt: 'cover preview' };
-            }
-
-            // default
-            return { kind: 'text', text: this.formatCellValue(v) };
         },
 
         async submitReject() {

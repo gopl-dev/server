@@ -11,7 +11,6 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/email"
 	"github.com/gopl-dev/server/test/factory"
@@ -53,7 +52,7 @@ func NewApp() *App {
 		Tracer:  tracer,
 		DB:      db,
 		Service: service.New(db, tracer),
-		Factory: factory.New(repo.New(db, tracer)),
+		Factory: factory.New(db),
 	}
 }
 

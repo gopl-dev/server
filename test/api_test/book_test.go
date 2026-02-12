@@ -50,7 +50,7 @@ func TestCreateBook_Basic(t *testing.T) {
 	// check entity created
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":          resp.ID,
-		"public_id":   app.Slug(req.Title),
+		"public_id":   resp.PublicID,
 		"title":       req.Title,
 		"summary_raw": req.Summary,
 		"summary":     summaryHTML,
@@ -208,11 +208,11 @@ func TestUpdateBook_WithReview(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("%v", v), fmt.Sprintf("%v", resp.Data[k]))
 	}
 
-	// do update (change only title)
+	// do update (change only summary)
 	updateReq := request.UpdateBook{
 		CreateBook: request.CreateBook{
-			Title:       random.Title(),
-			Summary:     book.Summary,
+			Title:       book.Title,
+			Summary:     random.Edit(book.Title),
 			Description: book.Description,
 			ReleaseDate: book.ReleaseDate,
 			Authors:     book.Authors,
@@ -227,13 +227,17 @@ func TestUpdateBook_WithReview(t *testing.T) {
 	assert.Equal(t, 1, updateResp.Revision)
 	assert.Equal(t, ds.EntityChangePending, updateResp.Status)
 
+	summaryPatch := app.MakePatch(book.Summary, updateReq.Summary)
+
 	// new change request should be created
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
 		"user_id":   user.ID,
 		"entity_id": book.ID,
 		"status":    ds.EntityChangePending,
 		"revision":  1,
-		"diff":      map[string]any{"title": updateReq.Title},
+		"diff": map[string]any{
+			"summary": summaryPatch,
+		},
 	})
 
 	// book itself should not be changed
@@ -253,7 +257,8 @@ func TestUpdateBook_WithReview(t *testing.T) {
 
 	// updating book that already have change request for review
 	// should only update that request
-	updateReq.Description = random.String()
+	updateReq.Description = random.Edit(book.Description)
+	descriptionPatch := app.MakePatch(book.Description, updateReq.Description)
 	UPDATE(t, pf("/books/%s/", book.ID), updateReq, &updateResp)
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
 		"user_id":    user.ID,
@@ -262,8 +267,8 @@ func TestUpdateBook_WithReview(t *testing.T) {
 		"revision":   2,            // revision should be incremented
 		"updated_at": test.NotNull, // updated_at should be set
 		"diff": map[string]any{
-			"title":       updateReq.Title,
-			"description": updateReq.Description,
+			"summary":     summaryPatch,
+			"description": descriptionPatch,
 		},
 	})
 }

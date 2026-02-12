@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -16,7 +17,9 @@ import (
 
 	z "github.com/Oudwins/zog"
 	"github.com/gosimple/slug"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
@@ -63,6 +66,9 @@ var (
 
 	// ErrExpectedStringSliceOrAny indicates that a value is not a slice of strings or a slice of any type.
 	ErrExpectedStringSliceOrAny = ErrForbidden("expected []string or []any")
+
+	// ErrUniqueViolation indicates a violation of a uniqueness constraint.
+	ErrUniqueViolation = errors.New("UNIQUE VIOLATION")
 )
 
 // serverURL holds parsed conf.Server.Addr.
@@ -282,4 +288,68 @@ func StringSliceFromAny(v any) ([]string, error) {
 	}
 
 	return out, nil
+}
+
+// MakePatch generates a patch string representing the differences between text1 and text2.
+func MakePatch(text1, text2 string) string {
+	dmp := diffmatchpatch.New()
+	patches := dmp.PatchMake(text1, text2)
+
+	return dmp.PatchToText(patches)
+}
+
+// ApplyPatch applies a patch string to the given text and returns the result.
+func ApplyPatch(text, patch string) (result string, err error) {
+	dmp := diffmatchpatch.New()
+	patches, err := dmp.PatchFromText(patch)
+	if err != nil {
+		err = fmt.Errorf("applying patch: %w", err)
+		return
+	}
+
+	result, _ = dmp.PatchApply(patches, text)
+	return
+}
+
+// IsUniqueViolation checks if an error is a PostgreSQL unique constraint violation.
+// It returns the column name that caused the violation and a boolean indicating success.
+// If the column name is not directly available in the error, it attempts to parse it
+// from the error detail message (e.g., "Key (username)=(test) already exists.").
+// For composite keys, it returns only the first column name
+// (e.g., "public_id" from "Key (public_id, type)=(things-fall-apart, book) already exists.").
+func IsUniqueViolation(err error) (column string, ok bool) {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return
+	}
+
+	// 23505 = unique_violation
+	if pgErr.Code != "23505" {
+		return
+	}
+
+	if pgErr.ColumnName == "" {
+		s := pgErr.Detail // "Key (username)=(test) already exists."
+		start := strings.Index(s, "(")
+		if start == -1 {
+			return
+		}
+
+		end := strings.Index(s[start+1:], ")")
+		if end == -1 {
+			return
+		}
+
+		column = s[start+1 : start+1+end] // username or "public_id, type"
+
+		// For composite keys, take only the first column name
+		if commaIdx := strings.Index(column, ","); commaIdx != -1 {
+			column = column[:commaIdx]
+		}
+
+		column = strings.TrimSpace(column)
+		return column, true
+	}
+
+	return pgErr.ColumnName, true
 }

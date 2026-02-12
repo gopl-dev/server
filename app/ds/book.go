@@ -2,11 +2,11 @@ package ds
 
 import (
 	"context"
-	"sort"
 	"strings"
 	"time"
 
 	z "github.com/Oudwins/zog"
+	"github.com/gopl-dev/server/app/ds/prop"
 )
 
 var bookCtxKey ctxKey = "book"
@@ -25,30 +25,35 @@ type Book struct {
 
 // Data returns the editable fields of the Book as a key-value map.
 func (b *Book) Data() map[string]any {
-	if b.Topics == nil {
-		b.Topics = make([]Topic, 0)
-	}
-
 	if b.Authors == nil {
 		b.Authors = make([]BookAuthor, 0)
 	}
 
-	topics := make([]string, len(b.Topics))
-	for i, t := range b.Topics {
-		topics[i] = t.PublicID
-	}
-	sort.Strings(topics)
-
-	return map[string]any{
-		"title":         b.Title,
+	return b.WithEntityData(map[string]any{
 		"cover_file_id": b.CoverFileID,
-		"summary":       b.SummaryRaw,
 		"description":   b.DescriptionRaw,
 		"homepage":      b.Homepage,
 		"release_date":  b.ReleaseDate,
-		"topics":        topics,
 		"authors":       b.Authors,
+	})
+}
+
+// PropertyType returns the property type for a given key.
+func (b *Book) PropertyType(key string) prop.Type {
+	switch key {
+	case "cover_file_id":
+		return prop.Image
+	case "description":
+		return prop.Markdown
+	case "homepage":
+		return prop.URL
+	case "release_date":
+		return prop.String
+	case "authors":
+		return prop.List
 	}
+
+	return b.Entity.PropertyType(key)
 }
 
 // ReleaseDateLayouts defines the allowed date layouts for formatting

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
-	"github.com/gopl-dev/server/app/service"
+	"github.com/gopl-dev/server/diff"
 	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
@@ -36,20 +36,25 @@ func TestFilterChangeRequest(t *testing.T) {
 	user := create[ds.User](t)
 	book := create[ds.Book](t)
 
+	summaryPatch := random.Patch(book.Summary)
 	cr := create(t, ds.EntityChangeRequest{
 		EntityID: book.ID,
 		UserID:   user.ID,
 		Status:   ds.EntityChangePending,
 		Diff: map[string]any{
-			"title": random.String(),
+			"summary": summaryPatch,
 		},
 	})
 
-	var resp service.ChangeDiff
+	var resp response.ChangeRequestDiff
 	GET(t, pf("change-requests/%s/diff/", cr.ID), &resp)
 
-	assert.Equal(t, book.Title, resp.Current["title"])
-	assert.Equal(t, cr.Diff["title"], resp.Proposed["title"])
+	diffedSummary, err := diff.ComputeFromPatch(book.Summary, summaryPatch)
+	test.CheckErr(t, err)
+
+	assert.Len(t, resp.Diff, 1)
+	assert.Equal(t, "summary", resp.Diff[0].Key)
+	assert.Equal(t, diffedSummary.HTML(), resp.Diff[0].Diff)
 }
 
 func TestRejectChangeRequest(t *testing.T) {
@@ -126,25 +131,23 @@ func TestApplyChangeRequestToBook(t *testing.T) {
 		Type: ds.EntityTypeBook,
 	})
 
-	summaryMD := random.String()
-	summaryHTML, err := app.MarkdownToHTML(summaryMD)
-	test.CheckErr(t, err)
-
-	descriptionMD := random.String()
-	descriptionHTML, err := app.MarkdownToHTML(descriptionMD)
-	test.CheckErr(t, err)
+	titlePatch := random.Patch(book.Title)
+	summaryPatch := random.Patch(book.Summary)
+	descriptionPatch := random.Patch(book.Description)
+	homepagePatch := random.Patch(book.Homepage)
+	releaseDatePatch := app.MakePatch(book.ReleaseDate, random.ReleaseDate())
 
 	cr := create(t, ds.EntityChangeRequest{
 		EntityID: book.ID,
 		UserID:   user.ID,
 		Status:   ds.EntityChangePending,
 		Diff: map[string]any{
-			"title":         random.String(),
-			"summary":       summaryMD,
-			"description":   descriptionMD,
+			"title":         titlePatch,
+			"summary":       summaryPatch,
+			"description":   descriptionPatch,
 			"cover_file_id": newCover.ID,
-			"homepage":      random.String(),
-			"release_date":  random.ReleaseDate(),
+			"homepage":      homepagePatch,
+			"release_date":  releaseDatePatch,
 			"topics":        []string{newTopic.PublicID},
 			"authors":       []ds.BookAuthor{{Name: random.String(), Link: random.String()}},
 		},
@@ -153,22 +156,41 @@ func TestApplyChangeRequestToBook(t *testing.T) {
 	var resp response.Status
 	UPDATE(t, pf("change-requests/%s/apply/", cr.ID), struct{}{}, &resp)
 
+	patchedSummary, err := app.ApplyPatch(book.Summary, summaryPatch)
+	test.CheckErr(t, err)
+	newSummaryHTML, err := app.MarkdownToHTML(patchedSummary)
+	test.CheckErr(t, err)
+
+	patchedDescription, err := app.ApplyPatch(book.Description, descriptionPatch)
+	test.CheckErr(t, err)
+	newDescriptionHTML, err := app.MarkdownToHTML(patchedDescription)
+	test.CheckErr(t, err)
+
+	patchedTitle, err := app.ApplyPatch(book.Title, titlePatch)
+	test.CheckErr(t, err)
+
+	patchedHomepage, err := app.ApplyPatch(book.Homepage, homepagePatch)
+	test.CheckErr(t, err)
+
+	patchedReleaseDate, err := app.ApplyPatch(book.ReleaseDate, releaseDatePatch)
+	test.CheckErr(t, err)
+
 	// entity should be updated
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":          book.ID,
-		"title":       cr.Diff["title"],
-		"summary":     summaryHTML,
-		"summary_raw": summaryMD,
+		"title":       patchedTitle,
+		"summary":     newSummaryHTML,
+		"summary_raw": patchedSummary,
 	})
 
 	// book should be updated
 	test.AssertInDB(t, tt.DB, "books", test.Data{
 		"id":              book.ID,
-		"description":     descriptionHTML,
-		"description_raw": descriptionMD,
+		"description":     newDescriptionHTML,
+		"description_raw": patchedDescription,
 		"cover_file_id":   cr.Diff["cover_file_id"],
-		"homepage":        cr.Diff["homepage"],
-		"release_date":    cr.Diff["release_date"],
+		"homepage":        patchedHomepage,
+		"release_date":    patchedReleaseDate,
 		"authors":         cr.Diff["authors"],
 	})
 
@@ -232,47 +254,51 @@ func TestApplyChangeRequestToPage(t *testing.T) {
 	test.CheckErr(t, err)
 
 	page := create(t, ds.Page{
-		Entity: &ds.Entity{
-			Title:    random.String(),
-			PublicID: random.String(),
-		},
 		ContentRaw: contentMD,
 		Content:    contentHTML,
 	})
 
 	// change request values
-	newPublicID := random.String()
-	newTitle := random.String()
-	newContentMD := random.String()
-	newContentHTML, err := app.MarkdownToHTML(newContentMD)
-	test.CheckErr(t, err)
+	titlePatch := random.Patch(page.Title)
+	publicIDPatch := random.Patch(page.PublicID)
+	contentPatch := random.Patch(page.ContentRaw)
 
 	cr := create(t, ds.EntityChangeRequest{
 		EntityID: page.ID,
 		UserID:   user.ID,
 		Status:   ds.EntityChangePending,
 		Diff: map[string]any{
-			"public_id": newPublicID,
-			"title":     newTitle,
-			"content":   newContentMD,
+			"public_id": publicIDPatch,
+			"title":     titlePatch,
+			"content":   contentPatch,
 		},
 	})
 
 	var resp response.Status
 	UPDATE(t, pf("change-requests/%s/apply/", cr.ID), struct{}{}, &resp)
 
+	patchedContent, err := app.ApplyPatch(page.ContentRaw, contentPatch)
+	test.CheckErr(t, err)
+	newContentHTML, err := app.MarkdownToHTML(patchedContent)
+	test.CheckErr(t, err)
+
+	patchedTitle, err := app.ApplyPatch(page.Title, titlePatch)
+	test.CheckErr(t, err)
+	patchedPublicID, err := app.ApplyPatch(page.PublicID, publicIDPatch)
+	test.CheckErr(t, err)
+
 	// entity should be updated
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":         page.ID,
-		"title":      newTitle,
-		"public_id":  newPublicID,
+		"title":      patchedTitle,
+		"public_id":  patchedPublicID,
 		"updated_at": test.NotNull,
 	})
 
 	// page should be updated
 	test.AssertInDB(t, tt.DB, "pages", test.Data{
 		"id":          page.ID,
-		"content_raw": newContentMD,
+		"content_raw": patchedContent,
 		"content":     newContentHTML,
 	})
 
@@ -298,5 +324,5 @@ func TestApplyChangeRequestToPage(t *testing.T) {
 	assert.Len(t, emailVars, 3)
 	assert.Equal(t, user.Username, emailVars["username"])
 	assert.Equal(t, page.Title, emailVars["entity_title"])
-	assert.Equal(t, app.ServerURL(newPublicID), emailVars["view_url"])
+	assert.Equal(t, app.ServerURL(patchedPublicID), emailVars["view_url"])
 }

@@ -4,7 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
 
@@ -50,7 +49,6 @@ func (r *CreateBook) ToBook() *ds.Book {
 			OwnerID:       ds.NilID,
 			PreviewFileID: r.CoverFileID,
 			Type:          ds.EntityTypeBook,
-			PublicID:      app.Slug(r.Title),
 			Title:         r.Title,
 			SummaryRaw:    r.Summary,
 			Visibility:    ds.EntityVisibilityPublic,

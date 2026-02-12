@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
-	"strings"
 	"sync"
 	"time"
 
@@ -25,7 +24,6 @@ import (
 	"github.com/gopl-dev/server/test/factory"
 	"github.com/gopl-dev/server/test/factory/random"
 	"github.com/gopl-dev/server/trace"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var (
@@ -34,9 +32,6 @@ var (
 
 	// ErrNoRows indicates that a query or operation returned no rows.
 	ErrNoRows = errors.New("no rows")
-
-	// ErrUniqueViolation indicates a violation of a uniqueness constraint.
-	ErrUniqueViolation = errors.New("UNIQUE VIOLATION")
 )
 
 // bucket returns an ID bucket for the given key, creating it if necessary.
@@ -67,7 +62,7 @@ func New(db *app.DB) *Seed {
 	return &Seed{
 		db:      db,
 		repo:    r,
-		factory: factory.New(r),
+		factory: factory.New(db),
 		relID:   make(map[string]*idBucket),
 	}
 }
@@ -194,34 +189,4 @@ func (s *Seed) bucket(key string) *idBucket {
 	}
 
 	return b
-}
-
-func isUniqueViolation(err error) (column string, ok bool) {
-	var pgErr *pgconn.PgError
-	if !errors.As(err, &pgErr) {
-		return
-	}
-
-	// 23505 = unique_violation
-	if pgErr.Code != "23505" {
-		return
-	}
-
-	if pgErr.ColumnName == "" {
-		s := pgErr.Detail // "Key (username)=(test) already exists."
-		start := strings.Index(s, "(")
-		if start == -1 {
-			return
-		}
-
-		end := strings.Index(s[start+1:], ")")
-		if end == -1 {
-			return
-		}
-
-		column = s[start+1 : start+1+end] // username
-		return column, true
-	}
-
-	return pgErr.ColumnName, true
 }

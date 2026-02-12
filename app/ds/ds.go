@@ -6,6 +6,8 @@ package ds
 
 import (
 	"time"
+
+	"github.com/gopl-dev/server/app/ds/prop"
 )
 
 type ctxKey string
@@ -29,6 +31,7 @@ const (
 // change requests, and edit workflows.
 type DataProvider interface {
 	Data() map[string]any
+	PropertyType(key string) prop.Type
 }
 
 // FilterDT ...

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	z "github.com/Oudwins/zog"
+	"github.com/gopl-dev/server/app/ds/prop"
 )
 
 var pageCtxKey ctxKey = "page"
@@ -18,11 +19,23 @@ type Page struct {
 
 // Data returns the editable fields of the Page as a key-value map.
 func (p *Page) Data() map[string]any {
-	return map[string]any{
-		"public_id": p.PublicID,
-		"title":     p.Title,
-		"content":   p.ContentRaw,
+	return p.WithEntityData(map[string]any{
+		"content": p.ContentRaw,
+	})
+}
+
+// PropertyType returns the property type for a given key.
+func (p *Page) PropertyType(key string) prop.Type {
+	// should rewrite switch statement to if statement (gocritic)
+	// switch key {
+	// case "content":
+	// 		return prop.Markdown
+	// }
+	if key == "content" {
+		return prop.Markdown
 	}
+
+	return p.Entity.PropertyType(key)
 }
 
 // CreateRules provides the validation map used when saving a new book.

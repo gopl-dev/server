@@ -9,6 +9,7 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/app/ds/prop"
 	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/email"
 )
@@ -50,6 +51,7 @@ func (s *Service) CreateBook(ctx context.Context, book *ds.Book) (err error) {
 	if err != nil {
 		return
 	}
+	book.PublicID = app.Slug(book.Title)
 
 	err = ValidateCreate(book)
 	if err != nil {
@@ -259,6 +261,7 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 
 	newBook.ID = book.ID
 	newBook.OwnerID = book.OwnerID
+	newBook.PublicID = book.PublicID
 
 	diff, ok := makeDiff(book, newBook)
 	if !ok {
@@ -295,6 +298,64 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	return req, nil
 }
 
+// normalizeDataFromChangeRequest processes diff data from a change request and prepares it for applying.
+// It performs the following transformations:
+// - Applies patches to patchable properties (text-based types)
+// - Converts Markdown properties to HTML and stores raw versions with "_raw" suffix
+// - Separates base Entity fields from child-specific fields
+//
+// Returns:
+//   - baseData: fields that belong to the base Entity
+//   - childData: fields specific to the child entity type
+//   - err: any error during patching or markdown conversion
+func normalizeDataFromChangeRequest(dp ds.DataProvider, diff map[string]any) (baseData map[string]any, childData map[string]any, err error) {
+	data := dp.Data()
+	newData := make(map[string]any)
+	for k, currentV := range data {
+		newV, ok := diff[k]
+		if ok {
+			if dp.PropertyType(k).Patchable() {
+				newV, err = app.ApplyPatch(app.String(currentV), app.String(newV))
+				if err != nil {
+					return
+				}
+			}
+
+			if dp.PropertyType(k).Is(prop.Markdown) {
+				newData[k+"_raw"] = newV
+
+				newV, err = app.MarkdownToHTML(app.String(newV))
+				if err != nil {
+					return
+				}
+			}
+
+			newData[k] = newV
+		}
+	}
+
+	// separate Entity data from child data as they'll have different methods to handle it
+	baseData = make(map[string]any)
+	childData = make(map[string]any)
+	baseDataKeys := new(ds.Entity).Data()
+	for k := range baseDataKeys {
+		if dp.PropertyType(k).Is(prop.Markdown) {
+			baseDataKeys[k+"_raw"] = nil
+		}
+	}
+
+	for k, v := range newData {
+		if _, ok := baseDataKeys[k]; ok {
+			baseData[k] = v
+			continue
+		}
+
+		childData[k] = v
+	}
+
+	return
+}
+
 // ApplyChangesToBook applies approved changes from a change request to a book entity.
 func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRequest, sendNotification bool) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ApplyChangesToBook")
@@ -315,29 +376,9 @@ func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRe
 		return
 	}
 
-	editable := []string{
-		"description", "homepage", "release_date", // string
-		"authors",       // slice
-		"cover_file_id", // file
-		"topics",        // external ref
-	}
-	data := make(map[string]any)
-	for _, k := range editable {
-		v, ok := req.Diff[k]
-		if ok {
-			data[k] = v
-		}
-	}
-
-	desc, ok := data["description"]
-	if ok {
-		descMD, err := app.MarkdownToHTML(app.String(desc))
-		if err != nil {
-			return err
-		}
-
-		data["description_raw"] = desc
-		data["description"] = descMD
+	entityData, data, err := normalizeDataFromChangeRequest(book, req.Diff)
+	if err != nil {
+		return
 	}
 
 	err = s.db.WithTx(ctx, func(ctx context.Context) (err error) {
@@ -372,26 +413,11 @@ func (s *Service) ApplyChangesToBook(ctx context.Context, req *ds.EntityChangeRe
 					return err
 				}
 
-				req.Diff["preview_file_id"] = uuidID
+				entityData["preview_file_id"] = uuidID
 			}
 		}
 
-		// handle topics
-		if topicsAny, ok := data["topics"]; ok {
-			topics, err := app.StringSliceFromAny(topicsAny)
-			if err != nil {
-				return err
-			}
-
-			err = s.ReplaceTopicsUsingPublicIDs(ctx, book.Entity, topics)
-			if err != nil {
-				return err
-			}
-
-			delete(data, "topics")
-		}
-
-		err = s.ApplyChangesToEntity(ctx, req.EntityID, req.Diff)
+		err = s.ApplyChangesToEntity(ctx, book.Entity, entityData)
 		if err != nil {
 			return
 		}
@@ -465,6 +491,11 @@ func makeDiff(oldData, newData ds.DataProvider) (diff map[string]any, hasDiff bo
 		if diff == nil {
 			diff = make(map[string]any)
 		}
+
+		if oldData.PropertyType(key).Patchable() {
+			newVal = app.MakePatch(app.String(oldVal), app.String(newVal))
+		}
+
 		diff[key] = newVal
 	}
 
