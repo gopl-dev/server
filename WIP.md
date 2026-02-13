@@ -2,23 +2,6 @@
 
 for simplicity, I keep todo list and progress here for now
 
-- [ ] books
-  - [x] create book
-  - [x] update book
-  - [x] review changes: accept|reject
-  - [x] view book
-  - [ ] delete book
-  - [x] list books
-  - [x] Add topics to entities
-  - [x] Strict format for release date
-  - [x] Rework book to have multiple authors
-  - [x] Remove visibility from book
-
-- [ ] Change requests 
-    - [x] Review, apply, and test complex types (pictures — need preview; topics — references to another entity; authors — array: what was added, removed, or updated)
-    - [ ] In the public activity log, let everyone see what was changed (at the moment the changes are applied)
-    - [x] Learn how to create a patch (when a typo is fixed within a large text, there’s no need to display the whole diff, but only the area around the fix)
-
 - [ ] Maybe group services by entity not by action (Ask opinions)
 - [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
 

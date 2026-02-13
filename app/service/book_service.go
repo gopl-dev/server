@@ -213,7 +213,7 @@ func (s *Service) resolveBookCover(ctx context.Context, book *ds.Book, edit bool
 	return nil
 }
 
-// UpdateBook updates an existing book by its identifier.
+// UpdateBook updates an existing book by its ID.
 //
 // For admin users, changes are applied immediately.
 // For non-admin users, a pending entity change request is created instead,
@@ -297,6 +297,14 @@ func (s *Service) UpdateBook(ctx context.Context, id ds.ID, newBook *ds.Book) (r
 	}
 
 	return req, nil
+}
+
+// DeleteBook deletes an existing book by its ID.
+func (s *Service) DeleteBook(ctx context.Context, id ds.ID) error {
+	ctx, span := s.tracer.Start(ctx, "DeleteBook")
+	defer span.End()
+
+	return s.db.DeleteEntity(ctx, id)
 }
 
 // normalizeDataFromChangeRequest processes diff data from a change request and prepares it for applying.

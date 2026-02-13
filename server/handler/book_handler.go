@@ -49,7 +49,7 @@ func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 
 // UpdateBook handles the API request for updating book.
 //
-//	@ID			UpdateRevision
+//	@ID			UpdateBook
 //	@Summary	Update book
 //	@Tags		books
 //	@Accept		json
@@ -86,6 +86,45 @@ func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res.jsonOK(changeRequest)
+}
+
+// DeleteBook handles the API request for updating book.
+//
+//	@ID			DeleteBook
+//	@Summary	Delete book
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		string	true	"Book ID"
+//	@Success	200		{object}	response.Status
+//	@Failure	400		{object}	Error
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/{id}/ [delete]
+//	@Security	ApiKeyAuth
+func (h *Handler) DeleteBook(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "DeleteBook")
+	defer span.End()
+
+	user := ds.UserFromContext(ctx)
+	if user == nil || !user.IsAdmin {
+		Abort(w, r, app.ErrUnauthorized())
+		return
+	}
+
+	id, err := idFromPath(r)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	err = h.service.DeleteBook(ctx, id)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	jsonOK(w, response.Success)
 }
 
 // GetBook handles the API request for creating a new book.

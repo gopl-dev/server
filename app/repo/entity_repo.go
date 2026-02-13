@@ -17,6 +17,9 @@ var (
 
 // DeleteEntity marks an entity as deleted.
 func (r *Repo) DeleteEntity(ctx context.Context, id ds.ID) error {
+	_, span := r.tracer.Start(ctx, "DeleteEntity")
+	defer span.End()
+
 	return r.delete(ctx, "entities", id)
 }
 

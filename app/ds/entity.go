@@ -13,6 +13,12 @@ import (
 	"github.com/lithammer/shortuuid"
 )
 
+const (
+	// CleanupDeletedEntitiesAfterDays defines how long soft-deleted entities
+	// are kept before permanent cleanup.
+	CleanupDeletedEntitiesAfterDays = 10
+)
+
 // Entity represents the base metadata for any user-content in the system.
 type Entity struct {
 	ID            ID               `json:"id"`

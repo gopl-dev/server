@@ -1,4 +1,5 @@
-// Package worker ...
+// Package worker provides a background job scheduler for running periodic maintenance tasks.
+// Jobs are registered at startup and run according to their defined schedules.
 package worker
 
 import (
@@ -17,7 +18,7 @@ import (
 	"github.com/gopl-dev/server/worker/delete_unconfirmed_users"
 )
 
-// Even this junior worker has lots of jobs and I can’t land one (yet).
+// List of registered jobs.
 var jobs = []Job{
 	cleanupexpiredpasswordchangerequests.NewJob(),
 	cleanupchangeemailrequests.NewJob(),

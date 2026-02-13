@@ -430,3 +430,18 @@ func TestRejectNewBook(t *testing.T) {
 		"note":      req.Note,
 	})
 }
+
+func TestDeleteBook(t *testing.T) {
+	user := login(t)
+	makeAdmin(user)
+
+	book := create[ds.Book](t)
+
+	var resp response.Status
+	DELETE(t, pf("/books/%s/", book.ID), &resp)
+
+	test.AssertInDB(t, tt.DB, "entities", test.Data{
+		"id":         book.ID,
+		"deleted_at": test.NotNull,
+	})
+}
