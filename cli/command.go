@@ -235,10 +235,9 @@ func extractArgs(raw []string, args []arg) (pos []string, flags map[string]bool,
 
 	for _, tok := range raw {
 		// Named params: "{argName}=" must match a registered param name.
-		if eq := strings.IndexByte(tok, '='); eq >= 0 {
-			key := tok[:eq]
+		if key, value, found := strings.Cut(tok, "="); found {
 			if _, ok := paramNames[key]; ok {
-				named[key] = tok[eq+1:]
+				named[key] = value
 				continue
 			}
 		}

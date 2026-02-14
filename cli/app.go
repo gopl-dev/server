@@ -257,7 +257,7 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	help.WriteString(fmt.Sprintf("%s: %s\n", aur.Green(name).Bold(), desc))
 
 	// Build usage line
-	usageParts := make([]string, 0)
+	usageParts := make([]string, 0, len(posArgs)+len(params)+len(flags))
 	usageParts = append(usageParts, posArgs...)
 	usageParts = append(usageParts, params...)
 	usageParts = append(usageParts, flags...)

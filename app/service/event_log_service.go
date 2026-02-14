@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
 
@@ -49,9 +48,9 @@ func (s *Service) LogEntityCreated(ctx context.Context, e *ds.Entity) error {
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(e.OwnerID),
+		UserID:   new(e.OwnerID),
 		Type:     ds.EventLogEntitySubmitted,
-		EntityID: app.Pointer(e.ID),
+		EntityID: new(e.ID),
 		Meta:     map[string]any{"entity_title": e.Title},
 		IsPublic: false,
 	}
@@ -70,9 +69,9 @@ func (s *Service) LogEntityUpdated(ctx context.Context, userID, entityID ds.ID, 
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogEntityUpdated,
-		EntityID: app.Pointer(entityID),
+		EntityID: new(entityID),
 		Meta: map[string]any{
 			"entity_title": title,
 			"changes":      changes,
@@ -89,9 +88,9 @@ func (s *Service) LogEntityRenamed(ctx context.Context, userID, entityID ds.ID, 
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogEntityRenamed,
-		EntityID: app.Pointer(entityID),
+		EntityID: new(entityID),
 		Meta: map[string]any{
 			"entity_title": oldTitle,
 			"new_title":    newTitle,
@@ -108,7 +107,7 @@ func (s *Service) LogUserRegistered(ctx context.Context, userID ds.ID) error {
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogUserAccountCreated,
 		IsPublic: false,
 	}
@@ -119,7 +118,7 @@ func (s *Service) LogUserRegistered(ctx context.Context, userID ds.ID) error {
 	}
 
 	log2 := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogUserAccountActivated,
 		IsPublic: false,
 	}
@@ -133,7 +132,7 @@ func (s *Service) LogEmailConfirmed(ctx context.Context, email string, userID ds
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID: app.Pointer(userID),
+		UserID: new(userID),
 		Type:   ds.EventLogUserEmailConfirmed,
 		Meta: map[string]any{
 			"email": email,
@@ -147,7 +146,7 @@ func (s *Service) LogEmailConfirmed(ctx context.Context, email string, userID ds
 	}
 
 	log2 := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogUserAccountActivated,
 		IsPublic: true,
 	}
@@ -161,7 +160,7 @@ func (s *Service) LogPasswordResetRequest(ctx context.Context, userID ds.ID) err
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogUserRequestPasswordReset,
 		IsPublic: false,
 	}
@@ -175,7 +174,7 @@ func (s *Service) LogPasswordChangedByResetRequest(ctx context.Context, userID d
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogUserPasswordChangedByResetRequest,
 		IsPublic: false,
 	}
@@ -190,7 +189,7 @@ func (s *Service) LogPasswordChanged(ctx context.Context, userID ds.ID) error {
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogUserPasswordChanged,
 		IsPublic: false,
 	}
@@ -204,7 +203,7 @@ func (s *Service) LogEmailChangeRequested(ctx context.Context, userID ds.ID) err
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(userID),
+		UserID:   new(userID),
 		Type:     ds.EventLogUserEmailChangeRequested,
 		IsPublic: false,
 	}
@@ -218,7 +217,7 @@ func (s *Service) LogEmailChanged(ctx context.Context, userID ds.ID, oldEmail, n
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID: app.Pointer(userID),
+		UserID: new(userID),
 		Type:   ds.EventLogUserEmailChanged,
 		Meta: map[string]any{
 			"old_email": oldEmail,
@@ -236,7 +235,7 @@ func (s *Service) LogUsernameChanged(ctx context.Context, userID ds.ID, oldName,
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID: app.Pointer(userID),
+		UserID: new(userID),
 		Type:   ds.EventLogUserUsernameChanged,
 		Meta: map[string]any{
 			"old_username": oldName,
@@ -258,9 +257,9 @@ func (s *Service) LogBookApproved(ctx context.Context, approvedBy ds.ID, book *d
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(approvedBy),
+		UserID:   new(approvedBy),
 		Type:     ds.EventLogEntityApproved,
-		EntityID: app.Pointer(book.ID),
+		EntityID: new(book.ID),
 		IsPublic: false,
 	}
 	err := s.createEventLog(ctx, log)
@@ -269,9 +268,9 @@ func (s *Service) LogBookApproved(ctx context.Context, approvedBy ds.ID, book *d
 	}
 
 	log2 := &ds.EventLog{
-		UserID:   app.Pointer(book.OwnerID),
+		UserID:   new(book.OwnerID),
 		Type:     ds.EventLogEntityAdded,
-		EntityID: app.Pointer(book.ID),
+		EntityID: new(book.ID),
 		IsPublic: true,
 	}
 	return s.createEventLog(ctx, log2)
@@ -283,9 +282,9 @@ func (s *Service) LogBookRejected(ctx context.Context, rejectedBy ds.ID, note st
 	defer span.End()
 
 	log := &ds.EventLog{
-		UserID:   app.Pointer(rejectedBy),
+		UserID:   new(rejectedBy),
 		Type:     ds.EventLogEntityRejected,
-		EntityID: app.Pointer(book.ID),
+		EntityID: new(book.ID),
 		Meta: map[string]any{
 			"note": note,
 		},

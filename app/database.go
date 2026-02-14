@@ -144,8 +144,8 @@ selectAll:
 		// on clean db run migrations table not exists yet
 		// check this by code returned and table name
 		// if so, create table and retry
-		pgErr := new(pgconn.PgError)
-		if errors.As(err, &pgErr) && pgErr.Code == "42P01" && strings.Contains(err.Error(), mgTable) {
+		pgErr, ok := errors.AsType[*pgconn.PgError](err)
+		if ok && pgErr.Code == "42P01" && strings.Contains(err.Error(), mgTable) {
 			_, err = db.Exec(ctx, `
        CREATE TABLE `+mgTable+` (
           version    BIGINT NOT NULL PRIMARY KEY,

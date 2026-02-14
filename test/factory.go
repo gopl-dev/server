@@ -43,8 +43,7 @@ func createMethodFor[T any]() (reflect.Method, error) {
 
 	var found *reflect.Method
 
-	for i := range factoryType.NumMethod() {
-		m := factoryType.Method(i)
+	for m := range factoryType.Methods() {
 		mt := m.Type
 
 		// func(*Factory, ...T) (*T, error)
@@ -105,9 +104,10 @@ func Create[T any](t *testing.T, f *factory.Factory, overrideOpt ...T) *T {
 		t.Fatal(err)
 	}
 
-	args := []reflect.Value{reflect.ValueOf(f)}
-	for _, o := range overrideOpt {
-		args = append(args, reflect.ValueOf(o))
+	args := make([]reflect.Value, 1, 2)
+	args[0] = reflect.ValueOf(f)
+	if len(overrideOpt) > 0 {
+		args = append(args, reflect.ValueOf(overrideOpt[0]))
 	}
 
 	outs := m.Func.Call(args)

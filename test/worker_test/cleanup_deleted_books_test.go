@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory"
@@ -18,12 +17,12 @@ func TestCleanupDeletedBooks(t *testing.T) {
 	bookWithFile := create[ds.Book](t, ds.Book{
 		CoverFileID: file.ID,
 		Entity: &ds.Entity{
-			DeletedAt: app.Pointer(time.Now().AddDate(0, 0, -(ds.CleanupDeletedEntitiesAfterDays + 1))),
+			DeletedAt: new(time.Now().AddDate(0, 0, -(ds.CleanupDeletedEntitiesAfterDays + 1))),
 		},
 	})
 	books, err := factory.Ten(tt.Factory.CreateBook, ds.Book{
 		Entity: &ds.Entity{
-			DeletedAt: app.Pointer(time.Now().AddDate(0, 0, -(ds.CleanupDeletedEntitiesAfterDays + 1))),
+			DeletedAt: new(time.Now().AddDate(0, 0, -(ds.CleanupDeletedEntitiesAfterDays + 1))),
 			Topics:    []ds.Topic{*topic},
 		},
 	})

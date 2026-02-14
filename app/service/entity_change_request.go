@@ -72,7 +72,7 @@ func (s *Service) GetEntityChangeState(ctx context.Context, entityID ds.ID, data
 
 	revisionDate := req.UpdatedAt
 	if revisionDate == nil {
-		revisionDate = app.Pointer(req.CreatedAt)
+		revisionDate = new(req.CreatedAt)
 	}
 
 	state = &EntityChange{
@@ -113,7 +113,7 @@ func (s *Service) UpdateEntityChangeRequest(ctx context.Context, m *ds.EntityCha
 	m.Revision = req.Revision + 1
 	m.Status = req.Status
 	m.CreatedAt = req.CreatedAt
-	m.UpdatedAt = app.Pointer(time.Now())
+	m.UpdatedAt = new(time.Now())
 
 	err = s.db.UpdateChangeRequest(ctx, m)
 	return
@@ -175,7 +175,7 @@ func (s *Service) ApplyChangeRequest(ctx context.Context, reqID ds.ID) (err erro
 	if err != nil {
 		return err
 	}
-	req.ReviewerID = app.Pointer(user.ID)
+	req.ReviewerID = new(user.ID)
 
 	if req.Status == ds.EntityChangeCommitted {
 		return ErrChangeRequestAlreadyCommited

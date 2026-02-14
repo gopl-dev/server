@@ -149,10 +149,7 @@ func (h *Request) MapHeaders(to any) {
 			continue
 		}
 
-		headerName := tag
-		if commaIndex := strings.Index(tag, ","); commaIndex != -1 {
-			headerName = tag[:commaIndex]
-		}
+		headerName, _, _ := strings.Cut(tag, ",")
 
 		if value, ok := h.Request.Header[http.CanonicalHeaderKey(headerName)]; ok && len(value) > 0 {
 			fieldVal := val.Field(i)
@@ -341,16 +338,11 @@ func Abort(w http.ResponseWriter, r *http.Request, err error) {
 		Code: app.CodeInternal,
 	}
 
-	var (
-		appErr   app.Error
-		inputErr app.InputError
-	)
-
-	if errors.As(err, &appErr) {
+	if appErr, ok := errors.AsType[app.Error](err); ok {
 		resp.Code = appErr.Code
 		resp.Error = appErr.Error()
 	}
-	if errors.As(err, &inputErr) {
+	if inputErr, ok := errors.AsType[app.InputError](err); ok {
 		resp.Code = app.CodeUnprocessable
 		resp.InputErrors = inputErr
 	} else {

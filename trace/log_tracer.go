@@ -1,5 +1,4 @@
-// Package trace ...
-package trace
+package trace //nolint:revive // TODO rename?
 
 import (
 	"context"

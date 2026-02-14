@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory"
@@ -13,7 +12,7 @@ import (
 
 func TestCleanupDeletedUserAccounts(t *testing.T) {
 	user := create(t, ds.User{
-		DeletedAt: app.Pointer(time.Now().Add(-(ds.CleanupDeletedUserAfter + time.Hour))),
+		DeletedAt: new(time.Now().Add(-(ds.CleanupDeletedUserAfter + time.Hour))),
 	})
 
 	_, err := factory.Five(tt.Factory.CreateUserSession, ds.UserSession{UserID: user.ID})

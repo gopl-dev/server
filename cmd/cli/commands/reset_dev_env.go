@@ -188,8 +188,8 @@ func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
 	if !cmd.NoSeed {
 		fmt.Println("Seeding data...")
 		seedCmd := seedDataCmd{
-			Data:  app.Pointer("all"),
-			Count: app.Pointer(100), //nolint:mnd
+			Data:  new("all"),
+			Count: new(100), //nolint:mnd
 		}
 		err = seedCmd.Handle(ctx)
 		if err != nil {

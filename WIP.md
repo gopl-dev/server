@@ -6,7 +6,6 @@ for simplicity, I keep todo list and progress here for now
 - [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
 
 **Before release**:
-- [ ] go1.26 🚀
 - [ ] Review "TODO!"s
 - [ ] enable "unused" linter 
 - [ ] Homepage

@@ -83,11 +83,6 @@ func CamelCaseToSnakeCase(str string) string {
 	return strings.ToLower(snake)
 }
 
-// Pointer is a generic helper function that returns a pointer to the value provided.
-func Pointer[T any](v T) *T {
-	return &v
-}
-
 // RelativeFilePath computes the relative path of a full path with respect to a base path,
 // and converts the path to use forward slashes.
 func RelativeFilePath(basePath, fullPath string) string {
@@ -318,8 +313,8 @@ func ApplyPatch(text, patch string) (result string, err error) {
 // For composite keys, it returns only the first column name
 // (e.g., "public_id" from "Key (public_id, type)=(things-fall-apart, book) already exists.").
 func IsUniqueViolation(err error) (column string, ok bool) {
-	var pgErr *pgconn.PgError
-	if !errors.As(err, &pgErr) {
+	pgErr, ok := errors.AsType[*pgconn.PgError](err)
+	if !ok {
 		return
 	}
 

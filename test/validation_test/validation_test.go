@@ -23,8 +23,8 @@ func checkValidatedInput(t *testing.T, valid bool, err error, argName string, ex
 		t.Fatal("expected error")
 	}
 
-	var inputError app.InputError
-	if !errors.As(err, &inputError) {
+	inputError, ok := errors.AsType[app.InputError](err)
+	if !ok {
 		t.Error("[ERROR]: ", err.Error())
 		t.Fatalf("error expected to be of type InputError, %T given", err)
 	}

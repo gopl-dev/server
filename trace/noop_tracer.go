@@ -1,4 +1,4 @@
-package trace
+package trace //nolint:revive
 
 import (
 	"go.opentelemetry.io/otel"

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/cli"
 	"github.com/gopl-dev/server/test/seed"
 )
@@ -43,7 +42,7 @@ func (cmd *seedDataCmd) Handle(ctx context.Context) (err error) {
 	s := seed.New(db())
 
 	if cmd.Data == nil {
-		cmd.Data = app.Pointer("all") // TODO: new("all") soon
+		cmd.Data = new("all")
 	}
 
 	switch *cmd.Data {
