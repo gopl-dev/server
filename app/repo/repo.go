@@ -330,14 +330,6 @@ func (b *filterBuilder) whereRaw(steak string, seasoning ...any) *filterBuilder 
 	return b
 }
 
-func (b *filterBuilder) whereValue(column string, val any) *filterBuilder {
-	if val == nil {
-		return b
-	}
-
-	return b.where(column, val)
-}
-
 func (b *filterBuilder) withCount(ok bool) *filterBuilder {
 	b.selectCount = ok
 	return b

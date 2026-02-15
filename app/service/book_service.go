@@ -28,6 +28,9 @@ var (
 	// ErrBookIsNotUnderReview is returned when an operation requires a book
 	// to be in the "under review" state.
 	ErrBookIsNotUnderReview = errors.New("book is not under review")
+
+	// ErrInvalidRefID is returned when a reference ID is neither a valid UUID nor string.
+	ErrInvalidRefID = app.ErrUnprocessable("id must be UUID or string")
 )
 
 // FilterBooks retrieves a paginated list of books matching the given filter.
@@ -541,4 +544,47 @@ func hasDiff(oldData, newData map[string]any) bool {
 func isRenameOnly(data map[string]any) bool {
 	_, ok := data["title"]
 	return ok && len(data) == 1
+}
+
+// GetBookByID retrieves a book record from the database by its ID.
+func (s *Service) GetBookByID(ctx context.Context, id ds.ID) (*ds.Book, error) {
+	ctx, span := s.tracer.Start(ctx, "GetBookByID")
+	defer span.End()
+
+	return s.db.GetBookByID(ctx, id)
+}
+
+// GetBookByPublicID retrieves a book record from the database by its public ID.
+func (s *Service) GetBookByPublicID(ctx context.Context, publicID string) (*ds.Book, error) {
+	ctx, span := s.tracer.Start(ctx, "GetBookByPublicID")
+	defer span.End()
+
+	return s.db.GetBookByPublicID(ctx, publicID)
+}
+
+// GetBookByRef returns a book by a reference of unknown type.
+//
+// The reference may be either:
+//   - ds.ID (internal UUID-based identifier), or
+//   - string, representing either a UUID or a public identifier (e.g. "book_ABCXYZ").
+func (s *Service) GetBookByRef(ctx context.Context, ref any) (*ds.Book, error) {
+	ctx, span := s.tracer.Start(ctx, "GetBookByRef")
+	defer span.End()
+
+	id, ok := ref.(ds.ID)
+	if ok {
+		return s.db.GetBookByID(ctx, id)
+	}
+
+	idStr, ok := ref.(string)
+	if ok {
+		id, err := ds.ParseID(idStr)
+		if err == nil {
+			return s.db.GetBookByID(ctx, id)
+		}
+
+		return s.db.GetBookByPublicID(ctx, idStr)
+	}
+
+	return nil, ErrInvalidRefID
 }

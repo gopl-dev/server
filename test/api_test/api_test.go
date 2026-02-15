@@ -257,10 +257,6 @@ func makeAdmin(u *ds.User) {
 	app.Config().Admins = []string{u.ID.String()}
 }
 
-func removeAdmin() {
-	app.Config().Admins = []string{}
-}
-
 type fileForm struct {
 	authToken    string
 	fields       map[string]string

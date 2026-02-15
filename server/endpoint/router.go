@@ -24,7 +24,6 @@ const exactMatchSuffix = "{$}"
 type Router struct {
 	basePath    string
 	mux         *http.ServeMux
-	routes      map[string]string
 	mw          *middleware.Middleware
 	handler     *handler.Handler
 	middlewares []middleware.Fn

@@ -10,12 +10,19 @@ import (
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/app/session"
+	"github.com/markbates/goth"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var authenticateUserInputRules = z.Shape{
 	"Email":    z.String().Required(z.Message("Email is required")),
 	"Password": z.String().Required(z.Message("Password is required")),
+}
+
+var authenticateOAuthUser = z.Shape{
+	"Email":    emailInputRules,
+	"Provider": z.String().Required(z.Message("provider is required")),
+	"UserID":   z.String().Required(z.Message("user_id is required")),
 }
 
 var (
@@ -72,18 +79,50 @@ func (s *Service) newSignedSessionToken(ctx context.Context, userID ds.ID) (toke
 	return session.NewSignedJWT(sess.ID, userID)
 }
 
-// AuthenticateUserInput ...
+// AuthenticateUserInput defines the input for user authentication.
 type AuthenticateUserInput struct {
 	Email, Password string
 }
 
-// Sanitize ...
+// Sanitize trims whitespace from email and password fields.
 func (in *AuthenticateUserInput) Sanitize() {
 	in.Email = strings.TrimSpace(in.Email)
 	in.Password = strings.TrimSpace(in.Password)
 }
 
-// Validate ...
+// Validate validates the authentication input against defined rules.
 func (in *AuthenticateUserInput) Validate() error {
 	return validateInput(authenticateUserInputRules, in)
+}
+
+// AuthenticateOAuthUser authenticates a user via OAuth provider credentials.
+// It resolves the user account from the OAuth data and creates a new session token.
+func (s *Service) AuthenticateOAuthUser(ctx context.Context, authAcc goth.User) (token string, err error) {
+	ctx, span := s.tracer.Start(ctx, "AuthenticateOAuthUser")
+	defer span.End()
+
+	in := &AuthenticateOAuthUserInput{&authAcc}
+	user, err := s.ResolveUserFromOAuthAccount(ctx, *in.User)
+	if err != nil {
+		return
+	}
+
+	return s.newSignedSessionToken(ctx, user.ID)
+}
+
+// AuthenticateOAuthUserInput defines the input for OAuth user authentication.
+type AuthenticateOAuthUserInput struct {
+	*goth.User
+}
+
+// Sanitize trims whitespace from OAuth user fields.
+func (in *AuthenticateOAuthUserInput) Sanitize() {
+	in.UserID = strings.TrimSpace(in.UserID)
+	in.Provider = strings.TrimSpace(in.Provider)
+	in.Email = strings.TrimSpace(in.Email)
+}
+
+// Validate validates the OAuth authentication input against defined rules.
+func (in *AuthenticateOAuthUserInput) Validate() error {
+	return validateInput(authenticateOAuthUser, in)
 }

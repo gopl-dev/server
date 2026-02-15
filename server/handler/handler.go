@@ -217,32 +217,6 @@ func (h *Request) bindJSON(body any) *Request {
 	return handleJSON(h.Response, h.Request, body)
 }
 
-// handleQueryRequest is a helper function that binds URL query parameters to the
-// provided 'body' struct, performs validation/sanitization, and handles errors.
-func handleQueryRequest(w http.ResponseWriter, r *http.Request, body any) *Request {
-	h := &Request{
-		Request:  r,
-		Response: w,
-	}
-
-	bindQuery(r, body)
-
-	if v, ok := body.(Sanitizer); ok {
-		v.Sanitize()
-	}
-
-	if v, ok := body.(Validator); ok {
-		err := app.NewInputError()
-		v.Validate(&err)
-
-		if err.Has() {
-			h.Abort(err)
-		}
-	}
-
-	return h
-}
-
 // writeJSON serializes the provided body into a JSON response, sets the Content-Type,
 // and writes the given HTTP status code.
 func writeJSON(w http.ResponseWriter, body any, status int) (err error) {
