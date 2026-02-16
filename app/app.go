@@ -259,9 +259,9 @@ func ServerURL(rel string) string {
 }
 
 // StringSliceFromAny converts a dynamically typed value into a []string.
-func StringSliceFromAny(v any) ([]string, error) {
+func StringSliceFromAny(v any) (out []string, err error) {
 	if v == nil {
-		return nil, nil
+		return
 	}
 
 	if ss, ok := v.([]string); ok {
@@ -270,14 +270,16 @@ func StringSliceFromAny(v any) ([]string, error) {
 
 	raw, ok := v.([]any)
 	if !ok {
-		return nil, fmt.Errorf("%w, got %T", ErrExpectedStringSliceOrAny, v)
+		err = fmt.Errorf("%w, got %T", ErrExpectedStringSliceOrAny, v)
+		return
 	}
 
-	out := make([]string, len(raw))
+	out = make([]string, len(raw))
 	for i, x := range raw {
 		s, ok := x.(string)
 		if !ok {
-			return nil, fmt.Errorf("element[%d] %w, but %T", i, ErrNotString, x)
+			err = fmt.Errorf("element[%d] %w, but %T", i, ErrNotString, x)
+			return
 		}
 		out[i] = s
 	}

@@ -25,7 +25,7 @@ func (r *Repo) FindPendingChangeRequest(ctx context.Context, entityID, userID ds
 	req := new(ds.EntityChangeRequest)
 	err := pgxscan.Get(ctx, r.getDB(ctx), req, query, entityID, userID, ds.EntityChangePending)
 	if noRows(err) {
-		return nil, nil
+		return nil, ErrEntityChangeRequestNotFound
 	}
 
 	return req, err

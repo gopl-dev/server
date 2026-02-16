@@ -9,6 +9,7 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/ds/prop"
+	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/diff"
 	"github.com/gopl-dev/server/email"
 )
@@ -42,12 +43,8 @@ func (s *Service) GetEntityChangeState(ctx context.Context, entityID ds.ID, data
 	}
 
 	req, err := s.db.FindPendingChangeRequest(ctx, entityID, user.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	// no changes were made yet, return data as is
-	if req == nil {
+	if errors.Is(err, repo.ErrEntityChangeRequestNotFound) {
+		// no changes were made yet, return data as is
 		state = &EntityChange{
 			ID:           entityID,
 			Data:         data.Data(),
@@ -56,6 +53,9 @@ func (s *Service) GetEntityChangeState(ctx context.Context, entityID ds.ID, data
 		}
 
 		return state, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	// apply changes to data
@@ -96,13 +96,12 @@ func (s *Service) UpdateEntityChangeRequest(ctx context.Context, m *ds.EntityCha
 	defer span.End()
 
 	req, err := s.db.FindPendingChangeRequest(ctx, m.EntityID, m.UserID)
-	if err != nil {
-		return err
-	}
-
-	if req == nil {
+	if errors.Is(err, repo.ErrEntityChangeRequestNotFound) {
 		m.Revision = 1
 		return s.db.CreateChangeRequest(ctx, m)
+	}
+	if err != nil {
+		return err
 	}
 
 	if !hasDiff(req.Diff, m.Diff) {
