@@ -33,16 +33,15 @@ func (r *Repo) CreateUserSession(ctx context.Context, s *ds.UserSession) (err er
 	})
 }
 
-// FindUserSessionByID retrieves a user session record from the database using its unique ID.
-func (r *Repo) FindUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.UserSession, err error) {
-	_, span := r.tracer.Start(ctx, "FindUserSessionByID")
+// GetUserSessionByID retrieves a user session record from the database using its unique ID.
+func (r *Repo) GetUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.UserSession, err error) {
+	_, span := r.tracer.Start(ctx, "GetUserSessionByID")
 	defer span.End()
 
 	sess = new(ds.UserSession)
 	err = pgxscan.Get(ctx, r.getDB(ctx), sess, `SELECT * FROM user_sessions WHERE id = $1`, id)
 	if noRows(err) {
-		sess = nil
-		err = ErrSessionNotFound
+		return nil, ErrSessionNotFound
 	}
 
 	return

@@ -15,9 +15,9 @@ var (
 	ErrEntityChangeRequestNotFound = app.ErrNotFound("change request not found")
 )
 
-// FindPendingChangeRequest retrieves the most recent pending change request for a specific entity and user.
-func (r *Repo) FindPendingChangeRequest(ctx context.Context, entityID, userID ds.ID) (*ds.EntityChangeRequest, error) {
-	ctx, span := r.tracer.Start(ctx, "FindPendingChangeRequest")
+// GetPendingChangeRequest retrieves the most recent pending change request for a specific entity and user.
+func (r *Repo) GetPendingChangeRequest(ctx context.Context, entityID, userID ds.ID) (*ds.EntityChangeRequest, error) {
+	ctx, span := r.tracer.Start(ctx, "GetPendingChangeRequest")
 	defer span.End()
 
 	const query = `SELECT * FROM entity_change_requests WHERE entity_id = $1 AND user_id = $2 AND status = $3 ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1`

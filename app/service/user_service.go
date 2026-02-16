@@ -128,10 +128,6 @@ const (
 	// UsernameAlreadyTaken is the specific error message for username validation failure during registration.
 	UsernameAlreadyTaken = "Username already taken"
 
-	// InvalidConfirmationCode is the specific error message returned
-	// when an email confirmation code is invalid or expired.
-	InvalidConfirmationCode = "Invalid confirmation code"
-
 	passwordResetTokenLength = 32
 	emailChangeTokenLength   = 32
 	emailConfirmationTTL     = time.Hour * 24
@@ -139,6 +135,9 @@ const (
 )
 
 var (
+	// ErrInvalidConfirmationCode is the specific error returned
+	// when an email confirmation code is invalid or expired.
+	ErrInvalidConfirmationCode = app.InputError{"code": "Invalid confirmation code"}
 	// ErrInvalidPasswordResetToken ...
 	ErrInvalidPasswordResetToken = app.ErrUnprocessable("password reset request is either expired or invalid")
 
@@ -184,7 +183,7 @@ func (s *Service) ChangeUserPassword(ctx context.Context, userID ds.ID, oldPassw
 		return err
 	}
 
-	user, err := s.FindUserByID(ctx, in.UserID)
+	user, err := s.GetUserByID(ctx, in.UserID)
 	if user == nil {
 		return err
 	}
@@ -235,7 +234,7 @@ func (s *Service) ChangeUsername(ctx context.Context, in ChangeUsernameInput) (e
 		return
 	}
 
-	user, err := s.db.FindUserByID(ctx, in.UserID)
+	user, err := s.db.GetUserByID(ctx, in.UserID)
 	if err != nil {
 		return
 	}
@@ -245,7 +244,7 @@ func (s *Service) ChangeUsername(ctx context.Context, in ChangeUsernameInput) (e
 		return app.InputError{"password": "Incorrect password"}
 	}
 
-	existingUser, err := s.db.FindUserByUsername(ctx, in.NewUsername)
+	existingUser, err := s.db.GetUserByUsername(ctx, in.NewUsername)
 	if errors.Is(err, repo.ErrUserNotFound) {
 		err = nil
 	}
@@ -293,13 +292,16 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 		return
 	}
 
-	ec, err := s.db.FindEmailConfirmationByCode(ctx, in.Code)
+	ec, err := s.db.GetEmailConfirmationByCode(ctx, in.Code)
+	if errors.Is(err, repo.ErrEmailConfirmationFound) {
+		return ErrInvalidConfirmationCode
+	}
 	if err != nil {
-		return
+		return err
 	}
 
-	if ec == nil || ec.Invalid() {
-		return app.InputError{"code": InvalidConfirmationCode}
+	if ec.Invalid() {
+		return ErrInvalidConfirmationCode
 	}
 
 	err = s.db.SetUserEmailConfirmed(ctx, ec.UserID)
@@ -312,7 +314,7 @@ func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
 		return
 	}
 
-	user, err := s.FindUserByID(ctx, ec.UserID)
+	user, err := s.GetUserByID(ctx, ec.UserID)
 	if err != nil {
 		return
 	}
@@ -346,7 +348,7 @@ func (s *Service) ConfirmEmailChange(ctx context.Context, token string) (err err
 		return
 	}
 
-	req, err := s.db.FindChangeEmailRequestByToken(ctx, in.Token)
+	req, err := s.db.GetChangeEmailRequestByToken(ctx, in.Token)
 	if errors.Is(err, repo.ErrChangeEmailRequestNotFound) {
 		return ErrInvalidChangeEmailToken
 	}
@@ -358,7 +360,7 @@ func (s *Service) ConfirmEmailChange(ctx context.Context, token string) (err err
 		return ErrInvalidChangeEmailToken
 	}
 
-	user, err := s.FindUserByID(ctx, req.UserID)
+	user, err := s.GetUserByID(ctx, req.UserID)
 	if err != nil {
 		return
 	}
@@ -405,7 +407,7 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID ds.ID, ne
 		return
 	}
 
-	user, err := s.db.FindUserByID(ctx, userID)
+	user, err := s.db.GetUserByID(ctx, userID)
 	if err != nil {
 		return
 	}
@@ -415,7 +417,7 @@ func (s *Service) CreateChangeEmailRequest(ctx context.Context, userID ds.ID, ne
 	}
 
 	// Check if the new email is already taken by another user.
-	existingUser, err := s.db.FindUserByEmail(ctx, in.NewEmail)
+	existingUser, err := s.db.GetUserByEmail(ctx, in.NewEmail)
 	if errors.Is(err, repo.ErrUserNotFound) {
 		err = nil
 	}
@@ -516,7 +518,7 @@ func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) 
 	for {
 		code := newCode(length)
 
-		ec, err := s.db.FindEmailConfirmationByCode(ctx, code)
+		ec, err := s.db.GetEmailConfirmationByCode(ctx, code)
 		if err != nil {
 			return "", err
 		}
@@ -583,7 +585,7 @@ func (s *Service) CreatePasswordResetRequest(ctx context.Context, emailAddr stri
 		return
 	}
 
-	user, err := s.db.FindUserByEmail(ctx, in.Email)
+	user, err := s.db.GetUserByEmail(ctx, in.Email)
 	if err != nil {
 		// If the user is not found, we don't return an error to prevent email enumeration attacks.
 		if errors.Is(err, repo.ErrUserNotFound) {
@@ -689,7 +691,7 @@ func (s *Service) DeleteUser(ctx context.Context, userID ds.ID, password string)
 		return
 	}
 
-	user, err := s.db.FindUserByID(ctx, in.UserID)
+	user, err := s.db.GetUserByID(ctx, in.UserID)
 	if err != nil {
 		return
 	}
@@ -754,9 +756,9 @@ func (in *DeleteUserSessionInput) Validate() error {
 	return nil
 }
 
-// FindPasswordResetByToken retrieves a password reset token from the database and validates it.
-func (s *Service) FindPasswordResetByToken(ctx context.Context, token string) (prt *ds.PasswordResetToken, err error) {
-	ctx, span := s.tracer.Start(ctx, "FindPasswordResetByToken")
+// GetPasswordResetByToken retrieves a password reset token from the database and validates it.
+func (s *Service) GetPasswordResetByToken(ctx context.Context, token string) (prt *ds.PasswordResetToken, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetPasswordResetByToken")
 	defer span.End()
 
 	in := &FindPasswordResetByTokenInput{Token: token}
@@ -765,7 +767,7 @@ func (s *Service) FindPasswordResetByToken(ctx context.Context, token string) (p
 		return
 	}
 
-	prt, err = s.db.FindPasswordResetToken(ctx, in.Token)
+	prt, err = s.db.GetPasswordResetToken(ctx, in.Token)
 	if errors.Is(err, repo.ErrPasswordResetTokenNotFound) {
 		err = ErrInvalidPasswordResetToken
 		return
@@ -797,9 +799,9 @@ func (in *FindPasswordResetByTokenInput) Validate() error {
 	return validateInput(findPasswordResetByTokenInputRules, in)
 }
 
-// FindUserByEmail retrieves a user record from the database by their email address.
-func (s *Service) FindUserByEmail(ctx context.Context, email string) (user *ds.User, err error) {
-	ctx, span := s.tracer.Start(ctx, "FindUserByEmail")
+// GetUserByEmail retrieves a user record from the database by their email address.
+func (s *Service) GetUserByEmail(ctx context.Context, email string) (user *ds.User, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetUserByEmail")
 	defer span.End()
 
 	in := &FindUserByEmailInput{Email: email}
@@ -808,7 +810,7 @@ func (s *Service) FindUserByEmail(ctx context.Context, email string) (user *ds.U
 		return
 	}
 
-	return s.db.FindUserByEmail(ctx, in.Email)
+	return s.db.GetUserByEmail(ctx, in.Email)
 }
 
 // FindUserByEmailInput defines the input for finding a user by email.
@@ -826,9 +828,9 @@ func (in *FindUserByEmailInput) Validate() error {
 	return validateInput(findUserByEmailInputRules, in)
 }
 
-// FindUserByID retrieves a user record from the database by their ID.
-func (s *Service) FindUserByID(ctx context.Context, id ds.ID) (user *ds.User, err error) {
-	ctx, span := s.tracer.Start(ctx, "FindUserByID")
+// GetUserByID retrieves a user record from the database by their ID.
+func (s *Service) GetUserByID(ctx context.Context, id ds.ID) (user *ds.User, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetUserByID")
 	defer span.End()
 
 	in := &FindUserByIDInput{ID: id}
@@ -837,7 +839,7 @@ func (s *Service) FindUserByID(ctx context.Context, id ds.ID) (user *ds.User, er
 		return
 	}
 
-	return s.db.FindUserByID(ctx, in.ID)
+	return s.db.GetUserByID(ctx, in.ID)
 }
 
 // FindUserByIDInput defines the input for finding a user by ID.
@@ -853,9 +855,9 @@ func (in *FindUserByIDInput) Validate() error {
 	return validateInput(findUserByIDInputRules, in)
 }
 
-// FindUserSessionByID retrieves a user session from the database using its ID.
-func (s *Service) FindUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.UserSession, err error) {
-	ctx, span := s.tracer.Start(ctx, "FindUserSessionByID")
+// GetUserSessionByID retrieves a user session from the database using its ID.
+func (s *Service) GetUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.UserSession, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetUserSessionByID")
 	defer span.End()
 
 	in := &FindUserSessionByIDInput{ID: id}
@@ -864,7 +866,7 @@ func (s *Service) FindUserSessionByID(ctx context.Context, id ds.ID) (sess *ds.U
 		return
 	}
 
-	return s.db.FindUserSessionByID(ctx, id)
+	return s.db.GetUserSessionByID(ctx, id)
 }
 
 // FindUserSessionByIDInput defines the input for finding a user session by ID.
@@ -931,7 +933,7 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
 		return
 	}
 
-	sess, err = s.FindUserSessionByID(ctx, sessionID)
+	sess, err = s.GetUserSessionByID(ctx, sessionID)
 	if err != nil {
 		return
 	}
@@ -950,7 +952,7 @@ func (s *Service) GetUserAndSessionFromJWT(ctx context.Context, token string) (
 		return
 	}
 
-	user, err = s.FindUserByID(ctx, sess.UserID)
+	user, err = s.GetUserByID(ctx, sess.UserID)
 	return
 }
 
@@ -1057,7 +1059,7 @@ func (s *Service) RegisterUser(ctx context.Context, username, emailAddr, passwor
 		return
 	}
 
-	_, err = s.db.FindUserByEmail(ctx, in.Email)
+	_, err = s.db.GetUserByEmail(ctx, in.Email)
 	if err == nil {
 		err = app.InputError{"email": UserWithThisEmailAlreadyExists}
 		return
@@ -1066,7 +1068,7 @@ func (s *Service) RegisterUser(ctx context.Context, username, emailAddr, passwor
 		return
 	}
 
-	_, err = s.db.FindUserByUsername(ctx, in.Username)
+	_, err = s.db.GetUserByUsername(ctx, in.Username)
 	if err == nil {
 		err = app.InputError{"username": UsernameAlreadyTaken}
 		return
@@ -1145,7 +1147,7 @@ func (s *Service) ResetPassword(ctx context.Context, token, password string) (er
 		return
 	}
 
-	prt, err := s.db.FindPasswordResetToken(ctx, in.Token)
+	prt, err := s.db.GetPasswordResetToken(ctx, in.Token)
 	if errors.Is(err, repo.ErrPasswordResetTokenNotFound) {
 		err = ErrInvalidPasswordResetToken
 		return
@@ -1215,14 +1217,14 @@ func (s *Service) ResolveUserFromOAuthAccount(ctx context.Context, authAcc goth.
 
 	acc, err := s.db.GetOAuthUserAccount(ctx, provider.New(in.Provider), in.UserID)
 	if err == nil {
-		return s.db.FindUserByID(ctx, acc.UserID)
+		return s.db.GetUserByID(ctx, acc.UserID)
 	}
 	if !errors.Is(err, repo.ErrOAuthUserAccountNotFound) {
 		return
 	}
 
 	// create new oauth account
-	user, err = s.FindUserByEmail(ctx, in.Email)
+	user, err = s.GetUserByEmail(ctx, in.Email)
 	if err != nil && !errors.Is(err, repo.ErrUserNotFound) {
 		return nil, err
 	}
@@ -1309,7 +1311,7 @@ func (s *Service) selectUsernameForOAuthUser(ctx context.Context, maybeNames ...
 	// The first candidate that isn't found in the DB is returned immediately
 	for {
 		for _, name := range names {
-			_, err := s.db.FindUserByUsername(ctx, name)
+			_, err := s.db.GetUserByUsername(ctx, name)
 			if errors.Is(err, repo.ErrUserNotFound) {
 				return name, nil
 			}

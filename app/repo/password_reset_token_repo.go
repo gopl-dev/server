@@ -30,10 +30,10 @@ func (r *Repo) CreatePasswordResetToken(ctx context.Context, t *ds.PasswordReset
 	})
 }
 
-// FindPasswordResetToken retrieves a password reset token from the database by the token string.
+// GetPasswordResetToken retrieves a password reset token from the database by the token string.
 // If the token is not found, it returns ErrPasswordResetTokenNotFound.
-func (r *Repo) FindPasswordResetToken(ctx context.Context, token string) (*ds.PasswordResetToken, error) {
-	_, span := r.tracer.Start(ctx, "FindPasswordResetToken")
+func (r *Repo) GetPasswordResetToken(ctx context.Context, token string) (*ds.PasswordResetToken, error) {
+	_, span := r.tracer.Start(ctx, "GetPasswordResetToken")
 	defer span.End()
 
 	t := new(ds.PasswordResetToken)

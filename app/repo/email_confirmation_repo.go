@@ -5,14 +5,20 @@ import (
 	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 )
 
-// FindEmailConfirmationByCode retrieves an email confirmation record from the database
+var (
+	// ErrEmailConfirmationFound is a sentinel error returned when ds.EmailConfirmation not found.
+	ErrEmailConfirmationFound = app.ErrNotFound("book not found")
+)
+
+// GetEmailConfirmationByCode retrieves an email confirmation record from the database
 // using its unique confirmation code.
 // If a record is not found, it returns (nil, nil).
-func (r *Repo) FindEmailConfirmationByCode(ctx context.Context, code string) (ec *ds.EmailConfirmation, err error) {
-	_, span := r.tracer.Start(ctx, "FindEmailConfirmationByCode")
+func (r *Repo) GetEmailConfirmationByCode(ctx context.Context, code string) (ec *ds.EmailConfirmation, err error) {
+	_, span := r.tracer.Start(ctx, "GetEmailConfirmationByCode")
 	defer span.End()
 
 	ec = new(ds.EmailConfirmation)
@@ -22,10 +28,10 @@ func (r *Repo) FindEmailConfirmationByCode(ctx context.Context, code string) (ec
 	)
 	if noRows(err) {
 		ec = nil
-		err = nil
+		err = ErrEmailConfirmationFound
 	}
 
-	return ec, err
+	return
 }
 
 // CreateEmailConfirmation creates a new email confirmation record in the database.

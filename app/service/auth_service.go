@@ -46,7 +46,7 @@ func (s *Service) AuthenticateUser(ctx context.Context, email, password string) 
 		return
 	}
 
-	user, err = s.db.FindUserByEmail(ctx, in.Email)
+	user, err = s.db.GetUserByEmail(ctx, in.Email)
 	if err != nil {
 		if errors.Is(err, repo.ErrUserNotFound) {
 			err = ErrInvalidEmailOrPassword

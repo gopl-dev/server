@@ -131,7 +131,7 @@ func (s *Service) ApproveNewBook(ctx context.Context, book *ds.Book) (err error)
 		return
 	}
 
-	owner, err := s.FindUserByID(ctx, book.OwnerID)
+	owner, err := s.GetUserByID(ctx, book.OwnerID)
 	if err != nil {
 		return
 	}
@@ -176,7 +176,7 @@ func (s *Service) RejectNewBook(ctx context.Context, note string, book *ds.Book)
 		return
 	}
 
-	owner, err := s.FindUserByID(ctx, book.OwnerID)
+	owner, err := s.GetUserByID(ctx, book.OwnerID)
 	if err != nil {
 		return
 	}
@@ -383,7 +383,7 @@ func (s *Service) ApplyChangesToBook(ctx context.Context, changes []ChangeDiff, 
 		return
 	}
 
-	author, err := s.FindUserByID(ctx, req.UserID)
+	author, err := s.GetUserByID(ctx, req.UserID)
 	if err != nil {
 		return
 	}

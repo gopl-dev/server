@@ -42,7 +42,7 @@ func (s *Service) GetEntityChangeState(ctx context.Context, entityID ds.ID, data
 		return nil, app.ErrUnauthorized()
 	}
 
-	req, err := s.db.FindPendingChangeRequest(ctx, entityID, user.ID)
+	req, err := s.db.GetPendingChangeRequest(ctx, entityID, user.ID)
 	if errors.Is(err, repo.ErrEntityChangeRequestNotFound) {
 		// no changes were made yet, return data as is
 		state = &EntityChange{
@@ -95,7 +95,7 @@ func (s *Service) UpdateEntityChangeRequest(ctx context.Context, m *ds.EntityCha
 	ctx, span := s.tracer.Start(ctx, "UpdateChangeRequest")
 	defer span.End()
 
-	req, err := s.db.FindPendingChangeRequest(ctx, m.EntityID, m.UserID)
+	req, err := s.db.GetPendingChangeRequest(ctx, m.EntityID, m.UserID)
 	if errors.Is(err, repo.ErrEntityChangeRequestNotFound) {
 		m.Revision = 1
 		return s.db.CreateChangeRequest(ctx, m)
@@ -202,7 +202,7 @@ func (s *Service) RejectChangeRequest(ctx context.Context, id, reviewerID ds.ID,
 		return
 	}
 
-	author, err := s.FindUserByID(ctx, req.UserID)
+	author, err := s.GetUserByID(ctx, req.UserID)
 	if err != nil {
 		return
 	}

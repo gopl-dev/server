@@ -44,7 +44,7 @@ func TestUserSignUp(t *testing.T) {
 	assert.Equal(t, req.Username, app.String(vars["username"]))
 	assert.Equal(t, req.Email, app.String(vars["email"]))
 
-	user, err := tt.Service.FindUserByEmail(context.Background(), req.Email)
+	user, err := tt.Service.GetUserByEmail(context.Background(), req.Email)
 	test.CheckErr(t, err)
 
 	test.AssertInDB(t, tt.DB, "email_confirmations", test.Data{

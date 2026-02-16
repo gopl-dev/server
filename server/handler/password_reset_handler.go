@@ -60,7 +60,7 @@ func (h *Handler) PasswordResetConfirmView(w http.ResponseWriter, r *http.Reques
 
 	token := r.PathValue("token")
 
-	_, err := h.service.FindPasswordResetByToken(ctx, token)
+	_, err := h.service.GetPasswordResetByToken(ctx, token)
 	if errors.Is(err, service.ErrInvalidPasswordResetToken) {
 		RenderDefaultLayout(ctx, w, layout.Data{
 			Title: "Reset Your Password",

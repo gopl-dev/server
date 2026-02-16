@@ -23,9 +23,9 @@ func (r *Repo) DeleteEntity(ctx context.Context, id ds.ID) error {
 	return r.delete(ctx, "entities", id)
 }
 
-// FindEntityByPublicID retrieves an entity by its URL-friendly name.
-func (r *Repo) FindEntityByPublicID(ctx context.Context, publicID string, t ds.EntityType) (*ds.Entity, error) {
-	_, span := r.tracer.Start(ctx, "FindEntityByPublicID")
+// GetEntityByPublicID retrieves an entity by its URL-friendly name.
+func (r *Repo) GetEntityByPublicID(ctx context.Context, publicID string, t ds.EntityType) (*ds.Entity, error) {
+	_, span := r.tracer.Start(ctx, "GetEntityByPublicID")
 	defer span.End()
 
 	ent := new(ds.Entity)

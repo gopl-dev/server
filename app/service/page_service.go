@@ -157,7 +157,7 @@ func (s *Service) ApplyChangesToPage(ctx context.Context, changes []ChangeDiff, 
 		return
 	}
 
-	author, err := s.FindUserByID(ctx, req.UserID)
+	author, err := s.GetUserByID(ctx, req.UserID)
 	if err != nil {
 		return
 	}

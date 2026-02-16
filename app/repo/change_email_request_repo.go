@@ -31,10 +31,10 @@ func (r *Repo) CreateChangeEmailRequest(ctx context.Context, req *ds.ChangeEmail
 	})
 }
 
-// FindChangeEmailRequestByToken retrieves a change email request from the database by its token.
+// GetChangeEmailRequestByToken retrieves a change email request from the database by its token.
 // If the token is not found, it returns ErrChangeEmailRequestNotFound.
-func (r *Repo) FindChangeEmailRequestByToken(ctx context.Context, token string) (*ds.ChangeEmailRequest, error) {
-	_, span := r.tracer.Start(ctx, "FindChangeEmailRequestByToken")
+func (r *Repo) GetChangeEmailRequestByToken(ctx context.Context, token string) (*ds.ChangeEmailRequest, error) {
+	_, span := r.tracer.Start(ctx, "GetChangeEmailRequestByToken")
 	defer span.End()
 
 	req := new(ds.ChangeEmailRequest)

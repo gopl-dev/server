@@ -379,7 +379,7 @@ func TestApproveNewBook(t *testing.T) {
 		"is_public": true,
 	})
 
-	owner, err := tt.Service.FindUserByID(context.Background(), book.OwnerID)
+	owner, err := tt.Service.GetUserByID(context.Background(), book.OwnerID)
 	test.CheckErr(t, err)
 
 	emailVars := test.LoadEmailVars(t, owner.Email)
@@ -420,7 +420,7 @@ func TestRejectNewBook(t *testing.T) {
 		"is_public": false,
 	})
 
-	owner, err := tt.Service.FindUserByID(context.Background(), book.OwnerID)
+	owner, err := tt.Service.GetUserByID(context.Background(), book.OwnerID)
 	test.CheckErr(t, err)
 
 	emailVars := test.LoadEmailVars(t, owner.Email)

@@ -20,9 +20,9 @@ var (
 	ErrChangeEmailRequestNotFound = errors.New("change email request not found")
 )
 
-// FindUserByEmail retrieves a user from the database by their email address.
-func (r *Repo) FindUserByEmail(ctx context.Context, email string) (*ds.User, error) {
-	_, span := r.tracer.Start(ctx, "FindUserByEmail")
+// GetUserByEmail retrieves a user from the database by their email address.
+func (r *Repo) GetUserByEmail(ctx context.Context, email string) (*ds.User, error) {
+	_, span := r.tracer.Start(ctx, "GetUserByEmail")
 	defer span.End()
 
 	user := new(ds.User)
@@ -34,9 +34,9 @@ func (r *Repo) FindUserByEmail(ctx context.Context, email string) (*ds.User, err
 	return user, err
 }
 
-// FindUserByUsername retrieves a user from the database by their username.
-func (r *Repo) FindUserByUsername(ctx context.Context, username string) (*ds.User, error) {
-	_, span := r.tracer.Start(ctx, "FindUserByUsername")
+// GetUserByUsername retrieves a user from the database by their username.
+func (r *Repo) GetUserByUsername(ctx context.Context, username string) (*ds.User, error) {
+	_, span := r.tracer.Start(ctx, "GetUserByUsername")
 	defer span.End()
 
 	user := new(ds.User)
@@ -48,9 +48,9 @@ func (r *Repo) FindUserByUsername(ctx context.Context, username string) (*ds.Use
 	return user, err
 }
 
-// FindUserByID retrieves a user from the database by their ID.
-func (r *Repo) FindUserByID(ctx context.Context, id ds.ID) (*ds.User, error) {
-	_, span := r.tracer.Start(ctx, "FindUserByID")
+// GetUserByID retrieves a user from the database by their ID.
+func (r *Repo) GetUserByID(ctx context.Context, id ds.ID) (*ds.User, error) {
+	_, span := r.tracer.Start(ctx, "GetUserByID")
 	defer span.End()
 
 	user := new(ds.User)
