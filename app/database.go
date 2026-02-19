@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/url"
 	"path"
 	"regexp"
 	"sort"
@@ -37,7 +38,7 @@ func NewDB(ctx context.Context) (db *DB, err error) {
 	c := Config().DB
 
 	conf, err := pgxpool.ParseConfig(
-		fmt.Sprintf("postgres://%s:%s@%s/%s", c.User, c.Password, net.JoinHostPort(c.Host, c.Port), c.Name))
+		fmt.Sprintf("postgres://%s:%s@%s/%s", c.User, url.QueryEscape(c.Password), net.JoinHostPort(c.Host, c.Port), c.Name))
 	if err != nil {
 		return nil, err
 	}
