@@ -62,7 +62,7 @@ jobs:
             log_queries: false
 
           server:
-            host: localhost
+            host: gopl.dev
             port: 443
             api_base_path: api
             addr: "https://gopl.dev/"
@@ -103,12 +103,12 @@ jobs:
             serve_path: openapi
 
           google_oauth:
-            client_id: "847131691504-hpb3lpb0hbrn0sdu52nfbukr3qgf4o9v.apps.googleusercontent.com"
+            client_id: "${{ secrets.GOOGLE_CLIENT_ID }}"
             client_secret: "${{ secrets.GOOGLE_CLIENT_SECRET }}"
 
           github_oauth:
-            client_id: "Ov23liX58szOFtQq9fbi"
-            client_secret: "${{ secrets.GITHUB_CLIENT_SECRET }}"
+            client_id: "${{ secrets.GH_CLIENT_ID }}"
+            client_secret: "${{ secrets.GH_CLIENT_SECRET }}"
 
           admins: []
           EOF
