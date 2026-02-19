@@ -70,13 +70,18 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 		if err != nil {
 			log.Fatal(err)
 		}
+		cacheDir = filepath.Join(cacheDir, "autocert")
+		err = os.MkdirAll(cacheDir, 0700)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		hosts := strings.Split(conf.AutocertHosts, ",")
 		for i, host := range hosts {
 			hosts[i] = strings.TrimSpace(host)
 		}
 		am := &autocert.Manager{
-			Cache:      autocert.DirCache(filepath.Join(cacheDir, "autocert")),
+			Cache:      autocert.DirCache(cacheDir),
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(hosts...),
 		}
