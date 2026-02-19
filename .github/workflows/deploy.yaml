@@ -134,3 +134,4 @@ jobs:
             chmod +x /opt/gopl/server
             chmod +x /opt/gopl/cli
             sudo systemctl restart gopl
+            sudo setcap 'cap_net_bind_service=+ep' /opt/gopl/server

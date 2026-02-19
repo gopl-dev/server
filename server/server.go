@@ -77,6 +77,7 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 		}
 
 		tlsConf = am.TLSConfig()
+		go http.ListenAndServe(":80", am.HTTPHandler(nil))
 	}
 
 	return &http.Server{
