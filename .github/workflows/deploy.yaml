@@ -51,7 +51,7 @@ jobs:
             id: "do_fra1"
             name: "gopl.dev"
             version: "${{ env.SHORT_SHA }}"
-            env: prod
+            env: production
 
           db:
             host: localhost
