@@ -518,13 +518,12 @@ func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) 
 	for {
 		code := newCode(length)
 
-		ec, err := s.db.GetEmailConfirmationByCode(ctx, code)
+		_, err := s.db.GetEmailConfirmationByCode(ctx, code)
+		if errors.Is(err, repo.ErrEmailConfirmationFound) {
+			return code, nil
+		}
 		if err != nil {
 			return "", err
-		}
-
-		if ec == nil {
-			return code, nil
 		}
 
 		length++

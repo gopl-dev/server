@@ -11,7 +11,7 @@ import (
 
 var (
 	// ErrEmailConfirmationFound is a sentinel error returned when ds.EmailConfirmation not found.
-	ErrEmailConfirmationFound = app.ErrNotFound("book not found")
+	ErrEmailConfirmationFound = app.ErrNotFound("email confirmation not found")
 )
 
 // GetEmailConfirmationByCode retrieves an email confirmation record from the database
