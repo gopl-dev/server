@@ -43,7 +43,7 @@ jobs:
 
       - name: Generate config
         run: |
-          cat > .config.yml << EOF
+          cat > ./bin/.config.yaml << EOF
           app:
             id: "do_fra1"
             name: "gopl.dev"
