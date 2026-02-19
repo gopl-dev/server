@@ -41,13 +41,16 @@ jobs:
       - name: Build CLI
         run: GOOS=linux GOARCH=amd64 go build -o ./bin/cli ./cmd/cli/main.go
 
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Generate config
         run: |
           cat > ./bin/.config.yaml << EOF
           app:
             id: "do_fra1"
             name: "gopl.dev"
-            version: "${{ github.sha }}"
+            version: "${{ env.SHORT_SHA }}"
             env: prod
 
           db:
@@ -60,7 +63,7 @@ jobs:
 
           server:
             host: localhost
-            port: 8080
+            port: 443
             api_base_path: api
             addr: "https://gopl.dev/"
 
