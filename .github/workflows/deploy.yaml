@@ -116,7 +116,7 @@ jobs:
           host: ${{ secrets.DEPLOY_SSH_HOST }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "bin/server,bin/cli,./bin/.config.yaml"
+          source: "bin/server,bin/cli,bin/.config.yaml"
           target: "/opt/gopl/"
           strip_components: 1
 
