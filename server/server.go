@@ -2,9 +2,13 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gopl-dev/server/app"
@@ -16,6 +20,7 @@ import (
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/google"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // RWTimeout defines server's Read&Write timeout in seconds.
@@ -58,9 +63,26 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 	api.ProtectedAPIEndpoints()
 	api.HandleNotFound()
 
+	var tlsConf *tls.Config
+	if conf.AutocertHost != "" {
+		cacheDir, err := os.UserCacheDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		am := &autocert.Manager{
+			Cache:      autocert.DirCache(filepath.Join(cacheDir, "autocert")),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(conf.AutocertHost),
+		}
+
+		tlsConf = am.TLSConfig()
+	}
+
 	return &http.Server{
 		Addr:         net.JoinHostPort(conf.Host, conf.Port),
 		Handler:      r,
+		TLSConfig:    tlsConf,
 		ReadTimeout:  RWTimeout,
 		WriteTimeout: RWTimeout,
 	}

@@ -62,10 +62,11 @@ jobs:
             log_queries: false
 
           server:
-            host: gopl.dev
+            host: ""
             port: 443
             api_base_path: api
             addr: "https://gopl.dev/"
+            autocert_host: "gopl.dev"
 
           email:
             driver: smtp

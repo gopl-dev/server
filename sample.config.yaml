@@ -29,6 +29,8 @@ server:
   api_base_path: api
   addr: "https://gopl.dev"
 
+  autocert_host: ""
+
 # Database configuration
 db:
   host: localhost:5432
