@@ -65,7 +65,11 @@ func main() {
 
 	log.Println(conf.App.Name + " (" + conf.App.Version + ") serving at " + conf.Server.Host + ":" + conf.Server.Port)
 
-	err = srv.ListenAndServe()
+	if conf.Server.AutocertHost != "" {
+		err = srv.ListenAndServeTLS("", "")
+	} else {
+		err = srv.ListenAndServe()
+	}
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Println(err.Error())
 		return
