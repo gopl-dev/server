@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gopl-dev/server/app"
@@ -64,16 +65,20 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 	api.HandleNotFound()
 
 	var tlsConf *tls.Config
-	if conf.AutocertHost != "" {
+	if conf.AutocertHosts != "" {
 		cacheDir, err := os.UserCacheDir()
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		hosts := strings.Split(conf.AutocertHosts, ",")
+		for i, host := range hosts {
+			hosts[i] = strings.TrimSpace(host)
+		}
 		am := &autocert.Manager{
 			Cache:      autocert.DirCache(filepath.Join(cacheDir, "autocert")),
 			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(conf.AutocertHost),
+			HostPolicy: autocert.HostWhitelist(hosts...),
 		}
 
 		tlsConf = am.TLSConfig()

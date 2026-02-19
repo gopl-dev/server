@@ -29,7 +29,7 @@ server:
   api_base_path: api
   addr: "https://gopl.dev"
 
-  autocert_host: ""
+  autocert_hosts: "" # comma separated
 
 # Database configuration
 db:

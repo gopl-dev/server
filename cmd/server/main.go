@@ -65,7 +65,7 @@ func main() {
 
 	log.Println(conf.App.Name + " (" + conf.App.Version + ") serving at " + conf.Server.Host + ":" + conf.Server.Port)
 
-	if conf.Server.AutocertHost != "" {
+	if conf.Server.AutocertHosts != "" {
 		err = srv.ListenAndServeTLS("", "")
 	} else {
 		err = srv.ListenAndServe()

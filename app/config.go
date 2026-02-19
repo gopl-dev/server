@@ -21,11 +21,11 @@ type ConfigT struct {
 	} `yaml:"app"`
 
 	Server struct {
-		Port         string `yaml:"port"`
-		Host         string `yaml:"host"`
-		APIBasePath  string `yaml:"api_base_path"`
-		Addr         string `yaml:"addr"`
-		AutocertHost string `yaml:"autocert_host"`
+		Port          string `yaml:"port"`
+		Host          string `yaml:"host"`
+		APIBasePath   string `yaml:"api_base_path"`
+		Addr          string `yaml:"addr"`
+		AutocertHosts string `yaml:"autocert_hosts"`
 	} `yaml:"server"`
 
 	DB struct {
