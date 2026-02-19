@@ -1,0 +1,131 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: golangci-lint
+        uses: golangci-lint-run/golangci-lint-action@v6
+        with:
+          version: latest
+
+#  test:
+#    needs: lint
+#    uses: ./.github/workflows/test.yml
+
+  deploy:
+    runs-on: ubuntu-latest
+#    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Build server
+        run: GOOS=linux GOARCH=amd64 go build -o server ./cmd/server/main.go
+
+      - name: Build CLI
+        run: GOOS=linux GOARCH=amd64 go build -o cli ./cmd/cli/main.go
+
+      - name: Generate config
+        run: |
+          cat > .config.yml << EOF
+          app:
+            id: "do_fra1"
+            name: "gopl.dev"
+            version: "${{ github.sha }}"
+            env: prod
+
+          db:
+            host: localhost
+            port: 5432
+            user: gopl
+            password: "${{ secrets.DB_PASSWORD }}"
+            name: gopl
+            log_queries: false
+
+          server:
+            host: localhost
+            port: 8080
+            api_base_path: api
+            addr: "https://gopl.dev/"
+
+          email:
+            driver: smtp
+            from: "mail@gopl.dev"
+            host: "live.smtp.mailtrap.io"
+            port: 587
+            username: "${{ secrets.SMTP_USERNAME }}"
+            password: "${{ secrets.SMTP_PASSWORD }}"
+
+          session:
+            duration_hours: 24
+            key: "${{ secrets.SESSION_KEY }}"
+
+          tracing:
+            enabled: true
+            driver: log
+            uptrace_dsn: "${{ secrets.UPTRACE_DSN }}"
+
+          files:
+            storage_driver: 'local-fs'
+            max_upload_size_mb: 20
+            image_max_width: 1500
+            image_max_height: 1500
+            preview_width: 400
+            preview_height: 400
+            local_fs:
+              storage_path: "/files"
+            entities:
+              books:
+                covers:
+                  path: "book-covers"
+
+          openapi:
+            enabled: true
+            serve_path: openapi
+
+          google_oauth:
+            client_id: "847131691504-hpb3lpb0hbrn0sdu52nfbukr3qgf4o9v.apps.googleusercontent.com"
+            client_secret: "${{ secrets.GOOGLE_CLIENT_SECRET }}"
+
+          github_oauth:
+            client_id: "Ov23liX58szOFtQq9fbi"
+            client_secret: "${{ secrets.GITHUB_CLIENT_SECRET }}"
+
+          admins: []
+          EOF
+
+      - name: Upload files to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "server,cli,.config.yml"
+          target: "/opt/gopl/"
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            chmod +x /opt/gopl/server
+            chmod +x /opt/gopl/cli
+            sudo systemctl restart gopl

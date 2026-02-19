@@ -2,9 +2,6 @@
 
 for simplicity, I keep todo list and progress here for now
 
-- [ ] Maybe group services by entity not by action (Ask opinions)
-- [ ] Review “retrieve one” methods with clear naming: Get{Something} should return {Something} or an error; Find{Something} may return nil, nil.
-
 **Before release**:
 - [ ] Review "TODO!"s
 - [ ] enable "unused" linter 
