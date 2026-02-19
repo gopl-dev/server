@@ -29,8 +29,7 @@ func main() {
 
 	err = worker.Start(ctx)
 	if err != nil {
-		println(err)
-		return
+		log.Fatal(err)
 	}
 
 	quit := make(chan os.Signal, 1)
@@ -43,15 +42,13 @@ func main() {
 
 	db, err := app.NewDB(ctx)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatal(err)
 	}
 	defer db.Close()
 
 	err = app.MigrateDB(ctx, db)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatal(err)
 	}
 
 	services := service.New(db, tracer)
@@ -62,8 +59,7 @@ func main() {
 		cancelCtx()
 		err := srv.Close()
 		if err != nil {
-			log.Println(err.Error())
-			return
+			log.Fatal(err)
 		}
 	}()
 
