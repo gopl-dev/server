@@ -4,7 +4,6 @@ for simplicity, I keep todo list and progress here for now
 
 **Before release**:
 - [ ] Review "TODO!"s
-- [ ] enable "unused" linter 
 - [ ] Homepage
 - [ ] Licence
 - [ ] RELEASE
@@ -19,7 +18,6 @@ AFTER RELEASE CHECKLIST:
 - [ ] Disable push to main without MR
 
 NEXT:
-- [ ] Check why user_account_activated is created right away
 - [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
 - [ ] Create new topic when creating/editing entity
 - [ ] Pages

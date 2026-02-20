@@ -77,12 +77,12 @@ jobs:
             password: "${{ secrets.SMTP_PASSWORD }}"
 
           session:
-            duration_hours: 24
+            duration_hours: 120
             key: "${{ secrets.SESSION_KEY }}"
 
           tracing:
             enabled: true
-            driver: log
+            driver: uptrace
             uptrace_dsn: "${{ secrets.UPTRACE_DSN }}"
 
           files:
