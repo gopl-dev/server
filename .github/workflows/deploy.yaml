@@ -111,7 +111,7 @@ jobs:
             client_id: "${{ secrets.GH_CLIENT_ID }}"
             client_secret: "${{ secrets.GH_CLIENT_SECRET }}"
 
-          admins: ["019c77c9-2a10-7b55-ad21-587b6b0482c0"]
+          admins: ["019c7a4b-1931-7adb-8e21-70044db68daf"]
           EOF
 
       - name: Upload files to droplet

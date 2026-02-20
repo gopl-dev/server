@@ -13,7 +13,7 @@ for simplicity, I keep todo list and progress here for now
 AFTER RELEASE CHECKLIST:
 - [x] Setup & test email
 - [x] Setup & test auth & registration with google
-- [ ] Setup & test auth & registration with github
+- [x] Setup & test auth & registration with github
 - [ ] Setup & test tracing
 - [ ] Enable linting and testing on CI/CD
 - [ ] Disable push to main without MR
