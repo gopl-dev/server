@@ -112,18 +112,7 @@ func (s *Service) LogUserRegistered(ctx context.Context, userID ds.ID) error {
 		IsPublic: false,
 	}
 
-	err := s.createEventLog(ctx, log)
-	if err != nil {
-		return err
-	}
-
-	log2 := &ds.EventLog{
-		UserID:   new(userID),
-		Type:     ds.EventLogUserAccountActivated,
-		IsPublic: false,
-	}
-
-	return s.createEventLog(ctx, log2)
+	return s.createEventLog(ctx, log)
 }
 
 // LogEmailConfirmed records successful email confirmation for a user.
@@ -145,13 +134,21 @@ func (s *Service) LogEmailConfirmed(ctx context.Context, email string, userID ds
 		return err
 	}
 
-	log2 := &ds.EventLog{
+	return s.LogAccountActivated(ctx, userID)
+}
+
+// LogAccountActivated records successful account activation.
+func (s *Service) LogAccountActivated(ctx context.Context, userID ds.ID) error {
+	ctx, span := s.tracer.Start(ctx, "LogAccountActivated")
+	defer span.End()
+
+	log := &ds.EventLog{
 		UserID:   new(userID),
 		Type:     ds.EventLogUserAccountActivated,
 		IsPublic: true,
 	}
 
-	return s.createEventLog(ctx, log2)
+	return s.createEventLog(ctx, log)
 }
 
 // LogPasswordResetRequest records that a user has requested a password reset.

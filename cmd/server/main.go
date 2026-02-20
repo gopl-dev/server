@@ -44,12 +44,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
 
 	err = app.MigrateDB(ctx, db)
 	if err != nil {
+		db.Close()
 		log.Fatal(err)
 	}
+
+	defer db.Close() // log.Fatal will exit, and `defer db.Close()` will not run (gocritic)
 
 	services := service.New(db, tracer)
 	srv := server.New(services, tracer)

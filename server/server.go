@@ -71,7 +71,7 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 			log.Fatal(err)
 		}
 		cacheDir = filepath.Join(cacheDir, "autocert")
-		err = os.MkdirAll(cacheDir, 0700)
+		err = os.MkdirAll(cacheDir, 0700) //nolint:mnd
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -87,7 +87,18 @@ func New(s *service.Service, t trace.Tracer) *http.Server {
 		}
 
 		tlsConf = am.TLSConfig()
-		go http.ListenAndServe(":80", am.HTTPHandler(nil))
+		go func() {
+			pongTLS := &http.Server{
+				Addr:         ":80",
+				Handler:      am.HTTPHandler(nil),
+				ReadTimeout:  RWTimeout,
+				WriteTimeout: RWTimeout,
+			}
+			err := pongTLS.ListenAndServe()
+			if err != nil {
+				log.Println("autocert ListenAndServe: ", err.Error())
+			}
+		}()
 	}
 
 	return &http.Server{

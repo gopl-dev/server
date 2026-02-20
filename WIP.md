@@ -11,20 +11,26 @@ for simplicity, I keep todo list and progress here for now
 ---
 
 AFTER RELEASE CHECKLIST:
-- [ ] Setup & test email
-- [ ] Setup & test auth & registration with google
+- [x] Setup & test email
+- [x] Setup & test auth & registration with google
 - [ ] Setup & test auth & registration with github
 - [ ] Setup & test tracing
+- [ ] Enable linting and testing on CI/CD
+- [ ] Disable push to main without MR
 
 NEXT:
+- [ ] Check why user_account_activated is created right away
 - [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
 - [ ] Create new topic when creating/editing entity
 - [ ] Pages
+  - [ ] Add meta to page (Who created, last edit by who and list of activities on page (api call))
 - [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
 - [ ] Jobs
 - [ ] Events
 - [ ] Software
+- [ ] Users
+  - Let user login by email or by username
 - [ ] Improve user profile
 - [ ] Internal notifications
 - [ ] Entity comments

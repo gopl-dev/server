@@ -1099,7 +1099,6 @@ func (s *Service) RegisterUser(ctx context.Context, username, emailAddr, passwor
 		return
 	}
 
-	// todo send email async
 	err = email.Send(user.Email, email.ConfirmEmail{
 		Username: user.Username,
 		Email:    in.Email,
@@ -1222,47 +1221,59 @@ func (s *Service) ResolveUserFromOAuthAccount(ctx context.Context, authAcc goth.
 		return
 	}
 
-	// create new oauth account
-	user, err = s.GetUserByEmail(ctx, in.Email)
-	if err != nil && !errors.Is(err, repo.ErrUserNotFound) {
-		return nil, err
-	}
-
-	// create new user
-	if errors.Is(err, repo.ErrUserNotFound) {
-		username, err := s.selectUsernameForOAuthUser(ctx, in.NickName, in.Name, in.Email)
-		if err != nil {
-			return nil, err
+	err = s.db.WithTx(ctx, func(ctx context.Context) error {
+		// create new oauth account
+		user, err = s.GetUserByEmail(ctx, in.Email)
+		if err != nil && !errors.Is(err, repo.ErrUserNotFound) {
+			return err
 		}
 
-		user = &ds.User{
+		// create new user
+		if errors.Is(err, repo.ErrUserNotFound) {
+			username, err := s.selectUsernameForOAuthUser(ctx, in.NickName, in.Name, in.Email)
+			if err != nil {
+				return err
+			}
+
+			user = &ds.User{
+				ID:             ds.NewID(),
+				Username:       username,
+				Email:          in.Email,
+				EmailConfirmed: true,
+				Password:       random.String(32), //nolint:mnd
+				CreatedAt:      time.Now(),
+				UpdatedAt:      nil,
+				DeletedAt:      nil,
+			}
+
+			err = s.db.CreateUser(ctx, user)
+			if err != nil {
+				return err
+			}
+
+			err = s.LogAccountActivated(ctx, user.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		acc = &ds.OAuthUserAccount{
 			ID:             ds.NewID(),
-			Username:       username,
-			Email:          in.Email,
-			EmailConfirmed: true,
-			Password:       random.String(32), //nolint:mnd
+			UserID:         user.ID,
+			Provider:       provider.New(in.Provider),
+			ProviderUserID: in.UserID,
 			CreatedAt:      time.Now(),
-			UpdatedAt:      nil,
-			DeletedAt:      nil,
 		}
 
-		err = s.db.CreateUser(ctx, user)
+		err = s.CreateOAuthUserAccount(ctx, acc)
 		if err != nil {
-			return nil, err
+			return err
 		}
-	}
 
-	acc = &ds.OAuthUserAccount{
-		ID:             ds.NewID(),
-		UserID:         user.ID,
-		Provider:       provider.New(in.Provider),
-		ProviderUserID: in.UserID,
-		CreatedAt:      time.Now(),
-	}
-
-	err = s.CreateOAuthUserAccount(ctx, acc)
+		return nil
+	})
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	return user, nil

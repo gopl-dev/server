@@ -72,7 +72,7 @@ jobs:
             driver: smtp
             from: "mail@gopl.dev"
             host: "live.smtp.mailtrap.io"
-            port: 587
+            port: 2525
             username: "${{ secrets.SMTP_USERNAME }}"
             password: "${{ secrets.SMTP_PASSWORD }}"
 
@@ -111,7 +111,7 @@ jobs:
             client_id: "${{ secrets.GH_CLIENT_ID }}"
             client_secret: "${{ secrets.GH_CLIENT_SECRET }}"
 
-          admins: []
+          admins: ["019c77c9-2a10-7b55-ad21-587b6b0482c0"]
           EOF
 
       - name: Upload files to droplet

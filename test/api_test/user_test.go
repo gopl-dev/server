@@ -135,14 +135,13 @@ func TestUserConfirmEmail(t *testing.T) {
 }
 
 func TestUserSignIn(t *testing.T) {
-	password := random.String()
 	user := create(t, ds.User{
-		Password: password,
+		Password: random.String(),
 	})
 
 	req := request.UserSignIn{
 		Email:    user.Email,
-		Password: password,
+		Password: user.Password,
 	}
 
 	var resp response.UserSignIn
