@@ -31,51 +31,51 @@ jobs:
 
       - name: Create test configs
         run: |
-          cat > /tmp/test-config.yaml << EOF
-app:
-  id: "test"
-  name: "gopl.dev"
-  version: "ci"
-  env: test
+          cat > /tmp/test-config.yaml << 'EOF'
+          app:
+            id: "test"
+            name: "gopl.dev"
+            version: "ci"
+            env: test
 
-db:
-  host: localhost
-  port: 5432
-  user: postgres
-  password: postgres
-  name: gopl_local_dev_test
-  log_queries: true
+          db:
+            host: localhost
+            port: 5432
+            user: postgres
+            password: postgres
+            name: gopl_local_dev_test
+            log_queries: true
 
-server:
-  host: localhost
-  port: 8080
-  api_base_path: api
-  addr: "http://127.0.0.1:8080/"
+          server:
+            host: localhost
+            port: 8080
+            api_base_path: api
+            addr: "http://127.0.0.1:8080/"
 
-email:
-  driver: test
+          email:
+            driver: test
 
-session:
-  duration_hours: 24
-  key: "key"
+          session:
+            duration_hours: 24
+            key: "key"
 
-files:
-  storage_driver: 'in-memory-fs'
-  max_upload_size_mb: 20
-  image_max_width: 1500
-  image_max_height: 1500
-  preview_width: 400
-  preview_height: 400
-  local_fs:
-    storage_path: "/tmp/gopl-files"
-  entities:
-    books:
-      covers:
-        path: "book-covers"
-  EOF
-  cp /tmp/test-config.yaml ./test/api_test/.config.yaml
-  cp /tmp/test-config.yaml ./test/service_test/.config.yaml
-  cp /tmp/test-config.yaml ./test/worker_test/.config.yaml
+          files:
+            storage_driver: 'in-memory-fs'
+            max_upload_size_mb: 20
+            image_max_width: 1500
+            image_max_height: 1500
+            preview_width: 400
+            preview_height: 400
+            local_fs:
+              storage_path: "/tmp/gopl-files"
+            entities:
+              books:
+                covers:
+                  path: "book-covers"
+          EOF
+          cp /tmp/test-config.yaml ./test/api_test/.config.yaml
+          cp /tmp/test-config.yaml ./test/service_test/.config.yaml
+          cp /tmp/test-config.yaml ./test/worker_test/.config.yaml
 
-- name: Run tests
-  run: go test ./...
+      - name: Run tests
+        run: go test ./...
