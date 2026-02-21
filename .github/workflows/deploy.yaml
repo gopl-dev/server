@@ -22,7 +22,7 @@ jobs:
 
   test:
     needs: lint
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/test.yaml
 
   deploy:
     runs-on: ubuntu-latest
