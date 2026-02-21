@@ -73,9 +73,13 @@ jobs:
                 covers:
                   path: "book-covers"
           EOF
+          cp /tmp/test-config.yaml ./.config.yaml
           cp /tmp/test-config.yaml ./test/api_test/.config.yaml
           cp /tmp/test-config.yaml ./test/service_test/.config.yaml
           cp /tmp/test-config.yaml ./test/worker_test/.config.yaml
+
+      - name: Migrate DB
+        run: go run ./cmd/cli/main.go migrate
 
       - name: Run tests
         run: go test ./...
