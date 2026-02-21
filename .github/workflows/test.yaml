@@ -33,7 +33,7 @@ jobs:
         run: |
           cat > /tmp/test-config.yaml << EOF
 app:
-  id: ""
+  id: "test"
   name: "gopl.dev"
   version: "ci"
   env: test
@@ -58,9 +58,6 @@ email:
 session:
   duration_hours: 24
   key: "key"
-
-trace:
-  enabled: false
 
 files:
   storage_driver: 'in-memory-fs'
