@@ -23,7 +23,7 @@ import (
 	"github.com/gopl-dev/server/file"
 	"github.com/gopl-dev/server/test/factory"
 	"github.com/gopl-dev/server/test/factory/random"
-	"github.com/gopl-dev/server/trace"
+	"github.com/gopl-dev/server/tracing"
 )
 
 var (
@@ -56,7 +56,7 @@ type Seed struct {
 
 // New creates a Seed instance with all required dependencies initialized.
 func New(db *app.DB) *Seed {
-	t := trace.NewNoOpTracer()
+	t := tracing.NewNoOpTracer()
 	r := repo.New(db, t)
 
 	return &Seed{

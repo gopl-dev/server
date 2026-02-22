@@ -254,7 +254,11 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	if cmd.Alias != "" {
 		name = cmd.Name + " (" + cmd.Alias + ")"
 	}
-	help.WriteString(fmt.Sprintf("%s: %s\n", aur.Green(name).Bold(), desc))
+
+	help.WriteString(aur.Green(name).Bold().String())
+	help.WriteString(": ")
+	help.WriteString(desc)
+	help.WriteString("\n")
 
 	// Build usage line
 	usageParts := make([]string, 0, len(posArgs)+len(params)+len(flags))
@@ -264,7 +268,13 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 	if cmd.Alias != "" {
 		name = cmd.Alias
 	}
-	help.WriteString(fmt.Sprintf("Usage: %s %s\n\n", aur.Green(name).Bold(), strings.Join(usageParts, " ")))
+
+	// Usage: help -y \n\n
+	help.WriteString("Usage: ")
+	help.WriteString(aur.Green(name).Bold().String())
+	help.WriteString(" ")
+	help.WriteString(strings.Join(usageParts, " "))
+	help.WriteString("\n\n")
 
 	if !verbose {
 		fmt.Print(help.String())
@@ -285,7 +295,8 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 
 	// Build Arguments section
 	if len(args) > 0 {
-		help.WriteString(fmt.Sprintf("%s\n", aur.Bold(aur.Cyan("Arguments:"))))
+		help.WriteString(aur.Bold(aur.Cyan("Arguments:")).String())
+		help.WriteByte('\n')
 		for _, ar := range args {
 			a.buildArgumentDetail(&help, ar, "  ")
 		}
@@ -294,7 +305,9 @@ func (a *App) printCommandHelp(cmd Command, verbose bool) {
 
 	// Build Flags section
 	if len(flagArgs) > 0 {
-		help.WriteString(fmt.Sprintf("%s\n", aur.Bold(aur.Cyan("Flags:"))))
+		help.WriteString(aur.Bold(aur.Cyan("Flags:")).String())
+		help.WriteByte('\n')
+
 		for _, ar := range flagArgs {
 			a.buildArgumentDetail(&help, ar, "  ")
 		}

@@ -8,7 +8,7 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/app/service"
-	"github.com/gopl-dev/server/trace"
+	"github.com/gopl-dev/server/tracing"
 )
 
 var (
@@ -34,7 +34,7 @@ func db() *app.DB {
 
 func services() *service.Service {
 	onceServices.Do(func() {
-		servicesInstance = service.New(db(), trace.NewNoOpTracer())
+		servicesInstance = service.New(db(), tracing.NewNoOpTracer())
 	})
 
 	return servicesInstance
@@ -42,7 +42,7 @@ func services() *service.Service {
 
 func repos() *repo.Repo {
 	onceRepo.Do(func() {
-		repoInstance = repo.New(db(), trace.NewNoOpTracer())
+		repoInstance = repo.New(db(), tracing.NewNoOpTracer())
 	})
 
 	return repoInstance

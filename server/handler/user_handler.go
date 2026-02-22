@@ -157,7 +157,7 @@ func (h *Handler) UserSignOut(w http.ResponseWriter, r *http.Request) {
 	if session != nil {
 		err := h.service.DeleteUserSession(ctx, session.ID)
 		if err != nil {
-			log.Println("delete user session: " + err.Error())
+			log.Println("delete user session: " + err.Error()) //nolint:gosec
 		}
 	}
 

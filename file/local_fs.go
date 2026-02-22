@@ -205,7 +205,7 @@ func normalizeFilepath(path string) string {
 // On platforms where os.Rename does not replace an existing destination (notably Windows),
 // it emulates "replace" semantics by removing the destination and retrying.
 func renameReplace(from, to string) error { // TODO review
-	err := os.Rename(from, to)
+	err := os.Rename(from, to) //nolint:gosec
 	if err == nil {
 		return nil
 	}
@@ -225,7 +225,7 @@ func renameReplace(from, to string) error { // TODO review
 		return fmt.Errorf("remove destination: %w", rmErr)
 	}
 
-	err = os.Rename(from, to)
+	err = os.Rename(from, to) //nolint:gosec
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-// Package main ...
+// Package main is the entry point of the server application.
 package main
 
 import (
@@ -14,7 +14,7 @@ import (
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/file"
 	"github.com/gopl-dev/server/server"
-	"github.com/gopl-dev/server/trace"
+	"github.com/gopl-dev/server/tracing"
 	"github.com/gopl-dev/server/worker"
 )
 
@@ -22,7 +22,7 @@ func main() {
 	_ = file.Storage()
 	conf := app.Config()
 	ctx, cancelCtx := context.WithCancel(context.Background())
-	tracer, err := trace.New(ctx)
+	tracer, err := tracing.New(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

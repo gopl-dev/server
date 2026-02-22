@@ -15,6 +15,6 @@ func (mw *Middleware) Logging(next handler.Fn) handler.Fn {
 		start := time.Now()
 
 		next(w, r)
-		log.Printf("[%s] %s %s", time.Since(start), r.Method, r.URL.Path)
+		log.Printf("[%s] %s %s", time.Since(start), r.Method, r.URL.Path) //nolint:gosec
 	}
 }

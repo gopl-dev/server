@@ -83,7 +83,7 @@ func (l EventLog) RenderMessage() string {
 		b.WriteString(string(*l.EntityType))
 
 		title := l.EntityTitle
-		if storedTitle, ok := l.Meta["entity_title"]; ok { //nolint:staticcheck // this value of storedTitle is never used
+		if storedTitle, ok := l.Meta["entity_title"]; ok {
 			title = new(app.String(storedTitle))
 		}
 

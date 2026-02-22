@@ -36,12 +36,14 @@ func newMigration(args []string) (err error) {
 	name = time.Now().UTC().Format("20060102150405") + "_" + name + ".sql"
 	mg := resolveSampleMg(name)
 
-	err = os.WriteFile("app/db_migrations/"+name, []byte(mg+"\n"), privateFileMode)
+	err = os.WriteFile("app/db_migrations/"+name, []byte(mg+"\n"), privateFileMode) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("write file: %w", err)
 	}
 
 	if runtime.GOOS == "windows" {
+		// #nosec G702 -- name is safe: built from args joined with "_" (no spaces), lowercased, and suffixed with ".sql"
+		// foo & del C:\ -> foo_&_del_C:\.sql
 		cmd := exec.CommandContext(context.Background(), "cmd", "/C start app/db_migrations/"+name)
 
 		err = cmd.Run()

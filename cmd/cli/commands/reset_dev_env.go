@@ -14,7 +14,7 @@ import (
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/cli"
-	"github.com/gopl-dev/server/trace"
+	"github.com/gopl-dev/server/tracing"
 	"github.com/jackc/pgx/v5"
 	aur "github.com/logrusorgru/aurora"
 	"golang.org/x/crypto/bcrypt"
@@ -48,7 +48,7 @@ type resetDevEnvCmd struct {
 	NoSeed   bool    `arg:"-ns"`
 	Username *string `arg:"-u" default:"admin"`
 	Email    *string `arg:"-e" default:"admin"`
-	Password *string `arg:"-p" default:"admin"`
+	Password *string `arg:"-p" default:"admin"` //nolint:gosec
 }
 
 func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
@@ -147,7 +147,7 @@ func (cmd *resetDevEnvCmd) Handle(ctx context.Context) error {
 	}
 
 	// Create user
-	r := repo.New(newDB, trace.NewNoOpTracer())
+	r := repo.New(newDB, tracing.NewNoOpTracer())
 	fmt.Println("Creating default user...")
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(*cmd.Password), bcrypt.MinCost)
@@ -276,7 +276,7 @@ func writeAdminsToConfig(adminID string) error {
 		return err
 	}
 	defer func() {
-		_ = os.Remove(tmp.Name())
+		_ = os.Remove(tmp.Name()) //nolint:gosec
 	}()
 
 	_, err = tmp.WriteString(out)
@@ -291,8 +291,8 @@ func writeAdminsToConfig(adminID string) error {
 
 	st, err := os.Stat(confPath)
 	if err == nil {
-		_ = os.Chmod(tmp.Name(), st.Mode())
+		_ = os.Chmod(tmp.Name(), st.Mode()) //nolint:gosec
 	}
 
-	return os.Rename(tmp.Name(), confPath)
+	return os.Rename(tmp.Name(), confPath) //nolint:gosec
 }

@@ -228,7 +228,7 @@ func (b *filterBuilder) paginate(page, perPage int) *filterBuilder {
 	// page 1 -> offset 0; page 2 -> offset 25
 	offset := (page - 1) * perPage
 
-	b.qb = b.qb.Limit(uint64(perPage)) //nolint:gosec
+	b.qb = b.qb.Limit(uint64(perPage))
 
 	if offset > 0 {
 		b.qb = b.qb.Offset(uint64(offset))

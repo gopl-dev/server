@@ -14,7 +14,7 @@ import (
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/email"
 	"github.com/gopl-dev/server/test/factory"
-	"github.com/gopl-dev/server/trace"
+	"github.com/gopl-dev/server/tracing"
 	"github.com/jackc/pgx/v5"
 	"github.com/logrusorgru/aurora"
 	otelTrace "go.opentelemetry.io/otel/trace"
@@ -32,7 +32,7 @@ type App struct {
 // NewApp ...
 func NewApp() *App {
 	ctx := context.Background()
-	tracer, err := trace.New(ctx)
+	tracer, err := tracing.New(ctx)
 	if err != nil {
 		panic("[TEST] New app: " + err.Error())
 	}

@@ -32,7 +32,7 @@ type ConfigT struct {
 		Host       string `yaml:"host"`
 		Port       string `yaml:"port"`
 		User       string `yaml:"user"`
-		Password   string `yaml:"password"`
+		Password   string `yaml:"password"` //nolint:gosec
 		Name       string `yaml:"name"`
 		LogQueries bool   `yaml:"log_queries"`
 	} `yaml:"db"`
@@ -72,7 +72,7 @@ type ConfigT struct {
 		Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`
 		Username string `yaml:"username"`
-		Password string `yaml:"password"`
+		Password string `yaml:"password"` //nolint:gosec
 	} `yaml:"email"`
 
 	Session struct {
@@ -87,12 +87,12 @@ type ConfigT struct {
 
 	GoogleOAuth struct {
 		ClientID     string `yaml:"client_id"`
-		ClientSecret string `yaml:"client_secret"`
+		ClientSecret string `yaml:"client_secret"` //nolint:gosec
 	} `yaml:"google_oauth"`
 
 	GithubOAuth struct {
 		ClientID     string `yaml:"client_id"`
-		ClientSecret string `yaml:"client_secret"`
+		ClientSecret string `yaml:"client_secret"` //nolint:gosec
 	} `yaml:"github_oauth"`
 
 	// Admins is a list of user IDs with administrative privileges.

@@ -81,7 +81,7 @@ func (s *Service) newSignedSessionToken(ctx context.Context, userID ds.ID) (toke
 
 // AuthenticateUserInput defines the input for user authentication.
 type AuthenticateUserInput struct {
-	Email, Password string
+	Email, Password string //nolint:gosec
 }
 
 // Sanitize trims whitespace from email and password fields.

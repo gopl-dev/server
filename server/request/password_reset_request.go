@@ -8,5 +8,5 @@ type PasswordResetRequest struct {
 // PasswordReset represents the request body for resetting a password with a token.
 type PasswordReset struct {
 	Token    string `json:"token"`
-	Password string `json:"password"`
+	Password string `json:"password"` //nolint:gosec
 }

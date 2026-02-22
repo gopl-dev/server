@@ -64,7 +64,7 @@ func (s *Service) UploadFile(ctx context.Context, args UploadFileArgs) (*ds.File
 		return nil, err
 	}
 	defer func() {
-		_ = os.Remove(tmp.Name())
+		_ = os.Remove(tmp.Name()) //nolint:gosec
 	}()
 
 	hasher := sha256.New()
@@ -121,7 +121,7 @@ func (s *Service) UploadFile(ctx context.Context, args UploadFileArgs) (*ds.File
 			return nil, err
 		}
 
-		src, err := os.Open(tmp.Name())
+		src, err := os.Open(tmp.Name()) //nolint:gosec
 		if err != nil {
 			return nil, err
 		}

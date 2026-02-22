@@ -3,6 +3,7 @@ package cleanupfiles
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -33,7 +34,7 @@ func (w Job) Schedule() gocron.JobDefinition {
 }
 
 // Do mark temp files as deleted after ds.DeleteTempFilesAfterDays.
-func (w Job) Do(ctx context.Context, s *service.Service, _ *app.DB) (err error) {
+func (w Job) Do(ctx context.Context, s *service.Service, db *app.DB) (err error) {
 	batchSize := 100
 
 	// To delete a file, a user must be present in the context
@@ -54,6 +55,19 @@ processBatch:
 	println("[CLEANUP-FILES]:", count, "files about to be removed from system")
 
 	for _, f := range files {
+		// detach from entities
+		_, err = db.Exec(ctx, "UPDATE entities SET preview_file_id=NULL WHERE preview_file_id=$1", f.ID)
+		if err != nil {
+			err = fmt.Errorf("detach preview file from entities: %w", err)
+			return
+		}
+		// detach book covers
+		_, err = db.Exec(ctx, "UPDATE books SET cover_file_id=NULL WHERE cover_file_id=$1", f.ID)
+		if err != nil {
+			err = fmt.Errorf("detach cover file from books: %w", err)
+			return
+		}
+
 		err := s.HardDeleteFileUnsafe(ctx, &f)
 		if err != nil {
 			return err

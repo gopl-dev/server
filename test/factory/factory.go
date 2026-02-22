@@ -13,7 +13,7 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
-	"github.com/gopl-dev/server/trace"
+	"github.com/gopl-dev/server/tracing"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -27,7 +27,7 @@ type Factory struct {
 func New(db *app.DB) *Factory {
 	return &Factory{
 		db:   db,
-		repo: repo.New(db, trace.NewNoOpTracer()),
+		repo: repo.New(db, tracing.NewNoOpTracer()),
 	}
 }
 

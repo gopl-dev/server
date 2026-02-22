@@ -267,7 +267,7 @@ func (s *Service) ChangeUsername(ctx context.Context, in ChangeUsernameInput) (e
 type ChangeUsernameInput struct {
 	UserID      ds.ID
 	NewUsername string
-	Password    string
+	Password    string //nolint:gosec
 }
 
 // Sanitize trims whitespace from the new username.
@@ -716,7 +716,7 @@ func (s *Service) DeleteUser(ctx context.Context, userID ds.ID, password string)
 // DeleteUserInput defines the input for deleting a user.
 type DeleteUserInput struct {
 	UserID   ds.ID
-	Password string
+	Password string //nolint:gosec
 }
 
 // Sanitize performs no sanitization for this input.
@@ -1116,7 +1116,7 @@ func (s *Service) RegisterUser(ctx context.Context, username, emailAddr, passwor
 type RegisterUserInput struct {
 	Username string
 	Email    string
-	Password string
+	Password string //nolint:gosec
 }
 
 // Sanitize trims whitespace from all registration fields.
@@ -1179,7 +1179,7 @@ func (s *Service) ResetPassword(ctx context.Context, token, password string) (er
 // ResetPasswordInput defines the input for resetting a password.
 type ResetPasswordInput struct {
 	Token    string
-	Password string
+	Password string //nolint:gosec
 }
 
 // Sanitize trims whitespace from token and password fields.

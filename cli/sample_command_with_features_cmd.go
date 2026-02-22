@@ -71,7 +71,7 @@ type SampleCommandWithFeaturesCmd struct {
 
 	// Named options: provided as {name}={value}.
 	// Unlike positional arguments, they can appear in any order.
-	AuthToken string   `arg:"-token"`
+	AuthToken string   `arg:"-token"` //nolint:gosec
 	TmpPath   *string  `arg:"-tmp-path" default:"/tmp/"`
 	Variables []string `arg:"-vars"`
 	Timeout   *int     `arg:"-t" default:"300"`

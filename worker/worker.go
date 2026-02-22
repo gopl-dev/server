@@ -9,7 +9,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/service"
-	"github.com/gopl-dev/server/trace"
+	"github.com/gopl-dev/server/tracing"
 	"github.com/gopl-dev/server/worker/cleanup_change_email_requests"
 	"github.com/gopl-dev/server/worker/cleanup_deleted_users"
 	"github.com/gopl-dev/server/worker/cleanup_expired_password_change_requests"
@@ -45,7 +45,7 @@ type Job interface {
 // It sets up the database connection, tracer, and registers all defined jobs.
 // The scheduler runs until the provided context is canceled.
 func Start(ctx context.Context) error {
-	tracer, err := trace.New(ctx)
+	tracer, err := tracing.New(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

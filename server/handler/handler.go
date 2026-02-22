@@ -262,7 +262,7 @@ func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) 
 	if err != nil {
 		log.Println(err)
 
-		_, err = w.Write([]byte(err.Error()))
+		_, err = w.Write([]byte("templ: failed to render component"))
 		if err != nil {
 			log.Println(err)
 		}

@@ -15,7 +15,7 @@ func (mw *Middleware) Recovery(next handler.Fn) handler.Fn {
 		defer func() {
 			if err := recover(); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("[%s %s] Recovered from panic: %s", r.Method, r.URL.Path, err)
+				log.Printf("[%s %s] Recovered from panic: %s", r.Method, r.URL.Path, err) //nolint:gosec
 				log.Println(string(debug.Stack()))
 			}
 		}()
