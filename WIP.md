@@ -22,6 +22,11 @@ NEXT:
 - [ ] Create new topic when creating/editing entity
 - [ ] Pages
   - [ ] Add meta to page (Who created, last edit by who and list of activities on page (api call))
+- [ ] Books
+  - [ ] Add subtitle
+  - [ ] Sort
+  - [ ] Search
+  - [ ] Reading list
 - [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
 - [ ] Jobs
