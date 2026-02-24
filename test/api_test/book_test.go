@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
@@ -18,6 +17,7 @@ import (
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory"
 	"github.com/gopl-dev/server/test/factory/random"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestCreateBook_Basic is a minimal effort to create valid book.
@@ -94,7 +94,7 @@ func TestCreateBook_Basic(t *testing.T) {
 
 		errText, ok := errResp.InputErrors["topics"]
 		assert.True(t, ok)
-		assert.True(t, errText != "")
+		assert.NotEmpty(t, errText)
 	})
 }
 
@@ -173,7 +173,7 @@ func TestFilterBooks(t *testing.T) {
 	var resp response.FilterBooks
 	GET(t, req, &resp)
 
-	assert.Equal(t, 2, len(resp.Data))
+	assert.Len(t, resp.Data, 2)
 
 	t.Run("pagination", func(t *testing.T) {
 		req.Params = request.FilterEntities{
@@ -182,7 +182,7 @@ func TestFilterBooks(t *testing.T) {
 		}
 
 		GET(t, req, &resp)
-		assert.Equal(t, 3, len(resp.Data))
+		assert.Len(t, resp.Data, 3)
 	})
 }
 
@@ -196,7 +196,7 @@ func TestUpdateBook_WithReview(t *testing.T) {
 	// first response's data should be same as book and with revision=0
 	assert.Equal(t, book.ID, resp.ID)
 	assert.Equal(t, 0, resp.Revision)
-	assert.True(t, len(book.Data()) == len(resp.Data))
+	assert.Len(t, book.Data(), len(resp.Data))
 
 	var data map[string]any
 	jsonData, err := json.Marshal(book.Data())
@@ -250,7 +250,7 @@ func TestUpdateBook_WithReview(t *testing.T) {
 	GET(t, pf("/books/%s/edit/", book.ID), &resp)
 	assert.Equal(t, book.ID, resp.ID)
 	assert.Equal(t, 1, resp.Revision) // revision should increase
-	assert.True(t, len(book.Data()) == len(resp.Data))
+	assert.Len(t, book.Data(), len(resp.Data))
 
 	assert.Equal(t, any(updateReq.Title), resp.Data["title"])
 	assert.Equal(t, any(updateReq.Description), resp.Data["description"])
@@ -383,11 +383,11 @@ func TestApproveNewBook(t *testing.T) {
 	test.CheckErr(t, err)
 
 	emailVars := test.LoadEmailVars(t, owner.Email)
-	assert.Equal(t, emailVars, map[string]any{
+	assert.Equal(t, map[string]any{
 		"username":      owner.Username,
 		"book_name":     book.Title,
 		"view_book_url": app.ServerURL("/books/" + book.PublicID + "/"),
-	})
+	}, emailVars)
 }
 
 func TestRejectNewBook(t *testing.T) {
@@ -424,11 +424,11 @@ func TestRejectNewBook(t *testing.T) {
 	test.CheckErr(t, err)
 
 	emailVars := test.LoadEmailVars(t, owner.Email)
-	assert.Equal(t, emailVars, map[string]any{
+	assert.Equal(t, map[string]any{
 		"username":  owner.Username,
 		"book_name": book.Title,
 		"note":      req.Note,
-	})
+	}, emailVars)
 }
 
 func TestDeleteBook(t *testing.T) {

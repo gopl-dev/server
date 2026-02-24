@@ -13,7 +13,7 @@ AFTER RELEASE CHECKLIST:
 - [x] Setup & test email
 - [x] Setup & test auth & registration with google
 - [x] Setup & test auth & registration with github
-- [ ] Setup & test tracing
+- [x] Setup & test tracing
 - [ ] Enable linting and testing on CI/CD
 - [ ] Disable push to main without MR
 
@@ -27,6 +27,8 @@ NEXT:
   - [ ] Sort
   - [ ] Search
   - [ ] Reading list
+- [ ] Let textarea be fullscreen
+- [ ] Preview for markdown
 - [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
 - [ ] Jobs

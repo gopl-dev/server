@@ -3,8 +3,8 @@ package api_test
 import (
 	"testing"
 
-	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/server/response"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetServerStatus(t *testing.T) {

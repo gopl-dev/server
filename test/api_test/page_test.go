@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
@@ -13,6 +12,7 @@ import (
 	"github.com/gopl-dev/server/server/request"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory/random"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreatePage(t *testing.T) {
@@ -80,7 +80,7 @@ func TestCreatePage(t *testing.T) {
 
 		errMsg, ok := errResp.InputErrors["public_id"]
 		assert.True(t, ok)
-		assert.True(t, errMsg != "")
+		assert.NotEmpty(t, errMsg)
 	})
 }
 
@@ -94,7 +94,7 @@ func TestUpdatePage_WithReview(t *testing.T) {
 	// first response's data should be same as page and with revision=0
 	assert.Equal(t, page.ID, resp.ID)
 	assert.Equal(t, 0, resp.Revision)
-	assert.True(t, len(page.Data()) == len(resp.Data))
+	assert.Len(t, page.Data(), len(resp.Data))
 
 	for k, v := range page.Data() {
 		assert.Equal(t, fmt.Sprintf("%v", v), fmt.Sprintf("%v", resp.Data[k]))
@@ -136,8 +136,8 @@ func TestUpdatePage_WithReview(t *testing.T) {
 	// next edit should return "in-progress" data
 	GET(t, pf("/pages/%s/edit/", page.PublicID), &resp)
 	assert.Equal(t, page.ID, resp.ID)
-	assert.Equal(t, 1, resp.Revision) // revision should increase
-	assert.True(t, len(page.Data()) == len(resp.Data))
+	assert.Equal(t, 1, resp.Revision)
+	assert.Len(t, page.Data(), len(resp.Data))
 	assert.Equal(t, any(updateReq.Content), resp.Data["content"])
 
 	// updating page that already have change request for review

@@ -12,7 +12,7 @@ This is a Go-based web server application using a layered architecture. It serve
 - Focus on "Code first, text second."
 
 ## Tech Stack
-- **Language:** Go (Golang) 1.23+
+- **Language:** Go (Golang) 1.26
 - **Database:** PostgreSQL 18+
 - **DB Driver:** `pgx/v5` with `georgysavva/scany/v2` for scanning.
 - **Routing:** Standard `net/http` `ServeMux` with a custom wrapper (`server/endpoint/router.go`).

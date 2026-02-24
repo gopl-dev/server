@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
+	"github.com/stretchr/testify/assert"
 )
 
 func checkValidatedInput(t *testing.T, valid bool, err error, argName string, expectedErr string) {

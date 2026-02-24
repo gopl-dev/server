@@ -22,6 +22,7 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 const (
@@ -47,12 +48,16 @@ var mdRenderer = goldmark.New(
 	goldmark.WithExtensions(
 		extension.GFM,
 	),
+	goldmark.WithRendererOptions(
+		html.WithUnsafe(),
+	),
 )
 
 var htmlPolicy = func() *bluemonday.Policy {
 	p := bluemonday.UGCPolicy()
 	p.RequireNoFollowOnLinks(true)
 	p.RequireNoReferrerOnLinks(true)
+
 	return p
 }()
 

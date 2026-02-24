@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/file"
@@ -14,6 +13,7 @@ import (
 	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory/random"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestUploadFile is a minimal effort to create valid file.
@@ -31,8 +31,8 @@ func TestUploadFile(t *testing.T) {
 
 	resp := UploadFile(t, req)
 
-	assert.True(t, resp.Size > 0)
-	assert.Equal(t, resp.MimeType, "image/png")
+	assert.Positive(t, resp.Size)
+	assert.Equal(t, "image/png", resp.MimeType)
 
 	test.AssertInDB(t, tt.DB, "files", test.Data{
 		"id":        resp.ID,

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alecthomas/assert/v2"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
@@ -15,6 +14,7 @@ import (
 	"github.com/gopl-dev/server/server/response"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory/random"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUserSignUp(t *testing.T) {
@@ -74,7 +74,7 @@ func TestUserSignUp(t *testing.T) {
 			assertStatus: http.StatusUnprocessableEntity,
 		})
 
-		assert.Equal(t, resp.InputErrors["username"], service.UsernameAlreadyTaken)
+		assert.Equal(t, service.UsernameAlreadyTaken, resp.InputErrors["username"])
 	})
 
 	t.Run("email already taken", func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestUserSignUp(t *testing.T) {
 			assertStatus: http.StatusUnprocessableEntity,
 		})
 
-		assert.Equal(t, resp.InputErrors["email"], service.UserWithThisEmailAlreadyExists)
+		assert.Equal(t, service.UserWithThisEmailAlreadyExists, resp.InputErrors["email"])
 	})
 }
 
@@ -257,7 +257,7 @@ func TestPasswordReset(t *testing.T) {
 
 	emailVars := test.LoadEmailVars(t, user.Email)
 	token := app.String(emailVars["token"])
-	assert.NotZero(t, token)
+	assert.NotEmpty(t, token)
 
 	// 2. Successfully reset the password
 	newPassword := random.String()
@@ -326,7 +326,7 @@ func TestPasswordReset(t *testing.T) {
 			bindResponse: &errorResp,
 			assertStatus: http.StatusUnprocessableEntity,
 		})
-		assert.NotZero(t, errorResp.InputErrors["password"])
+		assert.NotEmpty(t, errorResp.InputErrors["password"])
 	})
 }
 
@@ -358,7 +358,7 @@ func TestChangeEmail(t *testing.T) {
 
 	emailVars := test.LoadEmailVars(t, newEmail)
 	confirmToken := app.String(emailVars["token"])
-	assert.NotZero(t, confirmToken)
+	assert.NotEmpty(t, confirmToken)
 
 	// Confirm the email change with the confirmToken
 	var confirmResp response.Status
@@ -457,7 +457,7 @@ func TestChangeUsername(t *testing.T) {
 			assertStatus: http.StatusUnprocessableEntity,
 		})
 
-		assert.Equal(t, resp.InputErrors["password"], "Incorrect password")
+		assert.Equal(t, "Incorrect password", resp.InputErrors["password"])
 	})
 
 	t.Run("username already taken", func(t *testing.T) {
@@ -477,7 +477,7 @@ func TestChangeUsername(t *testing.T) {
 			assertStatus: http.StatusUnprocessableEntity,
 		})
 
-		assert.Equal(t, resp.InputErrors["username"], service.UsernameAlreadyTaken)
+		assert.Equal(t, service.UsernameAlreadyTaken, resp.InputErrors["username"])
 	})
 }
 

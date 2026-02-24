@@ -7,7 +7,6 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/Oudwins/zog v0.21.9
 	github.com/a-h/templ v0.3.960
-	github.com/alecthomas/assert/v2 v2.11.0
 	github.com/brianvoe/gofakeit/v7 v7.14.0
 	github.com/chzyer/readline v1.5.1
 	github.com/georgysavva/scany/v2 v2.1.4
@@ -40,7 +39,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.7.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
-	github.com/alecthomas/repr v0.5.2 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
@@ -70,7 +68,6 @@ require (
 	github.com/gorilla/sessions v1.1.1 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
-	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
