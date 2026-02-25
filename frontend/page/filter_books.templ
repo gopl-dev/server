@@ -120,7 +120,7 @@ templ FilterBooksPage() {
                 if (this.topics.length) return
 
                 try {
-                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book`, { method: 'GET' })
+                    const { resp, data } = await HTTP.requestJSON(`/api/topics/?type=book&per_page=100`, { method: 'GET' })
                     if (resp.status !== 200) {
                         this.error = data?.error || 'Failed to load topics'
                         return
