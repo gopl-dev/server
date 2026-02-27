@@ -97,7 +97,7 @@ func Home(d HomeData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><div class=\"bg-base-100 card-body\"><div class=\"flex items-start justify-between gap-3\"><h2 class=\"text-3xl\">Community</h2><a class=\"btn btn-ghost btn-sm btn-circle btn-success\" title=\"Edit\" href=\"/edit-page/ecosystem/\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><div class=\"bg-base-100 card-body\"><div class=\"flex items-start justify-between gap-3\"><h2 class=\"text-3xl\">Community</h2><a class=\"btn btn-ghost btn-sm btn-circle btn-success\" title=\"Edit\" href=\"/edit-page/community/\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
