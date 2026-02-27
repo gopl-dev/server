@@ -87,7 +87,7 @@ func EditPageForm(pageID string) templ.Component {
 				Model:       "form.content",
 				ErrorModel:  "errors.content",
 				Type:        "textarea",
-				Rows:        15,
+				Rows:        25,
 				Description: "You can use Markdown.",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {

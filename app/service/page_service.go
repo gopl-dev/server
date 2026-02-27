@@ -11,12 +11,20 @@ import (
 	"github.com/gopl-dev/server/email"
 )
 
-// GetPageByPublicID retrieves a page by its public identifier.
+// GetPageByPublicID retrieves a page by its public ID.
 func (s *Service) GetPageByPublicID(ctx context.Context, id string) (*ds.Page, error) {
 	ctx, span := s.tracer.Start(ctx, "GetPageByPublicID")
 	defer span.End()
 
 	return s.db.GetPageByPublicID(ctx, id)
+}
+
+// GetPagesByPublicID retrieves pages by given public IDs.
+func (s *Service) GetPagesByPublicID(ctx context.Context, id ...string) ([]ds.Page, error) {
+	ctx, span := s.tracer.Start(ctx, "GetPagesByPublicID")
+	defer span.End()
+
+	return s.db.GetPagesByPublicID(ctx, id...)
 }
 
 // GetPageByID retrieves a page by its ID from the database.
