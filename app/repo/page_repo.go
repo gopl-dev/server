@@ -30,6 +30,22 @@ func (r *Repo) GetPageByPublicID(ctx context.Context, publicID string) (*ds.Page
 	return page, err
 }
 
+// GetPagesByPublicID retrieves pages by given public ID.
+func (r *Repo) GetPagesByPublicID(ctx context.Context, publicIDs ...string) (pages []ds.Page, err error) {
+	_, span := r.tracer.Start(ctx, "GetPageByPublicID")
+	defer span.End()
+
+	if len(publicIDs) == 0 {
+		return
+	}
+
+	pages = make([]ds.Page, 0, len(publicIDs))
+	const query = `SELECT * FROM entities e JOIN pages p USING (id) WHERE e.public_id = ANY($1) AND e.type = $2 AND e.deleted_at IS NULL`
+
+	err = pgxscan.Select(ctx, r.getDB(ctx), &pages, query, publicIDs, ds.EntityTypePage)
+	return
+}
+
 // GetPageByID retrieves a page by its ID.
 func (r *Repo) GetPageByID(ctx context.Context, id ds.ID) (*ds.Page, error) {
 	_, span := r.tracer.Start(ctx, "GetPageByID")

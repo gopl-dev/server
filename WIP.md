@@ -4,24 +4,22 @@ for simplicity, I keep todo list and progress here for now
 
 **Before release**:
 - [ ] Review "TODO!"s
-- [ ] Homepage
+- [x] Homepage
 - [ ] Licence
-- [ ] RELEASE
+- [x] RELEASE
 ---
 
-AFTER RELEASE CHECKLIST:
-- [x] Setup & test email
-- [x] Setup & test auth & registration with google
-- [x] Setup & test auth & registration with github
-- [x] Setup & test tracing
-- [ ] Enable linting and testing on CI/CD
-- [ ] Disable push to main without MR
+Tweaks & fixes:
+- [ ] Add description to upload book cover input 
+- [ ] When book cover upload ends with error, another cannot be added
 
-NEXT:
+
+TODO:
 - [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
 - [ ] Create new topic when creating/editing entity
 - [ ] Pages
   - [ ] Add meta to page (Who created, last edit by who and list of activities on page (api call))
+  - [ ] Content chips
 - [ ] Books
   - [ ] Add subtitle
   - [ ] Sort
@@ -53,3 +51,4 @@ NEXT:
 - [ ] Let user continue work on reject entity and proposed changes
 - [ ] Review "delete account" test. Right now, it passes even if models belonging to the user still exist.
 - [ ] Order of props when reviewing changes and public diffs should be constant and predefined
+- [ ] Sitemap
