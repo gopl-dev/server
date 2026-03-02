@@ -743,7 +743,7 @@ func writeTestConfigs(m swModel, src []byte) error {
 	vals = append(vals,
 		yv("db", "name", testDBName),
 		yv("email", "driver", "test"),
-		yv("tracing", "enabled", "false"), // Обратите внимание: в вашем коде была строка "false"
+		yv("tracing", "enabled", false),
 		yv("files", "storage_driver", "in-memory-fs"),
 	)
 
