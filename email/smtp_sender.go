@@ -16,7 +16,7 @@ type SMTPSender struct {
 
 // NewSMTPSender creates and initializes a new SMTPSender instance.
 func NewSMTPSender() (*SMTPSender, error) {
-	conf := app.Config().Email
+	conf := app.Config().Email.SMTP
 
 	client, err := mail.NewClient(conf.Host,
 		mail.WithPort(conf.Port),

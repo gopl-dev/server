@@ -67,12 +67,14 @@ type ConfigT struct {
 
 	Email struct {
 		// Driver can be: smtp or test
-		Driver   string `yaml:"driver"`
-		From     string `yaml:"from"`
-		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"` //nolint:gosec
+		Driver string `yaml:"driver"`
+		From   string `yaml:"from"`
+		SMTP   struct {
+			Host     string `yaml:"host"`
+			Port     int    `yaml:"port"`
+			Username string `yaml:"username"`
+			Password string `yaml:"password"` //nolint:gosec
+		} `yaml:"smtp"`
 	} `yaml:"email"`
 
 	Session struct {
