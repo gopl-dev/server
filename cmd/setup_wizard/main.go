@@ -796,9 +796,9 @@ func ensureTestDB(hostPort, user, pass, dbName string) error {
 
 func main() {
 	fmt.Println(swErrorStyle.Render("⚠  WARNING"))
-	fmt.Println(swErrorStyle.Render("   This wizard is intended for local development setup only."))
-	fmt.Println(swErrorStyle.Render("   It will create or overwrite .config.yaml and may create databases."))
-	fmt.Println(swErrorStyle.Render("   Do NOT run this in staging or production environments."))
+	fmt.Println(swErrorStyle.Render("   This wizard is intended for LOCAL DEVELOPMENT setup only."))
+	fmt.Println(swErrorStyle.Render("   It may create and/or overwrite files and databases."))
+	fmt.Println(swErrorStyle.Render("   DO NOT PROCEED UNLESS you have mastered the \"First-Backup-Then-Fire\" spell."))
 	fmt.Println()
 	fmt.Print("   Proceed? [Y/n]: ")
 	var ans string
