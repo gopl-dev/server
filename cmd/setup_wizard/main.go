@@ -1,3 +1,6 @@
+// Package main provides a CLI setup wizard for the gopl-server.
+// It guides the user through database configuration, validates connections,
+// and generates the necessary .config.yaml files for local development.
 package main
 
 import (
@@ -5,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -14,6 +17,15 @@ import (
 	"github.com/gopl-dev/server/app"
 	"github.com/jackc/pgx/v5"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	errYAMLNodeUnsupportedValueType = errors.New("unsupported value type")
+	errEmptyYAML                    = errors.New("empty yaml document")
+	errSectionNotFound              = errors.New("section not found")
+	errSubsectionNotFound           = errors.New("subsection not found")
+	errKeyNotFound                  = errors.New("key not found")
+	errDatabaseNotEmpty             = errors.New("database already has tables")
 )
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -72,9 +84,8 @@ func (s stepState) focusInput(to int) stepState {
 }
 
 // makeInput creates a styled textinput with optional password echo mode.
-func makeInput(placeholder string, secret bool) textinput.Model {
+func makeInput(secret bool) textinput.Model {
 	ti := textinput.New()
-	ti.Placeholder = placeholder
 	ti.CharLimit = 256
 	ti.PromptStyle = swBlurredStyle
 	ti.TextStyle = swBlurredStyle
@@ -138,9 +149,9 @@ const (
 var stepDBCredentials = Step{
 	Init: func() stepState {
 		inputs := []textinput.Model{
-			makeInput("", false),
-			makeInput("", false),
-			makeInput("", true),
+			makeInput(false),
+			makeInput(false),
+			makeInput(true),
 		}
 		s := stepState{inputs: inputs}
 		return s.focusInput(dbIdxHost)
@@ -173,7 +184,7 @@ var stepDBCredentials = Step{
 				if err != nil {
 					return msgConnectResult{err: err}
 				}
-				conn.Close(context.Background())
+				_ = conn.Close(context.Background())
 				return msgConnectResult{}
 			}, false
 		case tea.KeyShiftTab, tea.KeyUp:
@@ -217,7 +228,7 @@ const dbNameIdx = 0
 
 var stepDBName = Step{
 	Init: func() stepState {
-		inputs := []textinput.Model{makeInput("", false)}
+		inputs := []textinput.Model{makeInput(false)}
 		s := stepState{inputs: inputs}
 		return s.focusInput(dbNameIdx)
 	},
@@ -238,7 +249,19 @@ var stepDBName = Step{
 		switch msg.Type {
 		case tea.KeyEnter, tea.KeyTab, tea.KeyDown:
 			dbName := s.val(dbNameIdx)
-			creds := s.extra.(dbCreds)
+
+			creds, ok := s.extra.(dbCreds)
+			if !ok {
+				s.err = "internal error: database credentials not found"
+				return s, nil, false
+			}
+
+			if dbName != "" && dbName == creds.originalName {
+				return s, func() tea.Msg {
+					return msgDBCheckResult{created: false, err: nil}
+				}, false
+			}
+
 			return s, func() tea.Msg {
 				return checkDB(creds.host, creds.user, creds.pass, dbName)
 			}, false
@@ -259,11 +282,14 @@ var stepDBName = Step{
 		return s, nil, true, true
 	},
 
-	Values: func(s stepState) []yamlValue { return nil },
+	Values: func(_ stepState) []yamlValue { return nil },
 }
 
 // dbCreds is passed as extra to stepDBName so it can fire the async check.
-type dbCreds struct{ host, user, pass string }
+type dbCreds struct {
+	host, user, pass string
+	originalName     string // Добавляем это поле
+}
 
 // checkDB connects to dbName, creating it if it doesn't exist, and verifies it has no tables.
 func checkDB(hostPort, user, pass, dbName string) tea.Msg {
@@ -278,7 +304,7 @@ func checkDB(hostPort, user, pass, dbName string) tea.Msg {
 			return msgDBCheckResult{err: pgErr}
 		}
 		_, pgErr = pgConn.Exec(ctx, fmt.Sprintf("CREATE DATABASE %q", dbName))
-		pgConn.Close(ctx)
+		_ = pgConn.Close(ctx)
 		if pgErr != nil {
 			return msgDBCheckResult{err: fmt.Errorf("create database: %w", pgErr)}
 		}
@@ -289,7 +315,9 @@ func checkDB(hostPort, user, pass, dbName string) tea.Msg {
 			return msgDBCheckResult{err: err}
 		}
 	}
-	defer conn.Close(ctx)
+	defer func() {
+		_ = conn.Close(ctx)
+	}()
 
 	var count int
 	err = conn.QueryRow(ctx,
@@ -299,7 +327,7 @@ func checkDB(hostPort, user, pass, dbName string) tea.Msg {
 		return msgDBCheckResult{err: fmt.Errorf("query tables: %w", err)}
 	}
 	if count > 0 {
-		return msgDBCheckResult{err: fmt.Errorf("database '%s' already has %d table(s)", dbName, count)}
+		return msgDBCheckResult{err: fmt.Errorf("%w: %s (%d tables)", errDatabaseNotEmpty, dbName, count)}
 	}
 	return msgDBCheckResult{created: created}
 }
@@ -380,28 +408,6 @@ func setInputDefault(inputs []textinput.Model, idx int, value string) {
 	inputs[idx].SetValue(value)
 }
 
-// currentStep returns the Step definition for the active step index.
-func (m swModel) currentStep() Step { return allSteps[m.stepIdx] }
-
-// currentState returns the runtime state for the active step.
-func (m swModel) currentState() stepState { return m.states[m.stepIdx] }
-
-// advance moves to the next step, injecting dbCreds into stepDBName when needed.
-// Sets done=true when there are no more steps.
-func (m swModel) advance() swModel {
-	next := m.stepIdx + 1
-	if next >= len(allSteps) {
-		m.done = true
-		return m
-	}
-	m.stepIdx = next
-	// inject dbCreds into stepDBName so it can fire the async check
-	if next == stepIdxDBName {
-		m.states[next].extra = m.dbInfo
-	}
-	return m
-}
-
 // ── Init / Update ─────────────────────────────────────────────────────────────
 
 func (m swModel) Init() tea.Cmd { return textinput.Blink }
@@ -435,15 +441,17 @@ func (m swModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if advance {
 				if m.stepIdx == stepIdxDBCreds {
 					m.dbInfo = dbCreds{
-						host: newState.val(dbIdxHost),
-						user: newState.val(dbIdxUser),
-						pass: newState.val(dbIdxPass),
+						host:         newState.val(dbIdxHost),
+						user:         newState.val(dbIdxUser),
+						pass:         newState.val(dbIdxPass),
+						originalName: "",
 					}
 				}
 				if m.stepIdx == stepIdxDBName {
-					r := msg.(msgDBCheckResult)
-					m.dbName = newState.val(dbNameIdx)
-					m.created = r.created
+					if r, ok := msg.(msgDBCheckResult); ok {
+						m.dbName = newState.val(dbNameIdx)
+						m.created = r.created
+					}
 				}
 				m = m.advance()
 			}
@@ -496,6 +504,30 @@ func (m swModel) View() string {
 	return b.String()
 }
 
+// currentStep returns the Step definition for the active step index.
+func (m swModel) currentStep() Step { return allSteps[m.stepIdx] }
+
+// currentState returns the runtime state for the active step.
+func (m swModel) currentState() stepState { return m.states[m.stepIdx] }
+
+// advance moves to the next step, injecting dbCreds into stepDBName when needed.
+// Sets done=true when there are no more steps.
+func (m swModel) advance() swModel {
+	next := m.stepIdx + 1
+	if next >= len(allSteps) {
+		m.done = true
+		return m
+	}
+	m.stepIdx = next
+	// inject dbCreds into stepDBName so it can fire the async check
+	if next == stepIdxDBName {
+		info := m.dbInfo
+		info.originalName = m.states[next].val(dbNameIdx)
+		m.states[next].extra = info
+	}
+	return m
+}
+
 // summaryView renders the final confirmation screen showing collected values.
 func (m swModel) summaryView() string {
 	var b strings.Builder
@@ -539,11 +571,11 @@ type yamlValue struct {
 	section    string
 	subsection string
 	key        string
-	value      string
+	value      any
 }
 
 // yv is a shorthand constructor for yamlValue without a subsection.
-func yv(section, key, value string) yamlValue {
+func yv(section, key string, value any) yamlValue {
 	return yamlValue{section: section, key: key, value: value}
 }
 
@@ -558,31 +590,49 @@ func setYAMLValue(doc *yaml.Node, v yamlValue) error {
 	root := doc
 	if root.Kind == yaml.DocumentNode {
 		if len(root.Content) == 0 {
-			return fmt.Errorf("empty yaml document")
+			return errEmptyYAML
 		}
 		root = root.Content[0]
 	}
 
 	sectionNode := mappingValue(root, v.section)
 	if sectionNode == nil {
-		return fmt.Errorf("section %q not found", v.section)
+		return fmt.Errorf("%w: %s", errSectionNotFound, v.section)
 	}
 
 	target := sectionNode
 	if v.subsection != "" {
 		target = mappingValue(sectionNode, v.subsection)
 		if target == nil {
-			return fmt.Errorf("subsection %q not found in %q", v.subsection, v.section)
+			return fmt.Errorf("%w: %s in %s", errSubsectionNotFound, v.subsection, v.section)
 		}
 	}
 
 	valueNode := mappingValue(target, v.key)
 	if valueNode == nil {
-		return fmt.Errorf("key %q not found in %q", v.key, v.section)
+		return fmt.Errorf("%w: %s in %s", errKeyNotFound, v.key, v.section)
 	}
 
-	valueNode.Value = v.value
-	valueNode.Tag = "!!str"
+	switch val := v.value.(type) {
+	case bool:
+		valueNode.Kind = yaml.ScalarNode
+		valueNode.Value = strconv.FormatBool(val)
+		valueNode.Tag = "!!bool"
+
+	case int:
+		valueNode.Kind = yaml.ScalarNode
+		valueNode.Value = strconv.Itoa(val)
+		valueNode.Tag = "!!int"
+
+	case string:
+		valueNode.Kind = yaml.ScalarNode
+		valueNode.Value = val
+		valueNode.Tag = "!!str"
+
+	default:
+		return fmt.Errorf("%w: %T", errYAMLNodeUnsupportedValueType, v.value)
+	}
+
 	return nil
 }
 
@@ -614,11 +664,12 @@ func applyValues(doc *yaml.Node, vals []yamlValue) error {
 func encodeYAML(doc *yaml.Node) (string, error) {
 	var buf strings.Builder
 	enc := yaml.NewEncoder(&buf)
-	enc.SetIndent(2)
+	enc.SetIndent(2) //nolint:mnd
 	err := enc.Encode(doc)
 	if err != nil {
 		return "", err
 	}
+
 	return buf.String(), nil
 }
 
@@ -655,7 +706,7 @@ func swWriteConfig(m swModel) error {
 		return fmt.Errorf("encode config: %w", err)
 	}
 
-	err = os.WriteFile(".config.yaml", []byte(content), 0o600)
+	err = os.WriteFile(".config.yaml", []byte(content), 0o600) //nolint:mnd
 	if err != nil {
 		return fmt.Errorf("write .config.yaml: %w", err)
 	}
@@ -686,12 +737,13 @@ func writeTestConfigs(m swModel, src []byte) error {
 		return fmt.Errorf("parse config.sample.yaml: %w", err)
 	}
 
-	var vals []yamlValue
-	vals = append(vals, stepDBCredentials.Values(m.states[stepIdxDBCreds])...)
+	dbVals := stepDBCredentials.Values(m.states[stepIdxDBCreds])
+	vals := make([]yamlValue, 0, len(dbVals)+4) //nolint:mnd
+	vals = append(vals, dbVals...)
 	vals = append(vals,
 		yv("db", "name", testDBName),
 		yv("email", "driver", "test"),
-		yv("tracing", "enabled", "false"),
+		yv("tracing", "enabled", "false"), // Обратите внимание: в вашем коде была строка "false"
 		yv("files", "storage_driver", "in-memory-fs"),
 	)
 
@@ -706,13 +758,12 @@ func writeTestConfigs(m swModel, src []byte) error {
 	}
 
 	for _, path := range testConfigPaths {
-		if _, statErr := os.Stat(path); statErr == nil {
+		_, statErr := os.Stat(path)
+		if statErr == nil {
 			continue // already exists — skip
 		}
-		if err = os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			return fmt.Errorf("mkdir %s: %w", filepath.Dir(path), err)
-		}
-		if err = os.WriteFile(path, []byte(content), 0o600); err != nil {
+		err = os.WriteFile(path, []byte(content), 0o600) //nolint:mnd
+		if err != nil {
 			return fmt.Errorf("write %s: %w", path, err)
 		}
 	}
@@ -727,7 +778,7 @@ func ensureTestDB(hostPort, user, pass, dbName string) error {
 	ctx := context.Background()
 	conn, err := pgx.Connect(ctx, buildConnStr(hostPort, user, pass, dbName))
 	if err == nil {
-		conn.Close(ctx)
+		_ = conn.Close(ctx)
 		return nil
 	}
 
@@ -737,7 +788,7 @@ func ensureTestDB(hostPort, user, pass, dbName string) error {
 		return err
 	}
 	_, err = pgConn.Exec(ctx, fmt.Sprintf("CREATE DATABASE %q", dbName))
-	pgConn.Close(ctx)
+	_ = pgConn.Close(ctx)
 	return err
 }
 
@@ -751,7 +802,11 @@ func main() {
 	fmt.Println()
 	fmt.Print("   Proceed? [Y/n]: ")
 	var ans string
-	fmt.Scanln(&ans)
+	_, err := fmt.Scanln(&ans)
+	if err != nil && err.Error() != "unexpected newline" && err.Error() != "EOF" {
+		fmt.Fprintln(os.Stderr, swErrorStyle.Render("\n✗ input error: "+err.Error()))
+		os.Exit(1)
+	}
 	ans = strings.ToLower(strings.TrimSpace(ans))
 	if ans != "" && ans != "y" {
 		fmt.Println("Aborted.")
@@ -782,23 +837,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	result := raw.(swModel)
-	if !result.done {
-		fmt.Println("Setup cancelled.")
-		return
+	result, ok := raw.(swModel)
+	if !ok {
+		fmt.Fprintln(os.Stderr, "error: terminal model is not of type swModel")
+		os.Exit(1)
 	}
 	if result.writeErr != "" {
 		fmt.Fprintln(os.Stderr, swErrorStyle.Render("✗ "+result.writeErr))
 		os.Exit(1)
 	}
 
-	if _, statErr := os.Stat(".config.yaml"); statErr == nil {
+	_, statErr := os.Stat(".config.yaml")
+	if statErr == nil {
 		fmt.Println(swSuccessStyle.Render("✓ .config.yaml updated successfully"))
 	} else {
 		fmt.Println(swSuccessStyle.Render("✓ .config.yaml created successfully"))
 	}
 	for _, p := range testConfigPaths {
-		if _, statErr := os.Stat(p); statErr == nil {
+		_, statErr := os.Stat(p)
+		if statErr == nil {
 			fmt.Println(swDimStyle.Render("  " + p + " already exists, skipped"))
 		} else {
 			fmt.Println(swSuccessStyle.Render("✓ " + p + " created successfully"))
