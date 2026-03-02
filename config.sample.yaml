@@ -1,0 +1,198 @@
+# This file contains sample and default values for the application configuration.
+# Copy this file to ".config.yaml" and update the values according to your environment.
+# This file is intended for local development and as a reference template.
+
+# Application settings
+app:
+  # Unique identifier of the running application instance.
+  # Useful when multiple instances are running (e.g., in containers or clusters).
+  # Appears in logs and monitoring systems.
+  id: "local-dev"
+
+  # Human-readable application name.
+  # Used in logs, metrics, tracing, and possibly UI/system integrations.
+  name: "MY-APP"
+
+  # Application version string.
+  # Can follow semantic versioning (e.g., 1.2.3), a commit hash, build timestamp,
+  # or any custom format.
+  # Used in logs and exposed via status endpoints (e.g., /api/status/).
+  version: "local-dev"
+
+  # Defines the current runtime environment.
+  # Allowed values:
+  #   dev     - Active development.
+  #   test    - Automated testing environment.
+  #   staging - Pre-production validation.
+  #   release - Production environment handling real traffic.
+  env: dev
+
+# HTTP server settings
+server:
+  # Network interface or hostname to bind the HTTP server to.
+  # Use "localhost" for local-only access.
+  # Use "0.0.0.0" to allow access from other machines.
+  host: localhost
+
+  # TCP port the HTTP server listens on.
+  # Must be available and not blocked by firewall rules.
+  port: 8080
+
+  # Base path prefix for API routes.
+  # For example, if set to "api", endpoints become:
+  #   /api/users
+  #   /api/status
+  api_base_path: api
+
+  # Public base address of the server (used for absolute URLs, redirects, email links, OAuth callbacks).
+  # Should include scheme (http/https).
+  addr: "https://yourhost.dev"
+
+  # Comma-separated list of domains for which automatic TLS certificates
+  # should be issued (e.g., via Let's Encrypt).
+  # Leave empty to disable automatic certificate provisioning.
+  autocert_hosts: ""
+
+# PostgreSQL database configuration
+db:
+  # Database host (hostname or IP address).
+  host: "localhost"
+
+  # PostgreSQL port number.
+  port: 5432
+
+  # Database user with appropriate privileges.
+  user: "postgres"
+
+  # Password for the database user.
+  password: "postgres"
+
+  # Database name used by the application.
+  name: "myapp_local_dev"
+
+  # Enables SQL query logging.
+  log_queries: true
+
+# Email configuration
+email:
+  # Email delivery driver.
+  #
+  # Allowed values:
+  #   test - Emails are not sent (but stored in-memory and available for tests)
+  #   smtp - Emails are sent via SMTP
+  driver: "test"
+
+  # Default "From" email address used in outgoing emails.
+  from: "mail@yourhost.dev"
+
+  smtp:
+    # SMTP server hostname.
+    host: "smtp.mailtrap.io"
+
+    # SMTP server port.
+    port: 2525
+
+    # SMTP authentication username.
+    username: "demo"
+
+    # SMTP authentication password.
+    password: "password"
+
+# Session management
+session:
+  # Session lifetime in hours.
+  # After this duration, the user must re-authenticate.
+  duration_hours: 24
+
+  # Secret key used to sign and validate session cookies or tokens.
+  # Changing this value invalidates all existing sessions.
+  key: "secret-key"
+
+# Distributed tracing / observability
+tracing:
+  # Enables or disables tracing instrumentation.
+  enabled: true
+
+  # Tracing backend driver.
+  #
+  # Allowed values:
+  #   log     - Writes trace spans to application logs.
+  #   uptrace - Sends trace data to Uptrace.
+  driver: log
+
+  # Uptrace DSN
+  # Required if driver is set to "uptrace".
+  # See: https://uptrace.dev/get#dsn
+  uptrace_dsn: "https://**********@api.uptrace.dev?grpc=4317"
+
+# File storage and uploads
+files:
+  # Storage backend driver.
+  #
+  # Allowed values:
+  #   local-fs     - Stores files on local filesystem.
+  #   in-memory-fs - Stores files in memory (for testing).
+  storage_driver: "local-fs"
+
+  # Maximum allowed upload size in megabytes.
+  # Requests exceeding this limit will be rejected.
+  max_upload_size_mb: 20
+
+  # Maximum width (in pixels) for uploaded images.
+  # Images larger than this may be resized.
+  image_max_width: 1500
+
+  # Maximum height (in pixels) for uploaded images.
+  image_max_height: 1500
+
+  # Width (in pixels) for generated preview images.
+  preview_width: 400
+
+  # Height (in pixels) for generated preview images.
+  preview_height: 400
+
+  local_fs:
+    # Directory path where files will be stored when using local-fs driver.
+    # "~" may need to be expanded by the application if supported.
+    storage_path: "~/uploaded-files/gopl-files"
+
+  # Logical storage structure for domain entities.
+  # Each entity can define subdirectories for different file types.
+  entities:
+    books:
+      covers:
+        # Subdirectory name for storing book cover images.
+        path: "book-covers"
+
+
+# OpenAPI documentation
+openapi:
+  # Enables serving OpenAPI (Swagger) specification.
+  enabled: true
+
+  # URL path where OpenAPI JSON/YAML is available.
+  # Example: /openapi
+  serve_path: openapi
+
+
+# OAuth providers
+google_oauth:
+  # OAuth 2.0 Client ID issued by Google.
+  client_id: ""
+
+  # OAuth 2.0 Client Secret issued by Google.
+  client_secret: ""
+
+github_oauth:
+  # OAuth App Client ID issued by GitHub.
+  client_id: ""
+
+  # OAuth App Client Secret issued by GitHub.
+  client_secret: ""
+
+# Administrators
+admins:
+  # List of user UUIDs that have administrative privileges.
+  # These users bypass normal role checks and have full system access.
+  - "uuid-of-admin"
+  - "uuid-of-another-admin"
