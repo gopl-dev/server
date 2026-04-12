@@ -21,13 +21,14 @@ func (r *Repo) CreateBook(ctx context.Context, b *ds.Book) error {
 	defer span.End()
 
 	return r.insert(ctx, "books", data{
-		"id":              b.ID,
-		"description_raw": b.DescriptionRaw,
-		"description":     b.Description,
-		"cover_file_id":   b.CoverFileID,
-		"authors":         b.Authors,
-		"homepage":        b.Homepage,
-		"release_date":    b.ReleaseDate,
+		"id":                b.ID,
+		"description_raw":   b.DescriptionRaw,
+		"description":       b.Description,
+		"cover_file_id":     b.CoverFileID,
+		"authors":           b.Authors,
+		"homepage":          b.Homepage,
+		"release_date":      b.ReleaseDate,
+		"release_date_sort": b.ReleaseDateSort,
 	})
 }
 
@@ -82,12 +83,13 @@ func (r *Repo) UpdateBook(ctx context.Context, b *ds.Book) error {
 	defer span.End()
 
 	err := r.update(ctx, b.ID, "books", data{
-		"description_raw": b.DescriptionRaw,
-		"description":     b.Description,
-		"cover_file_id":   b.CoverFileID,
-		"authors":         b.Authors,
-		"homepage":        b.Homepage,
-		"release_date":    b.ReleaseDate,
+		"description_raw":   b.DescriptionRaw,
+		"description":       b.Description,
+		"cover_file_id":     b.CoverFileID,
+		"authors":           b.Authors,
+		"homepage":          b.Homepage,
+		"release_date":      b.ReleaseDate,
+		"release_date_sort": b.ReleaseDateSort,
 	})
 	if err != nil {
 		return fmt.Errorf("update book: %w", err)

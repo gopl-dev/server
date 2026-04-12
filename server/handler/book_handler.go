@@ -188,7 +188,7 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 		Status:         req.Status,
 		Visibility:     req.Visibility,
 		Topics:         req.Topics,
-		OrderBy:        "created_at",
+		OrderBy:        "b.release_date_sort",
 		OrderDirection: "desc",
 	}
 
