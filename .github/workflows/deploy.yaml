@@ -66,10 +66,11 @@ jobs:
           email:
             driver: smtp
             from: "mail@gopl.dev"
-            host: "live.smtp.mailtrap.io"
-            port: 2525
-            username: "${{ secrets.SMTP_USERNAME }}"
-            password: "${{ secrets.SMTP_PASSWORD }}"
+            smtp:
+              host: "live.smtp.mailtrap.io"
+              port: 2525
+              username: "${{ secrets.SMTP_USERNAME }}"
+              password: "${{ secrets.SMTP_PASSWORD }}"
 
           session:
             duration_hours: 120
