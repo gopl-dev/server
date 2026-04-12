@@ -176,18 +176,18 @@ func Bool() bool {
 	return rand.IntN(2) == 1 //nolint:gosec,mnd
 }
 
-// ValOrNil returns a pointer to val or nil based on the given probability.
+// NilOrValue returns a pointer to val or nil based on the given probability.
 // The probability is specified in percent (0–100) and defaults to 50% if omitted.
 //
 // Examples:
 //
-//	ValOrNil("hello")       // ~50% chance to return &"hello"
-//	ValOrNil("hello", 10)   // 10% chance to return &"hello"
-//	ValOrNil("hello", 100)  // always returns &"hello"
-//	ValOrNil("hello", 0)    // always returns nil
+//	NilOrValue("hello")       // ~50% chance to return &"hello"
+//	NilOrValue("hello", 10)   // 10% chance to return &"hello"
+//	NilOrValue("hello", 100)  // always returns &"hello"
+//	NilOrValue("hello", 0)    // always returns nil
 //
 //nolint:mnd
-func ValOrNil[T any](val T, probabilityOpt ...int) *T {
+func NilOrValue[T any](val T, probabilityOpt ...int) *T {
 	probability := 50
 	if len(probabilityOpt) == 1 {
 		probability = probabilityOpt[0]
@@ -211,7 +211,7 @@ func ValOrNil[T any](val T, probabilityOpt ...int) *T {
 // based on the given probability.
 func Maybe[T any](val T, probabilityOpt ...int) T {
 	var v T
-	if ValOrNil(v, probabilityOpt...) != nil {
+	if NilOrValue(v, probabilityOpt...) != nil {
 		return val
 	}
 

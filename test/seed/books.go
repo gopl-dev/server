@@ -36,7 +36,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 	}
 
 	uniqueSlug := func(from string) (string, error) {
-		return factory.LookupIUnique(ctx, s.db, "entities", "public_id", from, func(s string) string {
+		return factory.LookupUnique(ctx, s.db, "entities", "public_id", from, func(s string) string {
 			return s + "-" + fake.UrlSlug(1)
 		})
 	}
@@ -83,7 +83,7 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 				PublicID:      app.Slug(title),
 				OwnerID:       ownerID,
 				PreviewFileID: cover.ID,
-				DeletedAt:     random.ValOrNil(fake.DateRange(time.Now().AddDate(0, -12, -25), time.Now()), 10),
+				DeletedAt:     random.NilOrValue(fake.DateRange(time.Now().AddDate(0, -12, -25), time.Now()), 10),
 			})
 
 		createBook:
@@ -118,11 +118,11 @@ func (s *Seed) Books(ctx context.Context, count int) (err error) {
 			// change requests
 			if random.Bool() {
 				maybeData := map[string]any{
-					"title":        random.ValOrNil(random.Patch(book.Title)),
-					"summary":      random.ValOrNil(random.Patch(book.Summary)),
-					"description":  random.ValOrNil(random.Patch(book.Description)),
-					"homepage":     random.ValOrNil(random.Patch(book.Homepage)),
-					"release_date": random.ValOrNil(app.MakePatch(book.ReleaseDate, random.ReleaseDate())),
+					"title":        random.NilOrValue(random.Patch(book.Title)),
+					"summary":      random.NilOrValue(random.Patch(book.Summary)),
+					"description":  random.NilOrValue(random.Patch(book.Description)),
+					"homepage":     random.NilOrValue(random.Patch(book.Homepage)),
+					"release_date": random.NilOrValue(app.MakePatch(book.ReleaseDate, random.ReleaseDate())),
 				}
 
 				data := make(map[string]any)

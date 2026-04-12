@@ -140,7 +140,7 @@ func (s *Seed) All(ctx context.Context, count int) (err error) {
 
 // RandomUserID returns a random user ID.
 //
-// On the first call, it loads up to 100 user IDs from the database and caches
+// On the first call, it loads up to 100 random user IDs from the database and caches
 // them for subsequent calls to avoid repeated queries.
 func (s *Seed) RandomUserID(ctx context.Context) (ds.ID, error) {
 	const q = `SELECT id FROM users ORDER BY RANDOM() LIMIT 100`

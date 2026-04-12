@@ -4,7 +4,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/service"
 	"github.com/gopl-dev/server/frontend/layout"
@@ -22,7 +24,7 @@ import (
 //	@Accept		json
 //	@Produce	json
 //	@Param		request	body		request.UserSignUp	true	"Request body"
-//	@Success	200		{object}	response.Status
+//	@Success	200		{object}	response.UserSignIn
 //	@Failure	422		{object}	Error
 //	@Failure	500		{object}	Error
 //	@Router		/users/sign-up/ [post]
@@ -44,7 +46,19 @@ func (h *Handler) UserSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.jsonSuccess()
+	user, token, err := h.service.AuthenticateUser(ctx, req.Email, req.Password)
+	if err != nil {
+		res.Abort(err)
+		return
+	}
+
+	setSessionCookie(w, token)
+
+	res.jsonOK(response.UserSignIn{
+		ID:       user.ID,
+		Username: user.Username,
+		Token:    token,
+	})
 }
 
 // UserSignIn is the API handler for the user login endpoint.
@@ -118,6 +132,34 @@ func (h *Handler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res.jsonSuccess()
+}
+
+// SendEmailConfirmationCode sends a confirmation code to the authenticated user's email.
+//
+//	@ID			SendEmailConfirmationCode
+//	@Summary	SendE email confirmation code
+//	@Tags		users
+//	@Accept		json
+//	@Produce	json
+//	@Success	200		{object}	response.Status
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/users/confirm-email/ [post]
+//	@Security	ApiKeyAuth
+func (h *Handler) SendEmailConfirmationCode(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "SendEmailConfirmationCode")
+	defer span.End()
+
+	retryAfter, err := h.service.ResendConfirmationEmailCode(ctx)
+	if errors.Is(err, service.ErrResendConfirmationEmailCodeTooManyRequest) {
+		w.Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds())))
+	}
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	jsonSuccess(w)
 }
 
 // UserSignUpView renders the static HTML form for user registration.
@@ -208,9 +250,21 @@ func (h *Handler) ConfirmEmailView(w http.ResponseWriter, r *http.Request) {
 	ctx, span := h.tracer.Start(r.Context(), "ConfirmEmailView")
 	defer span.End()
 
+	user := ds.UserFromContext(ctx)
+	if user == nil {
+		Abort(w, r, app.ErrUnauthorized())
+		return
+	}
+
+	retryAfter, err := h.service.GetConfirmationEmailRetryAfter(ctx, user.ID)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
 	RenderDefaultLayout(ctx, w, layout.Data{
 		Title: "Confirm email",
-		Body:  page.ConfirmEmailForm(),
+		Body:  page.ConfirmEmailForm(int(retryAfter.Seconds())),
 	})
 }
 

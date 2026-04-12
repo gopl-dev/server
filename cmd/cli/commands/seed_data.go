@@ -18,7 +18,7 @@ var seedAvailableData = []string{
 	"all", "users", "books",
 }
 
-// NewSeedDataCmd ...
+// NewSeedDataCmd returns a CLI command to seed the database with test data.
 func NewSeedDataCmd() cli.Command {
 	return cli.Command{
 		Name:  "seed_data",

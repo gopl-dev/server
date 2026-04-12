@@ -102,22 +102,22 @@ type ConfigT struct {
 	Admins []string `yaml:"admins"`
 }
 
-// IsDevEnv ...
+// IsDevEnv returns true if the application environment is set to dev.
 func (c *ConfigT) IsDevEnv() bool {
 	return c.App.Env == DevEnv
 }
 
-// IsTestEnv ...
+// IsTestEnv returns true if the application environment is set to test.
 func (c *ConfigT) IsTestEnv() bool {
 	return c.App.Env == TestEnv
 }
 
-// IsProductionEnv ...
+// IsProductionEnv returns true if the application environment is set to production.
 func (c *ConfigT) IsProductionEnv() bool {
 	return c.App.Env == ProductionEnv
 }
 
-// TracingDisabled ...
+// TracingDisabled returns true if the tracing configuration is not enabled.
 func (c *ConfigT) TracingDisabled() bool {
 	return !c.Tracing.Enabled
 }

@@ -15,7 +15,7 @@ func (h *Handler) PasswordResetRequestView(w http.ResponseWriter, r *http.Reques
 	ctx, span := h.tracer.Start(r.Context(), "PasswordResetRequestView")
 	defer span.End()
 
-	renderTempl(ctx, w, layout.Default(layout.Data{
+	RenderTempl(ctx, w, layout.Default(layout.Data{
 		Title: "Request Password Reset",
 		Body:  page.PasswordResetRequestForm(),
 	}))

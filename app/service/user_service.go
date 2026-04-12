@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 	"errors"
-	"math/rand"
 	"regexp"
 	"strings"
 	"time"
 
 	z "github.com/Oudwins/zog"
+	"github.com/google/uuid"
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/app/repo"
@@ -39,10 +39,6 @@ var confirmEmailChangeInputRules = z.Shape{
 var createChangeEmailRequestInputRules = z.Shape{
 	"UserID":   ds.IDInputRules,
 	"NewEmail": emailInputRules,
-}
-
-var createEmailConfirmationInputRules = z.Shape{
-	"UserID": ds.IDInputRules,
 }
 
 var createOAuthUserAccountInputRules = z.Shape{
@@ -130,14 +126,9 @@ const (
 
 	passwordResetTokenLength = 32
 	emailChangeTokenLength   = 32
-	emailConfirmationTTL     = time.Hour * 24
-	emailConfirmationCodeLen = 6
 )
 
 var (
-	// ErrInvalidConfirmationCode is the specific error returned
-	// when an email confirmation code is invalid or expired.
-	ErrInvalidConfirmationCode = app.InputError{"code": "Invalid confirmation code"}
 	// ErrInvalidPasswordResetToken ...
 	ErrInvalidPasswordResetToken = app.ErrUnprocessable("password reset request is either expired or invalid")
 
@@ -280,63 +271,6 @@ func (in *ChangeUsernameInput) Validate() error {
 	return validateInput(changeUsernameInputRules, in)
 }
 
-// ConfirmEmail confirms an email address by validating the provided code,
-// setting the email_confirmed flag for the associated user, and then deleting the used confirmation record.
-func (s *Service) ConfirmEmail(ctx context.Context, code string) (err error) {
-	ctx, span := s.tracer.Start(ctx, "ConfirmEmail")
-	defer span.End()
-
-	in := &ConfirmEmailInput{Code: code}
-	err = Normalize(in)
-	if err != nil {
-		return
-	}
-
-	ec, err := s.db.GetEmailConfirmationByCode(ctx, in.Code)
-	if errors.Is(err, repo.ErrEmailConfirmationFound) {
-		return ErrInvalidConfirmationCode
-	}
-	if err != nil {
-		return err
-	}
-
-	if ec.Invalid() {
-		return ErrInvalidConfirmationCode
-	}
-
-	err = s.db.SetUserEmailConfirmed(ctx, ec.UserID)
-	if err != nil {
-		return
-	}
-
-	err = s.db.DeleteEmailConfirmation(ctx, ec.ID)
-	if err != nil {
-		return
-	}
-
-	user, err := s.GetUserByID(ctx, ec.UserID)
-	if err != nil {
-		return
-	}
-
-	return s.LogEmailConfirmed(ctx, user.Email, user.ID)
-}
-
-// ConfirmEmailInput defines the input for email confirmation.
-type ConfirmEmailInput struct {
-	Code string
-}
-
-// Sanitize trims whitespace from the confirmation code.
-func (in *ConfirmEmailInput) Sanitize() {
-	in.Code = strings.TrimSpace(in.Code)
-}
-
-// Validate validates the email confirmation input against defined rules.
-func (in *ConfirmEmailInput) Validate() error {
-	return validateInput(confirmEmailInputRules, in)
-}
-
 // ConfirmEmailChange handles the logic for finalizing an email change via a token.
 func (s *Service) ConfirmEmailChange(ctx context.Context, token string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "ConfirmEmailChange")
@@ -471,77 +405,6 @@ func (in *CreateChangeEmailRequestInput) Sanitize() {
 // Validate validates the email change request input against defined rules.
 func (in *CreateChangeEmailRequestInput) Validate() error {
 	return validateInput(createChangeEmailRequestInputRules, in)
-}
-
-// CreateEmailConfirmation creates a new ds.EmailConfirmation for given user.
-func (s *Service) CreateEmailConfirmation(ctx context.Context, userID ds.ID) (code string, err error) {
-	ctx, span := s.tracer.Start(ctx, "CreateEmailConfirmation")
-	defer span.End()
-
-	in := &CreateEmailConfirmationInput{UserID: userID}
-	err = Normalize(in)
-	if err != nil {
-		return
-	}
-
-	code, err = s.newEmailConfirmationCode(ctx)
-	if err != nil {
-		return
-	}
-
-	ec := &ds.EmailConfirmation{
-		UserID:    in.UserID,
-		Code:      code,
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(emailConfirmationTTL),
-	}
-
-	err = s.db.CreateEmailConfirmation(ctx, ec)
-	return
-}
-
-// newEmailConfirmationCode generates a unique email confirmation code.
-// It checks for collisions and increments the code length if necessary.
-func (s *Service) newEmailConfirmationCode(ctx context.Context) (string, error) {
-	chars := []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-	length := emailConfirmationCodeLen
-	newCode := func(length int) string {
-		token := make([]byte, length)
-		for i := range length {
-			token[i] = chars[rand.Intn(len(chars))] //nolint:gosec
-		}
-
-		return string(token)
-	}
-
-	for {
-		code := newCode(length)
-
-		_, err := s.db.GetEmailConfirmationByCode(ctx, code)
-		if errors.Is(err, repo.ErrEmailConfirmationFound) {
-			return code, nil
-		}
-		if err != nil {
-			return "", err
-		}
-
-		length++
-	}
-}
-
-// CreateEmailConfirmationInput defines the input for creating an email confirmation.
-type CreateEmailConfirmationInput struct {
-	UserID ds.ID
-}
-
-// Sanitize performs no sanitization for this input.
-func (in *CreateEmailConfirmationInput) Sanitize() {
-}
-
-// Validate validates the email confirmation input against defined rules.
-func (in *CreateEmailConfirmationInput) Validate() error {
-	return validateInput(createEmailConfirmationInputRules, in)
 }
 
 // CreateOAuthUserAccount creates a new user session object.
@@ -970,10 +833,15 @@ func (in *GetUserAndSessionFromJWTInput) Validate() error {
 	return validateInput(getUserAndSessionFromJWTInputRules, in)
 }
 
-// HardDeleteUser handles the logic for deleting a user account and relations.
-func (s *Service) HardDeleteUser(ctx context.Context, userID ds.ID) (err error) {
-	ctx, span := s.tracer.Start(ctx, "DeleteUser")
+// CleanupDeletedUser handles the logic for deleting a user account and relations.
+func (s *Service) CleanupDeletedUser(ctx context.Context, userID ds.ID) (err error) {
+	ctx, span := s.tracer.Start(ctx, "CleanupDeletedUser")
 	defer span.End()
+
+	user, err := s.GetUserByID(ctx, userID)
+	if err != nil {
+		return
+	}
 
 	// sessions
 	err = s.db.DeleteSessionsByUserID(ctx, userID)
@@ -999,8 +867,12 @@ func (s *Service) HardDeleteUser(ctx context.Context, userID ds.ID) (err error) 
 		return
 	}
 
-	// user
-	return s.db.HardDeleteUser(ctx, userID)
+	user.Email = "deleted-" + random.String(16) + "-" + uuid.NewString()    //nolint:mnd
+	user.Username = "deleted-" + random.String(16) + "-" + uuid.NewString() //nolint:mnd
+	user.Password = "deleted-" + random.String(16)                          //nolint:mnd
+	user.CleanedAt = new(time.Now())
+
+	return s.db.UpdateUser(ctx, user)
 }
 
 // HardDeleteUserInput defines the input for hard deleting a user.

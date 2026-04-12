@@ -1181,19 +1181,8 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "Confirm email",
-                "operationId": "ConfirmEmail",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.ConfirmEmail"
-                        }
-                    }
-                ],
+                "summary": "SendE email confirmation code",
+                "operationId": "SendEmailConfirmationCode",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1553,7 +1542,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Status"
+                            "$ref": "#/definitions/response.UserSignIn"
                         }
                     },
                     "422": {

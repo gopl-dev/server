@@ -24,6 +24,9 @@ const (
 
 	// CodeInternal corresponds to HTTP 500 Internal Server Error.
 	CodeInternal = http.StatusInternalServerError
+
+	// CodeTooManyRequests corresponds to HTTP 429 Too Many Requests Error.
+	CodeTooManyRequests = http.StatusTooManyRequests
 )
 
 // Error is a custom application error type that includes an HTTP status code
@@ -146,4 +149,10 @@ func ErrUnauthorized() error {
 // the CodeForbidden (HTTP 403) status.
 func ErrForbidden(message string) error {
 	return NewError(CodeForbidden, message)
+}
+
+// ErrTooManyRequests is a convenience function to create a new Error with
+// the CodeTooManyRequests (HTTP 429) status.
+func ErrTooManyRequests(message string, params ...any) error {
+	return NewError(CodeTooManyRequests, message, params...)
 }

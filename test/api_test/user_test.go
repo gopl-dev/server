@@ -97,43 +97,6 @@ func TestUserSignUp(t *testing.T) {
 	})
 }
 
-func TestUserConfirmEmail(t *testing.T) {
-	ec := create[ds.EmailConfirmation](t)
-
-	req := request.ConfirmEmail{
-		Code: ec.Code,
-	}
-
-	var resp response.Status
-	Request(t, RequestArgs{
-		method:       http.MethodPost,
-		path:         "/users/confirm-email",
-		body:         req,
-		bindResponse: &resp,
-		assertStatus: http.StatusOK,
-	})
-
-	test.AssertInDB(t, tt.DB, "users", test.Data{
-		"id":              ec.UserID,
-		"email_confirmed": true,
-	})
-
-	test.AssertNotInDB(t, tt.DB, "email_confirmations", test.Data{
-		"code": ec.Code,
-	})
-
-	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
-		"user_id":   ec.UserID,
-		"type":      ds.EventLogUserEmailConfirmed,
-		"is_public": false,
-	})
-	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
-		"user_id":   ec.UserID,
-		"type":      ds.EventLogUserAccountActivated,
-		"is_public": true,
-	})
-}
-
 func TestUserSignIn(t *testing.T) {
 	password := random.String()
 	user := create(t, ds.User{
@@ -159,7 +122,7 @@ func TestChangePassword(t *testing.T) {
 	oldPassword := random.String(10)
 	newPassword := random.String(10)
 
-	user := create(t, ds.User{Password: oldPassword})
+	user := create(t, ds.User{Password: oldPassword, EmailConfirmed: true})
 
 	_, token, err := tt.Service.AuthenticateUser(context.Background(), user.Email, oldPassword)
 	if err != nil {
@@ -331,7 +294,7 @@ func TestPasswordReset(t *testing.T) {
 }
 
 func TestChangeEmail(t *testing.T) {
-	user := create[ds.User](t)
+	user := create[ds.User](t, ds.User{EmailConfirmed: true})
 	token := loginAs(t, user)
 
 	newEmail := random.Email()
@@ -407,7 +370,7 @@ func TestChangeEmail(t *testing.T) {
 
 func TestChangeUsername(t *testing.T) {
 	password := random.String(10)
-	user := create(t, ds.User{Password: password})
+	user := create(t, ds.User{Password: password, EmailConfirmed: true})
 
 	token := loginAs(t, user)
 	newUsername := random.String(10)
@@ -483,7 +446,7 @@ func TestChangeUsername(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	password := random.String(10)
-	user := create(t, ds.User{Password: password})
+	user := create(t, ds.User{Password: password, EmailConfirmed: true})
 
 	token := loginAs(t, user)
 

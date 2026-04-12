@@ -228,7 +228,9 @@ func login(t *testing.T) *ds.User {
 		return authUser
 	}
 
-	user := create[ds.User](t)
+	user := create(t, ds.User{
+		EmailConfirmed: true,
+	})
 	loginAs(t, user)
 
 	return authUser
@@ -253,8 +255,16 @@ func loginAs(t *testing.T, u *ds.User) (token string) {
 	return token
 }
 
-func makeAdmin(u *ds.User) {
-	app.Config().Admins = []string{u.ID.String()}
+func loginAsAdmin(t *testing.T) (user *ds.User) {
+	t.Helper()
+
+	user = create(t, ds.User{
+		EmailConfirmed: true,
+	})
+	loginAs(t, user)
+
+	app.Config().Admins = []string{user.ID.String()}
+	return
 }
 
 type fileForm struct {

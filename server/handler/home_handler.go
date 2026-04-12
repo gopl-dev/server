@@ -35,7 +35,7 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	title := random.Element([]string{
 		// Now that you have found a list of silly titles, please read through it.
 		"Green Olives Party Late",
-		"Goats Organizing Pajama Launches",
+		"Goats Organizing Pajama Laundry",
 		"Grandma’s Overpowered Pancake Love",
 		"Galactic Octopus Pizza League",
 		"Giraffes On Purple Ladders",
@@ -51,7 +51,7 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	})
 
 	data.Title = title
-	renderTempl(ctx, w, layout.Default(layout.Data{
+	RenderTempl(ctx, w, layout.Default(layout.Data{
 		Title: "Welcome",
 		Body:  page.Home(data),
 		User:  frontend.NewUser(ds.UserFromContext(r.Context())),

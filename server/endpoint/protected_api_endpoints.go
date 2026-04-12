@@ -2,6 +2,10 @@ package endpoint
 
 // ProtectedAPIEndpoints registers API routes that require authentication.
 func (r *Router) ProtectedAPIEndpoints() {
+	r.POST("/users/email-confirmation-code/", r.handler.SendEmailConfirmationCode)
+
+	r.Use(r.mw.EmailMustBeConfirmed)
+
 	// users
 	r.PUT("/users/password/", r.handler.ChangePassword)
 	r.POST("/users/email/", r.handler.RequestEmailChange)

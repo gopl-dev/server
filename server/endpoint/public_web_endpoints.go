@@ -7,7 +7,6 @@ func (r *Router) PublicWebEndpoints() {
 	// User authentication and registration
 	r.GET("/users/sign-up/", r.handler.UserSignUpView)
 	r.GET("/users/sign-in/", r.handler.UserSignInView)
-	r.GET("/users/confirm-email/", r.handler.ConfirmEmailView)
 
 	r.GET("/password-reset/", r.handler.PasswordResetRequestView)
 	r.GET("/password-reset/{token}/", r.handler.PasswordResetConfirmView)

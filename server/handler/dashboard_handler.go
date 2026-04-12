@@ -21,7 +21,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderTempl(ctx, w, layout.Dashboard(layout.Data{
+	RenderTempl(ctx, w, layout.Dashboard(layout.Data{
 		Title: "Dashboard",
 		Body:  page.Home(page.HomeData{}),
 		User:  frontend.NewUser(ds.UserFromContext(r.Context())),

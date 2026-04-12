@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	// ErrEmailConfirmationFound is a sentinel error returned when ds.EmailConfirmation not found.
-	ErrEmailConfirmationFound = app.ErrNotFound("email confirmation not found")
+	// ErrEmailConfirmationNotFound is a sentinel error returned when ds.EmailConfirmation not found.
+	ErrEmailConfirmationNotFound = app.ErrNotFound("email confirmation not found")
 )
 
 // GetEmailConfirmationByCode retrieves an email confirmation record from the database
@@ -28,7 +28,7 @@ func (r *Repo) GetEmailConfirmationByCode(ctx context.Context, code string) (ec 
 	)
 	if noRows(err) {
 		ec = nil
-		err = ErrEmailConfirmationFound
+		err = ErrEmailConfirmationNotFound
 	}
 
 	return
@@ -71,4 +71,27 @@ func (r *Repo) DeleteEmailConfirmationByUser(ctx context.Context, userID ds.ID) 
 	defer span.End()
 
 	return r.exec(ctx, "DELETE FROM email_confirmations WHERE user_id = $1", userID)
+}
+
+// GetLatestEmailConfirmationByUserID returns the most recent email confirmation record for the given user.
+func (r *Repo) GetLatestEmailConfirmationByUserID(ctx context.Context, userID ds.ID) (*ds.EmailConfirmation, error) {
+	ctx, span := r.tracer.Start(ctx, "GetLatestEmailConfirmationByUserID")
+	defer span.End()
+
+	ec := new(ds.EmailConfirmation)
+	err := pgxscan.Get(ctx, r.db, ec,
+		`SELECT * FROM email_confirmations
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 1`,
+		userID,
+	)
+	if noRows(err) {
+		return nil, ErrEmailConfirmationNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return ec, nil
 }

@@ -2,8 +2,12 @@ package ds
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 )
+
+// DeletedUsername is the placeholder username for soft-deleted users.
+const DeletedUsername = "deleted"
 
 const (
 	userCtxKey ctxKey = "user"
@@ -12,7 +16,7 @@ const (
 	CleanupDeletedUserAfter = 30 * 24 * time.Hour
 )
 
-// User ...
+// User represents a user account in the system.
 type User struct {
 	ID             ID         `json:"id"`
 	Username       string     `json:"username"`
@@ -22,11 +26,24 @@ type User struct {
 	CreatedAt      time.Time  `json:"-"`
 	UpdatedAt      *time.Time `json:"-"`
 	DeletedAt      *time.Time `json:"-"`
+	CleanedAt      *time.Time `json:"-"`
 
 	// IsAdmin is true if the user ID is listed in "admins" key in config file.
 	// This field is set by the auth middleware.
 	// Until proper RBAC/ACL is implemented, we trust authority generously granted by the devs themselves.
 	IsAdmin bool `json:"-"`
+}
+
+// MarshalJSON implements custom JSON serialization for User.
+func (u *User) MarshalJSON() ([]byte, error) {
+	type Alias User
+	a := Alias(*u)
+
+	if u.Deleted() {
+		a.Username = DeletedUsername
+	}
+
+	return json.Marshal(&a)
 }
 
 // UsersFilter is used to filter and paginate user queries.
@@ -39,9 +56,10 @@ type UsersFilter struct {
 	Deleted        bool
 	OrderBy        string
 	OrderDirection string
+	NotCleaned     bool
 }
 
-// Deleted ...
+// Deleted reports whether the user has been soft-deleted.
 func (u *User) Deleted() bool {
 	return u.DeletedAt != nil
 }

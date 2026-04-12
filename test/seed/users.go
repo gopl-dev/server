@@ -25,13 +25,13 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 	}
 
 	uniqueUsername := func(from string) (string, error) {
-		return factory.LookupIUnique(ctx, s.db, "users", "username", from, func(s string) string {
+		return factory.LookupUnique(ctx, s.db, "users", "username", from, func(s string) string {
 			return s + "." + random.String(5)
 		})
 	}
 
 	uniqueEmail := func(from string) (string, error) {
-		return factory.LookupIUnique(ctx, s.db, "users", "email", from, func(s string) string {
+		return factory.LookupUnique(ctx, s.db, "users", "email", from, func(s string) string {
 			return random.String(5) + "." + s
 		})
 	}
@@ -41,8 +41,10 @@ func (s *Seed) Users(ctx context.Context, count int) (err error) {
 	for range count {
 		eg.Go(func() error {
 			createdAt := fake.DateRange(time.Now().AddDate(0, -12, 0), time.Now())
-			updatedAt := random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
-			deletedAt := random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
+			// nil or after createdAt
+			updatedAt := random.NilOrValue(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
+			// nil or after createdAt
+			deletedAt := random.NilOrValue(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 75)
 
 			u := ds.User{
 				Username:       fake.Username(),

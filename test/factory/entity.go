@@ -21,7 +21,7 @@ func (f *Factory) NewEntity(overrideOpt ...ds.Entity) (m *ds.Entity) {
 	status := random.Element(ds.EntityStatuses)
 	if status == ds.EntityStatusApproved {
 		publishedAt = &createdAt
-		updatedAt = random.ValOrNil(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 50)
+		updatedAt = random.NilOrValue(fake.DateRange(createdAt.AddDate(0, -12, -25), createdAt), 50)
 	}
 
 	title := fake.BookTitle()
@@ -72,7 +72,7 @@ createEntity:
 	if column, ok := app.IsUniqueViolation(err); ok {
 		switch column {
 		case "public_id":
-			m.PublicID, err = LookupIUnique(context.Background(), f.db, "entities", "public_id", m.PublicID, func(s string) string {
+			m.PublicID, err = LookupUnique(context.Background(), f.db, "entities", "public_id", m.PublicID, func(s string) string {
 				return s + "-" + fake.UrlSlug(1)
 			})
 			if err != nil {

@@ -109,14 +109,14 @@ func Ten[T any](fn func(m ...T) (*T, error), override ...T) ([]*T, error) {
 	return Batch(10, fn, override...) //nolint:mnd
 }
 
-// LookupIUnique tries to find a unique value in the given table.column by repeatedly
+// LookupUnique tries to find a unique value in the given table.column by repeatedly
 // querying the database with a transformed version of the input value.
 //
 // The transformFn is expected to produce a new candidate value
 // (for example, by appending a suffix or incrementing a counter) and must eventually
 // lead to a value that does not exist in the database, otherwise the function will
 // recurse indefinitely (angry emoji).
-func LookupIUnique[T any](ctx context.Context, db *app.DB, table, column string, value T,
+func LookupUnique[T any](ctx context.Context, db *app.DB, table, column string, value T,
 	transformFn func(T) T) (T, error) {
 	res := new(T)
 
@@ -138,5 +138,5 @@ func LookupIUnique[T any](ctx context.Context, db *app.DB, table, column string,
 		return value, err
 	}
 
-	return LookupIUnique[T](ctx, db, table, column, transformFn(value), transformFn)
+	return LookupUnique[T](ctx, db, table, column, transformFn(value), transformFn)
 }

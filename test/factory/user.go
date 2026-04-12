@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// NewUser ...
+// NewUser builds a new User struct with random data for testing purposes.
 func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 	m = &ds.User{
 		ID:             ds.NewID(),
@@ -21,6 +21,7 @@ func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      nil,
 		DeletedAt:      nil,
+		CleanedAt:      nil,
 	}
 
 	if len(overrideOpt) == 1 {
@@ -30,7 +31,7 @@ func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 	return
 }
 
-// CreateUser ...
+// CreateUser creates and persists a user to the database for testing purposes.
 func (f *Factory) CreateUser(overrideOpt ...ds.User) (m *ds.User, err error) {
 	m = f.NewUser(overrideOpt...)
 

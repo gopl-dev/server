@@ -2,21 +2,17 @@
 
 for simplicity, I keep todo list and progress here for now
 
-**Before release**:
-- [ ] Review "TODO!"s
-- [x] Homepage
-- [ ] Licence
-- [x] RELEASE
----
-
 Tweaks & fixes:
-- [ ] Add description to upload book cover input 
+- [X] Add description and limits to upload book cover input 
 - [ ] When book cover upload ends with error, another cannot be added
 
 
 TODO:
 - [ ] Resend verification link (Sometimes email is lost in somewhere between the woods (Not mailman to blame))
-- [ ] Create new topic when creating/editing entity
+- [ ] Topics
+  -[ ] Manage topics (create, edit, delete)
+  -[ ] Create new topic when creating/editing entity
+- [ ] Entity highlight (Show something exciting: New book just released, latest book, random book.)
 - [ ] Pages
   - [ ] Add meta to page (Who created, last edit by who and list of activities on page (api call))
   - [ ] Content chips
@@ -29,6 +25,7 @@ TODO:
 - [ ] Preview for markdown
 - [ ] Convert all TODO's into tasks/issues 
 - [ ] Create a CLI command to set up a new dev environment
+- [ ] Showcase
 - [ ] Jobs
 - [ ] Events
 - [ ] Software
