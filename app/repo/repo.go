@@ -321,6 +321,14 @@ func (b *filterBuilder) where(column string, val any) *filterBuilder {
 	return b
 }
 
+func (b *filterBuilder) whereIf(cond bool, column string, val any) *filterBuilder {
+	if cond {
+		b.where(column, val)
+	}
+
+	return b
+}
+
 func (b *filterBuilder) whereRaw(steak string, seasoning ...any) *filterBuilder {
 	if steak == "" {
 		return b

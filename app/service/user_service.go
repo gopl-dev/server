@@ -870,6 +870,7 @@ func (s *Service) CleanupDeletedUser(ctx context.Context, userID ds.ID) (err err
 	user.Email = "deleted-" + random.String(16) + "-" + uuid.NewString()    //nolint:mnd
 	user.Username = "deleted-" + random.String(16) + "-" + uuid.NewString() //nolint:mnd
 	user.Password = "deleted-" + random.String(16)                          //nolint:mnd
+	user.CleanedAt = new(time.Now())
 
 	return s.db.UpdateUser(ctx, user)
 }

@@ -26,6 +26,7 @@ type User struct {
 	CreatedAt      time.Time  `json:"-"`
 	UpdatedAt      *time.Time `json:"-"`
 	DeletedAt      *time.Time `json:"-"`
+	CleanedAt      *time.Time `json:"-"`
 
 	// IsAdmin is true if the user ID is listed in "admins" key in config file.
 	// This field is set by the auth middleware.
@@ -55,6 +56,7 @@ type UsersFilter struct {
 	Deleted        bool
 	OrderBy        string
 	OrderDirection string
+	NotCleaned     bool
 }
 
 // Deleted reports whether the user has been soft-deleted.

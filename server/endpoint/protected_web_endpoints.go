@@ -3,6 +3,7 @@ package endpoint
 // ProtectedWebEndpoints registers web endpoints that require user authentication.
 func (r *Router) ProtectedWebEndpoints() {
 	r.GET("/users/sign-out/", r.handler.UserSignOut)
+	r.GET("/users/confirm-email/", r.handler.ConfirmEmailView)
 
 	r.Use(r.mw.EmailMustBeConfirmed)
 	// users

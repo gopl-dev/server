@@ -142,6 +142,7 @@ func (r *Repo) FilterUsers(ctx context.Context, f ds.UsersFilter) (users []ds.Us
 		createdAt(f.CreatedAt).
 		deletedAt(f.DeletedAt).
 		deleted(f.Deleted).
+		whereIf(f.NotCleaned, "cleaned_at IS NULL", nil).
 		order(f.OrderBy, f.OrderDirection).
 		withCount(f.WithCount).
 		scan(ctx, &users)
@@ -155,9 +156,10 @@ func (r *Repo) UpdateUser(ctx context.Context, u *ds.User) error {
 	defer span.End()
 
 	err := r.update(ctx, u.ID, "users", data{
-		"email":    u.Email,
-		"username": u.Username,
-		"password": u.Password,
+		"email":      u.Email,
+		"username":   u.Username,
+		"password":   u.Password,
+		"cleaned_at": u.CleanedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("update user: %w", err)

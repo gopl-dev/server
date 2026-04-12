@@ -33,12 +33,13 @@ func (w Job) Schedule() gocron.JobDefinition {
 	)
 }
 
-// Do executes the job's task, which is to permanently delete users who have been
+// Do executes the job's task, which is cleanup users data who have been
 // soft-deleted for more than a certain period.
 func (w Job) Do(ctx context.Context, s *service.Service, _ *app.DB) (err error) {
 	users, _, err := s.FilterUsers(ctx, ds.UsersFilter{
-		DeletedAt: ds.DtBefore(time.Now().Add(-ds.CleanupDeletedUserAfter)),
-		PerPage:   ds.PerPageNoLimit,
+		DeletedAt:  ds.DtBefore(time.Now().Add(-ds.CleanupDeletedUserAfter)),
+		NotCleaned: true,
+		PerPage:    ds.PerPageNoLimit,
 	})
 	if err != nil {
 		return

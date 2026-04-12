@@ -21,6 +21,7 @@ func (f *Factory) NewUser(overrideOpt ...ds.User) (m *ds.User) {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      nil,
 		DeletedAt:      nil,
+		CleanedAt:      nil,
 	}
 
 	if len(overrideOpt) == 1 {
