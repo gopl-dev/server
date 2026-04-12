@@ -15,12 +15,13 @@ var bookCtxKey ctxKey = "book"
 type Book struct {
 	*Entity
 
-	DescriptionRaw string       `json:"-"`
-	Description    string       `json:"description"`
-	CoverFileID    ID           `json:"cover_file_id"`
-	Authors        []BookAuthor `json:"authors"`
-	Homepage       string       `json:"homepage"`
-	ReleaseDate    string       `json:"release_date"`
+	DescriptionRaw  string       `json:"-"`
+	Description     string       `json:"description"`
+	CoverFileID     ID           `json:"cover_file_id"`
+	Authors         []BookAuthor `json:"authors"`
+	Homepage        string       `json:"homepage"`
+	ReleaseDate     string       `json:"release_date"`
+	ReleaseDateSort time.Time    `json:"-"`
 }
 
 // Data returns the editable fields of the Book as a key-value map.
@@ -76,8 +77,9 @@ func (b *Book) CreateRules() z.Shape {
 			}
 
 			for _, layout := range ReleaseDateLayouts {
-				_, err := time.Parse(layout, *val)
+				t, err := time.Parse(layout, *val)
 				if err == nil {
+					b.ReleaseDateSort = t
 					return true
 				}
 			}

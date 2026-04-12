@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
@@ -47,6 +48,15 @@ func TestCreateBook_Basic(t *testing.T) {
 	test.CheckErr(t, err)
 	assert.Equal(t, resp.Description, descriptionHTML)
 
+	var releaseDateSort time.Time
+	for _, layout := range ds.ReleaseDateLayouts {
+		t, err := time.Parse(layout, req.ReleaseDate)
+		if err == nil {
+			releaseDateSort = t
+			break
+		}
+	}
+
 	// check entity created
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":          resp.ID,
@@ -61,10 +71,12 @@ func TestCreateBook_Basic(t *testing.T) {
 
 	// check book created
 	test.AssertInDB(t, tt.DB, "books", test.Data{
-		"authors":         req.Authors,
-		"homepage":        req.Homepage,
-		"description_raw": req.Description,
-		"description":     descriptionHTML,
+		"authors":           req.Authors,
+		"homepage":          req.Homepage,
+		"description_raw":   req.Description,
+		"description":       descriptionHTML,
+		"release_date":      req.ReleaseDate,
+		"release_date_sort": releaseDateSort,
 	})
 
 	// check log created
