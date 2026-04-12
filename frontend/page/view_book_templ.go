@@ -309,7 +309,7 @@ func ViewBookPage(user *ds.User, book *ds.Book) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if book.Status == ds.EntityStatusApproved || user.IsAdmin {
+		if book.Status == ds.EntityStatusApproved || user != nil && user.IsAdmin {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<p><a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -335,7 +335,7 @@ func ViewBookPage(user *ds.User, book *ds.Book) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if user.IsAdmin {
+			if user != nil && user.IsAdmin {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<a class=\"link-error ml-2 cursor-pointer\" @click=\"confirmDelete()\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

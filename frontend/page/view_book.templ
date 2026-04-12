@@ -228,12 +228,12 @@ templ ViewBookPage(user *ds.User, book *ds.Book) {
     <a class="badge badge-soft badge-lg" href={"/books/?topics=" + t.PublicID}>{ t.Name }</a>
     }
 </div>
-if book.Status == ds.EntityStatusApproved || user.IsAdmin {
+if book.Status == ds.EntityStatusApproved || user != nil && user.IsAdmin {
 <p>
     <a href={ "/edit-book/" + book.PublicID } class="link-info">
     @icon.Pencil("mr-1", "w-4", "h-4") Edit ...
     </a>
-    if user.IsAdmin {
+    if user != nil && user.IsAdmin {
     <a class="link-error ml-2 cursor-pointer" @click="confirmDelete()">
         @icon.Trash("mr-1", "w-4", "h-4") Delete
     </a>
