@@ -16,11 +16,8 @@ import (
 )
 
 func TestCreatePage(t *testing.T) {
-	// only admins can create pages now
-	user := create[ds.User](t)
-	token := loginAs(t, user)
-
-	app.Config().Admins = []string{user.ID.String()}
+	// only admins can create pages for now
+	admin := loginAsAdmin(t)
 
 	req := request.CreatePage{
 		PublicID: random.String(),
@@ -29,14 +26,7 @@ func TestCreatePage(t *testing.T) {
 	}
 
 	var resp ds.Page
-	Request(t, RequestArgs{
-		method:       http.MethodPost,
-		path:         "/pages/",
-		body:         req,
-		authToken:    token,
-		bindResponse: &resp,
-		assertStatus: http.StatusCreated,
-	})
+	CREATE(t, "/pages/", req, &resp)
 
 	contentHTML, err := app.MarkdownToHTML(req.Content)
 	test.CheckErr(t, err)
@@ -47,7 +37,7 @@ func TestCreatePage(t *testing.T) {
 		"id":         resp.ID,
 		"public_id":  req.PublicID,
 		"title":      req.Title,
-		"owner_id":   user.ID,
+		"owner_id":   admin.ID,
 		"type":       ds.EntityTypePage,
 		"status":     ds.EntityStatusApproved,
 		"visibility": ds.EntityVisibilityPublic,
@@ -63,7 +53,7 @@ func TestCreatePage(t *testing.T) {
 	// check log created
 	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
 		"entity_id": resp.ID,
-		"user_id":   user.ID,
+		"user_id":   admin.ID,
 		"type":      ds.EventLogEntityAdded,
 	})
 
@@ -73,7 +63,6 @@ func TestCreatePage(t *testing.T) {
 			method:       http.MethodPost,
 			path:         "/pages/",
 			body:         req,
-			authToken:    token,
 			bindResponse: &errResp,
 			assertStatus: http.StatusUnprocessableEntity,
 		})
@@ -160,8 +149,7 @@ func TestUpdatePage_WithReview(t *testing.T) {
 }
 
 func TestUpdatePage_WithoutReview(t *testing.T) {
-	user := login(t)
-	makeAdmin(user)
+	admin := loginAsAdmin(t)
 
 	page := create[ds.Page](t)
 	newContent := random.Edit(page.ContentRaw)
@@ -192,7 +180,7 @@ func TestUpdatePage_WithoutReview(t *testing.T) {
 
 	contentPatch := app.MakePatch(page.ContentRaw, newContent)
 	test.AssertInDB(t, tt.DB, "entity_change_requests", test.Data{
-		"user_id":   user.ID,
+		"user_id":   admin.ID,
 		"entity_id": page.ID,
 		"status":    ds.EntityChangeCommitted,
 		"revision":  1,

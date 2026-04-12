@@ -1,12 +1,11 @@
 package page
 
 import (
-    . "github.com/gopl-dev/server/frontend/component"
-    "github.com/gopl-dev/server/frontend/component/icon"
+. "github.com/gopl-dev/server/frontend/component"
 )
 
 
-templ ConfirmEmailForm() {
+templ ConfirmEmailForm(retryAfterSeconds int) {
 <script src="/assets/http_helpers.js"></script>
 <script src="/assets/form_helpers.js"></script>
 <script>
@@ -33,25 +32,70 @@ templ ConfirmEmailForm() {
                     FormHelpers.applyInputErrors(this.errors, data?.input_errors)
                 },
             }),
+
+            resendCooldown: {{ retryAfterSeconds }},
+            resendTimer: null,
+            resendLoading: false,
+            resendSuccess: false,
+
+            init(){
+                if (this.resendCooldown > 0) {
+                    this.startCooldown(this.resendCooldown)
+                }
+            },
+
+            get resendBlocked() {
+                return this.resendCooldown > 0
+            },
+
+            async resendCode() {
+                if (this.resendBlocked) return
+
+                this.resendLoading = true
+                this.resendSuccess = false
+
+                const { resp, data } = await HTTP.postJSON('/api/users/email-confirmation-code/', {})
+
+                this.resendLoading = false
+
+                if (resp.status === 429) {
+                    const retryAfter = parseInt(resp.headers.get('Retry-After') || '300', 10)
+                    this.startCooldown(retryAfter)
+                    return
+                }
+
+                if (data?.success === true) {
+                    this.resendSuccess = true
+                    return
+                }
+            },
+
+            startCooldown(seconds) {
+                this.resendCooldown = seconds
+                clearInterval(this.resendTimer)
+                this.resendTimer = setInterval(() => {
+                    this.resendCooldown--
+                    if (this.resendCooldown <= 0) {
+                        this.resendCooldown = 0
+                        clearInterval(this.resendTimer)
+                    }
+                }, 1000)
+            },
         }
     }
 </script>
 
 <div>
     <h1 class="text-3xl pb-4">Confirm email</h1>
-    <div class="bg-base-100 w-full max-w-sm shadow-md">
+    <div class="bg-base-100 w-full max-w-sm ">
         <div class="card-body">
             @Form("confirmEmailForm") {
             <p class="text-red-500" x-text="error" x-show="!success && error !== ''"></p>
-            <div role="alert" class="alert alert-success" x-show="success" x-cloak>
-                <div>
-                    <div class="mb-2">Your email has been confirmed!</div>
-                    <div>
-                        <a href="/users/sign-in/" class="btn btn-ghost  rounded-full btn-success">
-                            @icon.LogIn("w-5 h-5 mr-2")
-                            Sign in</a>
-                    </div>
-                </div>
+            <div role="alert" class="mb-2" x-show="!success" x-cloak>
+                We have sent a confirmation code to your email, please enter it here:
+            </div>
+            <div role="alert" class="alert alert-success mb-2" x-show="success" x-cloak>
+                Your email has been confirmed!
             </div>
 
             <fieldset class="fieldset" x-show="!success" :disabled="submitting">
@@ -67,6 +111,29 @@ templ ConfirmEmailForm() {
                     @SubmitButton("Confirm")
                 </div>
             </fieldset>
+
+            <div x-show="!success" x-cloak>
+                <div x-show="!resendSuccess">
+                    <div class="mb-2">
+                        If you didn't receive our email, you can request a new code:
+                    </div>
+                    <button
+                            type="button"
+                            class="btn btn-ghost btn-info btn-link"
+                            :disabled="resendBlocked || resendLoading"
+                            @click="resendCode()">
+                        <span x-show="resendLoading" class="loading loading-spinner loading-sm"></span>
+                        <span x-show="!resendLoading && !resendBlocked">Resend confirmation email</span>
+                        <span x-show="!resendLoading && resendBlocked">Resend in <span x-text="resendCooldown"></span>s</span>
+                    </button>
+                    <div class="text-xs">
+                        Don't forget to check your Spam folder. If you still don't receive it after a few attempts, please contact us.
+                    </div>
+                </div>
+                <div x-show="resendSuccess" x-cloak>
+                    New email with confirmation code has been sent.
+                </div>
+            </div>
             }
         </div>
     </div>

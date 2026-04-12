@@ -19,7 +19,8 @@ templ UserSignUpForm() {
                 submit: async function () {
                     const {resp, data} = await HTTP.postJSON('/api/users/sign-up/', this.form)
 
-                    if (data?.success === true || resp.status === 200) {
+                    if (data?.token) {
+                        localStorage.setItem('auth_token', data.token)
                         window.location.href = '/users/confirm-email/'
                         return
                     }

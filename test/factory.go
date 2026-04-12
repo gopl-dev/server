@@ -92,6 +92,7 @@ func createMethodFor[T any]() (reflect.Method, error) {
 // NOTE: Go does not currently allow methods to declare their own type parameters.
 // When this becomes possible, move this helper onto *factory.Factory
 // and remove the wrapper functions.
+// TODO: a promising "Proposal: Generic Methods for Go" have landed:  https://github.com/golang/go/issues/77273
 func Create[T any](t *testing.T, f *factory.Factory, overrideOpt ...T) *T {
 	t.Helper()
 

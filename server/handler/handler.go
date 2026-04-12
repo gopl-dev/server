@@ -252,9 +252,9 @@ func jsonCreated(w http.ResponseWriter, body any) {
 	}
 }
 
-// renderTempl renders a templ.Component to the http.ResponseWriter, setting the
+// RenderTempl renders a templ.Component to the http.ResponseWriter, setting the
 // Content-Type to HTML and the status to 200 OK.
-func renderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) {
+func RenderTempl(ctx context.Context, w http.ResponseWriter, t templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
@@ -274,13 +274,13 @@ func RenderDefaultLayout(ctx context.Context, w http.ResponseWriter, data layout
 	data.User = frontend.NewUser(ds.UserFromContext(ctx))
 	t := layout.Default(data)
 
-	renderTempl(ctx, w, t)
+	RenderTempl(ctx, w, t)
 }
 
 // RenderUserSignInPage renders the HTML page containing the user sign-in form,
 // optionally specifying a redirect-to path after successful login.
 func RenderUserSignInPage(w http.ResponseWriter, r *http.Request, redirectTo string) {
-	renderTempl(r.Context(), w, layout.Default(layout.Data{
+	RenderTempl(r.Context(), w, layout.Default(layout.Data{
 		Title: "Sign In",
 		Body:  page.UserSignInForm(redirectTo),
 	}))

@@ -1,29 +1,31 @@
 # 🚀 Serving gopl.dev
 
-# templ live watch & reload
-`go tool templ generate --watch --proxy="http://localhost:8080" --cmd="go run ./cmd/server/main.go"`
+### Contributing
 
-# tailwind watch
-`tailwindcss -i ./frontend/assets/input.css -o ./frontend/assets/output.css --watch`
+We don't have a formal set of rules for contributions yet; everyone is welcome! We appreciate everything from critiques and suggestions to bug fixes and new features.
 
-# linting
-https://golangci-lint.run/docs/welcome/install/local/
+### Setup Your Own Instance
 
-`golangci-lint run`  
+See [SETUP.md](SETUP.md) for detailed instructions on how to set up your own instance.
 
+### Internal Tools
 
-# openapi & swagger
-https://github.com/swaggo/swag  
-`swag fmt --dir server/handler`  
-`swag init --parseDependency  --parseDepth 1 --dir server/handler -g handler.go -o server/docs`
-
-# internal devtools
-`go run ./cmd/cli/main.go rde`  
-Reset dev environment (recreate DB, apply migrations & create default user). Useful during active development when you messed with the DB or need a clean state.
-
-`go run ./cmd/cli/main.go sd`  
-Will seed data to the database. By default, it seeds all available data. You can specify an entity and a count, for example:
-`go run ./cmd/cli/main.go sd users 1000`.
-Run `go run ./cmd/cli/main.go ? sd` to see available options and a detailed description.
+* **Reset Dev Environment**
+    ```bash
+    go run ./cmd/cli/main.go rde
+    ```  
+  Resets the development environment by recreating the database, applying migrations, and creating a default user. This is useful during active development if you need a clean state.
 
 
+* **Database Seeding**
+    ```bash
+    go run ./cmd/cli/main.go sd
+    ```  
+  Seeds data into the database. By default, it seeds all available data. You can specify an entity and a count:  
+  `go run ./cmd/cli/main.go sd users 1000`
+
+  Run `go run ./cmd/cli/main.go ? sd` to see all available options and detailed descriptions.
+
+---
+
+License [MIT](LICENSE)

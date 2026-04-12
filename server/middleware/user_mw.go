@@ -6,6 +6,9 @@ import (
 
 	"github.com/gopl-dev/server/app"
 	"github.com/gopl-dev/server/app/ds"
+	"github.com/gopl-dev/server/frontend"
+	"github.com/gopl-dev/server/frontend/layout"
+	"github.com/gopl-dev/server/frontend/page"
 	"github.com/gopl-dev/server/server/handler"
 )
 
@@ -46,6 +49,7 @@ func (mw *Middleware) ResolveUserFromCookie(next handler.Fn) handler.Fn {
 func (mw *Middleware) UserAuth(next handler.Fn) handler.Fn {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := ds.UserFromContext(r.Context())
+
 		if user == nil {
 			if handler.ShouldServeJSON(r) {
 				handler.Abort(w, r, app.ErrUnauthorized())
@@ -62,6 +66,40 @@ func (mw *Middleware) UserAuth(next handler.Fn) handler.Fn {
 		}
 
 		next(w, r)
+	}
+}
+
+// EmailMustBeConfirmed blocks access for users with unconfirmed email addresses.
+func (mw *Middleware) EmailMustBeConfirmed(next handler.Fn) handler.Fn {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := ds.UserFromContext(r.Context())
+
+		if user == nil {
+			handler.Abort(w, r, app.ErrUnauthorized())
+			return
+		}
+
+		if user.EmailConfirmed {
+			next(w, r)
+			return
+		}
+
+		if handler.ShouldServeJSON(r) {
+			handler.Abort(w, r, app.ErrForbidden("email not confirmed"))
+			return
+		}
+
+		retryAfter, err := mw.service.GetConfirmationEmailRetryAfter(r.Context(), user.ID)
+		if err != nil {
+			handler.Abort(w, r, err)
+			return
+		}
+
+		handler.RenderTempl(r.Context(), w, layout.Default(layout.Data{
+			Title: "Email confirmation required",
+			Body:  page.ConfirmEmailForm(int(retryAfter.Seconds())),
+			User:  frontend.NewUser(user),
+		}))
 	}
 }
 

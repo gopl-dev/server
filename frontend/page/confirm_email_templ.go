@@ -10,10 +10,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	. "github.com/gopl-dev/server/frontend/component"
-	"github.com/gopl-dev/server/frontend/component/icon"
 )
 
-func ConfirmEmailForm() templ.Component {
+func ConfirmEmailForm(retryAfterSeconds int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -34,11 +33,23 @@ func ConfirmEmailForm() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const CONFIRM_EMAIL_DEFAULTS = {\r\n        code: '',\r\n    }\r\n\r\n    function confirmEmailForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: CONFIRM_EMAIL_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.postJSON('/api/users/confirm-email/', this.form)\r\n\r\n                    if (data?.success === true || resp.status === 200) {\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) {\r\n                        this.error = (data?.code ? (data.code + ': ') : '') + data.error\r\n                    }\r\n\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n        }\r\n    }\r\n</script><div><h1 class=\"text-3xl pb-4\">Confirm email</h1><div class=\"bg-base-100 w-full max-w-sm shadow-md\"><div class=\"card-body\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script src=\"/assets/http_helpers.js\"></script><script src=\"/assets/form_helpers.js\"></script><script>\r\n    const CONFIRM_EMAIL_DEFAULTS = {\r\n        code: '',\r\n    }\r\n\r\n    function confirmEmailForm() {\r\n        return {\r\n            ...FormHelpers.makeForm({\r\n                defaults: CONFIRM_EMAIL_DEFAULTS,\r\n                submit: async function () {\r\n                    const { resp, data } = await HTTP.postJSON('/api/users/confirm-email/', this.form)\r\n\r\n                    if (data?.success === true || resp.status === 200) {\r\n                        this.success = true\r\n                        return\r\n                    }\r\n\r\n                    if (data?.error) {\r\n                        this.error = (data?.code ? (data.code + ': ') : '') + data.error\r\n                    }\r\n\r\n                    FormHelpers.applyInputErrors(this.errors, data?.input_errors)\r\n                },\r\n            }),\r\n\r\n            resendCooldown: ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var2, templ_7745c5c3_Err := templruntime.ScriptContentOutsideStringLiteral(retryAfterSeconds)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/page/confirm_email.templ`, Line: 36, Col: 48}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, ",\r\n            resendTimer: null,\r\n            resendLoading: false,\r\n            resendSuccess: false,\r\n\r\n            init(){\r\n                if (this.resendCooldown > 0) {\r\n                    this.startCooldown(this.resendCooldown)\r\n                }\r\n            },\r\n\r\n            get resendBlocked() {\r\n                return this.resendCooldown > 0\r\n            },\r\n\r\n            async resendCode() {\r\n                if (this.resendBlocked) return\r\n\r\n                this.resendLoading = true\r\n                this.resendSuccess = false\r\n\r\n                const { resp, data } = await HTTP.postJSON('/api/users/email-confirmation-code/', {})\r\n\r\n                this.resendLoading = false\r\n\r\n                if (resp.status === 429) {\r\n                    const retryAfter = parseInt(resp.headers.get('Retry-After') || '300', 10)\r\n                    this.startCooldown(retryAfter)\r\n                    return\r\n                }\r\n\r\n                if (data?.success === true) {\r\n                    this.resendSuccess = true\r\n                    return\r\n                }\r\n            },\r\n\r\n            startCooldown(seconds) {\r\n                this.resendCooldown = seconds\r\n                clearInterval(this.resendTimer)\r\n                this.resendTimer = setInterval(() => {\r\n                    this.resendCooldown--\r\n                    if (this.resendCooldown <= 0) {\r\n                        this.resendCooldown = 0\r\n                        clearInterval(this.resendTimer)\r\n                    }\r\n                }, 1000)\r\n            },\r\n        }\r\n    }\r\n</script><div><h1 class=\"text-3xl pb-4\">Confirm email</h1><div class=\"bg-base-100 w-full max-w-sm \"><div class=\"card-body\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -50,15 +61,7 @@ func ConfirmEmailForm() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"!success && error !== ''\"></p><div role=\"alert\" class=\"alert alert-success\" x-show=\"success\" x-cloak><div><div class=\"mb-2\">Your email has been confirmed!</div><div><a href=\"/users/sign-in/\" class=\"btn btn-ghost  rounded-full btn-success\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = icon.LogIn("w-5 h-5 mr-2").Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Sign in</a></div></div></div><fieldset class=\"fieldset\" x-show=\"!success\" :disabled=\"submitting\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-red-500\" x-text=\"error\" x-show=\"!success && error !== ''\"></p><div role=\"alert\" class=\"mb-2\" x-show=\"!success\" x-cloak>We have sent a confirmation code to your email, please enter it here:</div><div role=\"alert\" class=\"alert alert-success mb-2\" x-show=\"success\" x-cloak>Your email has been confirmed!</div><fieldset class=\"fieldset\" x-show=\"!success\" :disabled=\"submitting\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -81,13 +84,13 @@ func ConfirmEmailForm() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></fieldset>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></fieldset><div x-show=\"!success\" x-cloak><div x-show=\"!resendSuccess\"><div class=\"mb-2\">If you didn't receive our email, you can request a new code:</div><button type=\"button\" class=\"btn btn-ghost btn-info btn-link\" :disabled=\"resendBlocked || resendLoading\" @click=\"resendCode()\"><span x-show=\"resendLoading\" class=\"loading loading-spinner loading-sm\"></span> <span x-show=\"!resendLoading && !resendBlocked\">Resend confirmation email</span> <span x-show=\"!resendLoading && resendBlocked\">Resend in <span x-text=\"resendCooldown\"></span>s</span></button><div class=\"text-xs\">Don't forget to check your Spam folder. If you still don't receive it after a few attempts, please contact us.</div></div><div x-show=\"resendSuccess\" x-cloak>New email with confirmation code has been sent.</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Form("confirmEmailForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Form("confirmEmailForm").Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

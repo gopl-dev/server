@@ -2,15 +2,18 @@ package service_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/gopl-dev/server/app/ds"
 	"github.com/gopl-dev/server/test"
 	"github.com/gopl-dev/server/test/factory"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestHardDeleteUser(t *testing.T) {
+func TestCleanupDeletedUser(t *testing.T) {
 	user := create[ds.User](t)
+	ctx := context.Background()
 
 	// user sessions
 	_, err := factory.Five(tt.Factory.CreateUserSession, ds.UserSession{UserID: user.ID})
@@ -28,12 +31,18 @@ func TestHardDeleteUser(t *testing.T) {
 	_, err = factory.Five(tt.Factory.CreateChangeEmailRequest, ds.ChangeEmailRequest{UserID: user.ID})
 	test.CheckErr(t, err)
 
-	err = tt.Service.HardDeleteUser(context.Background(), user.ID)
+	err = tt.Service.CleanupDeletedUser(ctx, user.ID)
 	test.CheckErr(t, err)
 
 	test.AssertNotInDB(t, tt.DB, "user_sessions", test.Data{"user_id": user.ID})
 	test.AssertNotInDB(t, tt.DB, "email_confirmations", test.Data{"user_id": user.ID})
 	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"user_id": user.ID})
 	test.AssertNotInDB(t, tt.DB, "change_email_requests", test.Data{"user_id": user.ID})
-	test.AssertNotInDB(t, tt.DB, "users", test.Data{"id": user.ID})
+
+	user, err = tt.Service.GetUserByID(ctx, user.ID)
+	test.CheckErr(t, err)
+
+	assert.True(t, strings.HasPrefix(user.Username, ds.DeletedUsername))
+	assert.True(t, strings.HasPrefix(user.Email, ds.DeletedUsername))
+	assert.True(t, strings.HasPrefix(user.Password, ds.DeletedUsername))
 }

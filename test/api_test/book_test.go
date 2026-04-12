@@ -274,8 +274,7 @@ func TestUpdateBook_WithReview(t *testing.T) {
 }
 
 func TestUpdateBook_WithoutReview(t *testing.T) {
-	user := login(t)
-	makeAdmin(user)
+	loginAsAdmin(t)
 
 	imageBytes1, err := random.ImagePNG(10)
 	test.CheckErr(t, err)
@@ -347,8 +346,7 @@ func TestUpdateBook_WithoutReview(t *testing.T) {
 }
 
 func TestApproveNewBook(t *testing.T) {
-	user := login(t)
-	makeAdmin(user)
+	admin := loginAsAdmin(t)
 
 	book := create(t, ds.Book{
 		Entity: &ds.Entity{
@@ -366,7 +364,7 @@ func TestApproveNewBook(t *testing.T) {
 	})
 
 	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
-		"user_id":   user.ID,
+		"user_id":   admin.ID,
 		"type":      ds.EventLogEntityApproved,
 		"entity_id": book.ID,
 		"is_public": false,
@@ -391,8 +389,7 @@ func TestApproveNewBook(t *testing.T) {
 }
 
 func TestRejectNewBook(t *testing.T) {
-	user := login(t)
-	makeAdmin(user)
+	admin := loginAsAdmin(t)
 
 	book := create(t, ds.Book{
 		Entity: &ds.Entity{
@@ -413,7 +410,7 @@ func TestRejectNewBook(t *testing.T) {
 	})
 
 	test.AssertInDB(t, tt.DB, "event_logs", test.Data{
-		"user_id":   user.ID,
+		"user_id":   admin.ID,
 		"type":      ds.EventLogEntityRejected,
 		"entity_id": book.ID,
 		"meta":      map[string]any{"note": req.Note},
@@ -432,8 +429,7 @@ func TestRejectNewBook(t *testing.T) {
 }
 
 func TestDeleteBook(t *testing.T) {
-	user := login(t)
-	makeAdmin(user)
+	loginAsAdmin(t)
 
 	book := create[ds.Book](t)
 

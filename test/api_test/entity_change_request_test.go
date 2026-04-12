@@ -16,9 +16,7 @@ import (
 )
 
 func TestGetChangeRequestDiff(t *testing.T) {
-	admin := create[ds.User](t)
-	loginAs(t, admin)
-	makeAdmin(admin)
+	_ = loginAsAdmin(t)
 
 	_, err := factory.Ten(tt.Factory.CreateEntityChangeRequest, ds.EntityChangeRequest{
 		Status: ds.EntityChangePending,
@@ -58,9 +56,7 @@ func TestFilterChangeRequest(t *testing.T) {
 }
 
 func TestRejectChangeRequest(t *testing.T) {
-	admin := create[ds.User](t)
-	loginAs(t, admin)
-	makeAdmin(admin)
+	admin := loginAsAdmin(t)
 
 	user := create[ds.User](t)
 	book := create[ds.Book](t)
@@ -99,9 +95,7 @@ func TestRejectChangeRequest(t *testing.T) {
 }
 
 func TestApplyChangeRequestToBook(t *testing.T) {
-	admin := create[ds.User](t)
-	loginAs(t, admin)
-	makeAdmin(admin)
+	admin := loginAsAdmin(t)
 
 	imageBytes, err := random.ImagePNG(10)
 	test.CheckErr(t, err)
@@ -243,9 +237,7 @@ func TestApplyChangeRequestToBook(t *testing.T) {
 }
 
 func TestApplyChangeRequestToPage(t *testing.T) {
-	admin := create[ds.User](t)
-	loginAs(t, admin)
-	makeAdmin(admin)
+	admin := loginAsAdmin(t)
 
 	user := create[ds.User](t)
 

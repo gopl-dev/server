@@ -28,7 +28,7 @@ var (
 	ErrMultipleSameVersion = errors.New("multiple migrations of same version found")
 )
 
-// DB ...
+// DB wraps the pgxpool.Pool.
 type DB struct {
 	*pgxpool.Pool
 }

@@ -33,5 +33,4 @@ func TestCleanupDeletedUserAccounts(t *testing.T) {
 	test.AssertNotInDB(t, tt.DB, "password_reset_tokens", test.Data{"user_id": user.ID})
 	test.AssertNotInDB(t, tt.DB, "email_confirmations", test.Data{"user_id": user.ID})
 	test.AssertNotInDB(t, tt.DB, "change_email_requests", test.Data{"user_id": user.ID})
-	test.AssertNotInDB(t, tt.DB, "users", test.Data{"id": user.ID})
 }

@@ -61,6 +61,7 @@ func CreateBookForm() templ.Component {
 				FileIDModel: "form.cover_file_id",
 				Accept:      "image/*",
 				Preview:     true,
+				Description: "Only PNG | JPG. Max dimensions: 3000×3000px, size up to 20MB",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

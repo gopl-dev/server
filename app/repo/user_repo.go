@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -131,16 +132,7 @@ func (r *Repo) DeleteUser(ctx context.Context, userID ds.ID) (err error) {
 	return r.delete(ctx, "users", userID)
 }
 
-// HardDeleteUser permanently deletes a user.
-// This is not a logout. See you at the Afterlife, V.
-func (r *Repo) HardDeleteUser(ctx context.Context, userID ds.ID) (err error) {
-	_, span := r.tracer.Start(ctx, "HardDeleteUser")
-	defer span.End()
-
-	return r.hardDelete(ctx, "users", userID)
-}
-
-// FilterUsers ...
+// FilterUsers retrieves a paginated, filtered list of users from the database.
 func (r *Repo) FilterUsers(ctx context.Context, f ds.UsersFilter) (users []ds.User, count int, err error) {
 	_, span := r.tracer.Start(ctx, "FilterUsers")
 	defer span.End()
@@ -155,4 +147,21 @@ func (r *Repo) FilterUsers(ctx context.Context, f ds.UsersFilter) (users []ds.Us
 		scan(ctx, &users)
 
 	return
+}
+
+// UpdateUser updates user fields in the database.
+func (r *Repo) UpdateUser(ctx context.Context, u *ds.User) error {
+	_, span := r.tracer.Start(ctx, "UpdateUser")
+	defer span.End()
+
+	err := r.update(ctx, u.ID, "users", data{
+		"email":    u.Email,
+		"username": u.Username,
+		"password": u.Password,
+	})
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+
+	return nil
 }

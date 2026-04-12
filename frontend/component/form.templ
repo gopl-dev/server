@@ -161,6 +161,7 @@ type FileUploadInputParams struct {
     FileIDModel string // "form.cover_file_id"
     Accept      string
     Preview     bool
+    Description string
 }
 
 templ FileUploadInput(p FileUploadInputParams) {
@@ -176,6 +177,10 @@ templ FileUploadInput(p FileUploadInputParams) {
             @change={ "upload.upload($event)" }
     :disabled="upload.uploading || submitting"
     />
+
+    if p.Description != "" {
+        <div class="text-xs text-gray-400 mt-1">{ p.Description }</div>
+    }
 
     <div class="text-sm opacity-70 mt-1" x-show="upload.fileName !== ''">
         Selected: <span x-text="upload.fileName"></span>

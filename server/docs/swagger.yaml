@@ -1164,14 +1164,7 @@ paths:
     post:
       consumes:
       - application/json
-      operationId: ConfirmEmail
-      parameters:
-      - description: Request body
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.ConfirmEmail'
+      operationId: SendEmailConfirmationCode
       produces:
       - application/json
       responses:
@@ -1189,7 +1182,7 @@ paths:
             $ref: '#/definitions/handler.Error'
       security:
       - ApiKeyAuth: []
-      summary: Confirm email
+      summary: SendE email confirmation code
       tags:
       - users
   /users/email/:
@@ -1401,7 +1394,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Status'
+            $ref: '#/definitions/response.UserSignIn'
         "422":
           description: Unprocessable Entity
           schema:

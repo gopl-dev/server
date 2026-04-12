@@ -63,7 +63,7 @@ By default, it seeds all available entities. You can specify a specific entity a
 * **Help:** `go run ./cmd/cli/main.go ? sd` for detailed options.
 
 ## Environment Reset
-If you need a clean slate, run:
+If you need a clean state, run:
 ```bash
 go run ./cmd/cli/main.go rde
 ```
