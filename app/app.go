@@ -355,3 +355,12 @@ func IsUniqueViolation(err error) (column string, ok bool) {
 
 	return pgErr.ColumnName, true
 }
+
+// Value dereferences a pointer and returns the value, or zero value if nil.
+func Value[T any](p *T) (v T) {
+	if p == nil {
+		return
+	}
+
+	return *p
+}

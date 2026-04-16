@@ -196,6 +196,41 @@ func TestFilterBooks(t *testing.T) {
 		GET(t, req, &resp)
 		assert.Len(t, resp.Data, 3)
 	})
+
+	t.Run("filter by topic", func(t *testing.T) {
+		topic := create(t, ds.Topic{Type: ds.EntityTypeBook})
+		book := create(t, ds.Book{
+			Entity: &ds.Entity{
+				Topics:     []ds.Topic{*topic},
+				Status:     ds.EntityStatusApproved,
+				Visibility: ds.EntityVisibilityPublic,
+			},
+		})
+		req.Params = request.FilterEntities{
+			Topics: []string{topic.PublicID},
+		}
+
+		GET(t, req, &resp)
+		assert.Len(t, resp.Data, 1)
+		assert.Equal(t, resp.Data[0].PublicID, book.PublicID)
+	})
+
+	t.Run("filter by author", func(t *testing.T) {
+		book := create(t, ds.Book{
+			Entity: &ds.Entity{
+				Status:     ds.EntityStatusApproved,
+				Visibility: ds.EntityVisibilityPublic,
+			},
+			Authors: []ds.BookAuthor{{Name: random.String(32)}},
+		})
+		req.Params = request.FilterBooks{
+			Author: book.Authors[0].Name,
+		}
+
+		GET(t, req, &resp)
+		assert.Len(t, resp.Data, 1)
+		assert.Equal(t, resp.Data[0].PublicID, book.PublicID)
+	})
 }
 
 func TestUpdateBook_WithReview(t *testing.T) {
@@ -451,5 +486,88 @@ func TestDeleteBook(t *testing.T) {
 	test.AssertInDB(t, tt.DB, "entities", test.Data{
 		"id":         book.ID,
 		"deleted_at": test.NotNull,
+	})
+}
+
+func TestSearchBooks(t *testing.T) {
+	topic := create(t, ds.Topic{
+		Type: ds.EntityTypeBook,
+		Name: "Testing",
+	})
+
+	book := create(t, ds.Book{
+		Entity: &ds.Entity{
+			Title:      "Learn Go With Tests",
+			Status:     ds.EntityStatusApproved,
+			Visibility: ds.EntityVisibilityPublic,
+			Topics:     []ds.Topic{*topic},
+		},
+		Authors: []ds.BookAuthor{{
+			Name: "John Tester",
+			Link: random.URL(),
+		}},
+	})
+
+	// unrelated book should not appear
+	create(t, ds.Book{
+		Entity: &ds.Entity{
+			Status:     ds.EntityStatusApproved,
+			Visibility: ds.EntityVisibilityPublic,
+		},
+	})
+
+	type SearchQuery struct {
+		Search string `url:"search"`
+	}
+
+	req := Query{
+		Path:   "books/search/",
+		Params: SearchQuery{Search: "test"},
+	}
+	var resp []service.SearchBooksResult
+	GET(t, req, &resp)
+
+	// book by title
+	assert.Contains(t, resp, service.SearchBooksResult{
+		Type: service.SearchBookTypeBook,
+		Name: book.Title,
+		URL:  "/books/" + book.PublicID + "/",
+	})
+
+	// author
+	assert.Contains(t, resp, service.SearchBooksResult{
+		Type: service.SearchBookTypeAuthor,
+		Name: "John Tester",
+		URL:  "/books/?author=John Tester",
+	})
+
+	// topic
+	assert.Contains(t, resp, service.SearchBooksResult{
+		Type: service.SearchBookTypeTopic,
+		Name: "Testing",
+		URL:  "/books/?topics=" + topic.PublicID,
+	})
+
+	t.Run("no match returns empty result", func(t *testing.T) {
+		var resp []service.SearchBooksResult
+		GET(t, Query{Path: "books/search", Params: SearchQuery{Search: random.String()}}, &resp)
+		assert.Empty(t, resp)
+	})
+
+	t.Run("draft book not returned", func(t *testing.T) {
+		draftBook := create(t, ds.Book{
+			Entity: &ds.Entity{
+				Title:      "Test Draft Book",
+				Status:     ds.EntityStatusUnderReview,
+				Visibility: ds.EntityVisibilityPublic,
+			},
+		})
+
+		var resp []service.SearchBooksResult
+		GET(t, Query{Path: "books/search", Params: SearchQuery{Search: draftBook.Title}}, &resp)
+
+		for _, r := range resp {
+			assert.NotEqual(t, draftBook.Title, r.Name)
+		}
 	})
 }

@@ -343,6 +343,61 @@ func (b *filterBuilder) withCount(ok bool) *filterBuilder {
 	return b
 }
 
+func (b *filterBuilder) filterString(col string, f *ds.FilterString) *filterBuilder {
+	if f == nil {
+		return b
+	}
+
+	if app.Value(f.Null) {
+		if f.Not {
+			b.qb = b.qb.Where(col + " IS NOT NULL")
+		} else {
+			b.qb = b.qb.Where(col + " IS NULL")
+		}
+	}
+
+	if app.Value(f.Empty) {
+		if f.Not {
+			b.qb = b.qb.Where(col + " != ''")
+		} else {
+			b.qb = b.qb.Where(col + " = ''")
+		}
+	}
+
+	if v := app.Value(f.Equal); v != "" {
+		if f.Not {
+			b.qb = b.qb.Where(col+" != ?", v)
+		} else {
+			b.qb = b.qb.Where(col+" = ?", v)
+		}
+	}
+
+	likeOP := "ILIKE"
+	if f.CaseSensitive {
+		likeOP = "LIKE"
+	}
+	if f.Not {
+		likeOP = "NOT " + likeOP
+	}
+
+	if v := app.Value(f.Contains); v != "" {
+		v = "%" + v + "%"
+		b.qb = b.qb.Where(col+" "+likeOP+" ?", v)
+	}
+
+	if v := app.Value(f.StartsWith); v != "" {
+		v += "%"
+		b.qb = b.qb.Where(col+" "+likeOP+" ?", v)
+	}
+
+	if v := app.Value(f.EndsWith); v != "" {
+		v = "%" + v
+		b.qb = b.qb.Where(col+" "+likeOP+" ?", v)
+	}
+
+	return b
+}
+
 func (b *filterBuilder) sql() (sql string, args []any, err error) {
 	lb := *b
 	if !lb.columnsSet {

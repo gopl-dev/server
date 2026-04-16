@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/gopl-dev/server/app"
@@ -20,17 +21,21 @@ func (r *Repo) FilterTopics(ctx context.Context, f ds.TopicsFilter) (data []ds.T
 
 	if f.OrderBy == "" {
 		f.OrderBy = "name"
-		f.OrderDirection = "asc"
+		f.OrderDirection = "ASC"
 	}
 
 	count, err = r.filter("topics").
 		columns(`*`).
 		where("type", f.Type).
+		filterString("name", f.Name).
 		paginate(f.Page, f.PerPage).
 		order(f.OrderBy, f.OrderDirection).
 		withCount(f.WithCount).
 		apply(whereIn("public_id", f.PublicIDs)).
 		scan(ctx, &data)
+	if err != nil {
+		err = fmt.Errorf("filter topics: %w", err)
+	}
 
 	return
 }

@@ -35,6 +35,11 @@ const docTemplate = `{
                 "operationId": "FilterBooks",
                 "parameters": [
                     {
+                        "type": "string",
+                        "name": "author",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "name": "page",
                         "in": "query"
@@ -157,6 +162,59 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/search/": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Search books",
+                "operationId": "SearchBooks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "search",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/service.SearchBooksResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/handler.Error"
                         }
@@ -2246,6 +2304,33 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "revision_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.SearchBookType": {
+            "type": "string",
+            "enum": [
+                "book",
+                "author",
+                "topic"
+            ],
+            "x-enum-varnames": [
+                "SearchBookTypeBook",
+                "SearchBookTypeAuthor",
+                "SearchBookTypeTopic"
+            ]
+        },
+        "service.SearchBooksResult": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/service.SearchBookType"
+                },
+                "url": {
                     "type": "string"
                 }
             }

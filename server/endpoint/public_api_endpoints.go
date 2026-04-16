@@ -15,6 +15,7 @@ func (r *Router) PublicAPIEndpoints() {
 	// books
 	r.Group("books").
 		GET("/", r.handler.FilterBooks).
+		GET("/search/", r.handler.SearchBooks).
 		Use(r.mw.RequestBook).
 		GET("{id}/", r.handler.GetBook)
 

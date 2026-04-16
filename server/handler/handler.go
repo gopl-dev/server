@@ -630,16 +630,16 @@ func GetSessionFromCookie(r *http.Request) string {
 
 type ctxKey int
 
-const ctxServerJSON ctxKey = iota
+const ctxServeJSON ctxKey = iota
 
 // SetServerJSON marks request context to indicate the response must be JSON.
 func SetServerJSON(r *http.Request) *http.Request {
-	return r.WithContext(context.WithValue(r.Context(), ctxServerJSON, true))
+	return r.WithContext(context.WithValue(r.Context(), ctxServeJSON, true))
 }
 
 // ShouldServeJSON reports whether the current request must be served as JSON.
 func ShouldServeJSON(r *http.Request) bool {
-	v, ok := r.Context().Value(ctxServerJSON).(bool)
+	v, ok := r.Context().Value(ctxServeJSON).(bool)
 
 	return ok && v
 }

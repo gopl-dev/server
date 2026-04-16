@@ -117,6 +117,8 @@ func BookFromContext(ctx context.Context) *Book {
 // BooksFilter is used to filter and paginate user queries.
 type BooksFilter struct {
 	EntitiesFilter
+
+	Author string
 }
 
 // BookAuthor represents an author of a book.

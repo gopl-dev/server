@@ -415,7 +415,7 @@ func create[T any](t *testing.T, override ...T) *T {
 
 type Query struct {
 	Path   string
-	Params any
+	Params any // struct only
 }
 
 func (q Query) String(t *testing.T) string {

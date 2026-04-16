@@ -28,6 +28,7 @@ type TopicsFilter struct {
 	Page           int
 	PerPage        int
 	Type           EntityType
+	Name           *FilterString
 	PublicIDs      []string
 	WithCount      bool
 	OrderBy        string
