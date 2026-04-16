@@ -72,11 +72,12 @@ func DtBetween(from, to time.Time) *FilterDT {
 
 // FilterString defines options for filtering string-type data.
 type FilterString struct {
-	NotNull     *bool
-	NotEmpty    *bool
-	ExactMatch  *string
-	Contains    *string
-	NotContains *string
-	StartsWith  *string
-	EndsWith    *string
+	Null          *bool
+	Empty         *bool
+	Equal         *string
+	Contains      *string
+	StartsWith    *string
+	EndsWith      *string
+	Not           bool
+	CaseSensitive bool
 }

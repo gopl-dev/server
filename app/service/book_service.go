@@ -12,6 +12,7 @@ import (
 	"github.com/gopl-dev/server/app/ds/prop"
 	"github.com/gopl-dev/server/app/repo"
 	"github.com/gopl-dev/server/email"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -587,4 +588,99 @@ func (s *Service) GetBookByRef(ctx context.Context, ref any) (*ds.Book, error) {
 	}
 
 	return nil, ErrInvalidRefID
+}
+
+// SearchBookType represents the type of a search result.
+type SearchBookType string
+
+const (
+	// SearchBookTypeBook is a book result.
+	SearchBookTypeBook SearchBookType = "book"
+	// SearchBookTypeAuthor is an author result.
+	SearchBookTypeAuthor SearchBookType = "author"
+	// SearchBookTypeTopic is a topic result.
+	SearchBookTypeTopic SearchBookType = "topic"
+)
+
+// SearchBooksResult represents a single search result item.
+type SearchBooksResult struct {
+	Type SearchBookType `json:"type"`
+	Name string         `json:"name"`
+	URL  string         `json:"url"`
+}
+
+// SearchBooks searches books, books authors and books topics by query string.
+func (s *Service) SearchBooks(ctx context.Context, query string) ([]SearchBooksResult, error) {
+	ctx, span := s.tracer.Start(ctx, "SearchBooks")
+	defer span.End()
+
+	if query == "" {
+		return []SearchBooksResult{}, nil
+	}
+
+	var (
+		books   []ds.Book
+		authors []ds.BookAuthor
+		topics  []ds.Topic
+	)
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() (err error) {
+		books, _, err = s.db.FilterBooks(ctx, ds.BooksFilter{EntitiesFilter: ds.EntitiesFilter{
+			PerPage:    25, //nolint:mnd
+			WithCount:  false,
+			Title:      &ds.FilterString{Contains: &query},
+			Visibility: []ds.EntityVisibility{ds.EntityVisibilityPublic},
+			Status:     []ds.EntityStatus{ds.EntityStatusApproved},
+		}})
+		return
+	})
+
+	g.Go(func() (err error) {
+		authors, err = s.db.SearchBookAuthors(ctx, query)
+		return
+	})
+
+	g.Go(func() (err error) {
+		topics, _, err = s.db.FilterTopics(ctx, ds.TopicsFilter{
+			PerPage: 25, //nolint:mnd
+			Type:    ds.EntityTypeBook,
+			Name:    &ds.FilterString{Contains: &query},
+		})
+		return
+	})
+
+	err := g.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]SearchBooksResult, 0, len(books)+len(authors)+len(topics))
+
+	for _, r := range books {
+		results = append(results, SearchBooksResult{
+			Type: SearchBookTypeBook,
+			Name: r.Title,
+			URL:  "/books/" + r.PublicID + "/",
+		})
+	}
+
+	for _, r := range authors {
+		results = append(results, SearchBooksResult{
+			Type: SearchBookTypeAuthor,
+			Name: r.Name,
+			URL:  "/books/?author=" + r.Name,
+		})
+	}
+
+	for _, r := range topics {
+		results = append(results, SearchBooksResult{
+			Type: SearchBookTypeTopic,
+			Name: r.Name,
+			URL:  "/books/?topics=" + r.PublicID,
+		})
+	}
+
+	return results, nil
 }

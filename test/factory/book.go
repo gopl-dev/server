@@ -59,6 +59,7 @@ func (f *Factory) CreateBook(overrideOpt ...ds.Book) (m *ds.Book, err error) {
 			return nil, err
 		}
 		m.Topics = []ds.Topic{*topic}
+
 		err = f.repo.AttachTopics(context.Background(), m.ID, m.Topics)
 		if err != nil {
 			return nil, err

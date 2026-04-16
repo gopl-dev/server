@@ -199,6 +199,7 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 
 	books, count, err := h.service.FilterBooks(ctx, ds.BooksFilter{
 		EntitiesFilter: filter,
+		Author:         req.Author,
 	})
 	if err != nil {
 		Abort(w, r, err)
@@ -209,6 +210,37 @@ func (h *Handler) FilterBooks(w http.ResponseWriter, r *http.Request) {
 		Data:  books,
 		Count: count,
 	})
+}
+
+// SearchBooks handles search across books, books authors and books topics.
+//
+//	@ID			SearchBooks
+//	@Summary	Search books
+//	@Tags		books
+//	@Produce	json
+//	@Param		search	query		string	true	"Search query"
+//	@Success	200		{array}	[]service.SearchBooksResult
+//	@Failure	400		{object}	Error
+//	@Failure	422		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/books/search/ [get]
+func (h *Handler) SearchBooks(w http.ResponseWriter, r *http.Request) {
+	ctx, span := h.tracer.Start(r.Context(), "SearchBooks")
+	defer span.End()
+
+	query := r.URL.Query().Get("search")
+	if len(query) < 3 { //nolint:mnd
+		Abort(w, r, app.ErrBadRequest("search query is too short, at least 3 characters are needed for a proper performance in this show"))
+		return
+	}
+
+	result, err := h.service.SearchBooks(ctx, query)
+	if err != nil {
+		Abort(w, r, err)
+		return
+	}
+
+	jsonOK(w, result)
 }
 
 // FilterBooksView renders the books listing page with filtering UI.

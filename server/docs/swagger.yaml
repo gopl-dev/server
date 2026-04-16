@@ -422,6 +422,25 @@ definitions:
       revision_date:
         type: string
     type: object
+  service.SearchBookType:
+    enum:
+    - book
+    - author
+    - topic
+    type: string
+    x-enum-varnames:
+    - SearchBookTypeBook
+    - SearchBookTypeAuthor
+    - SearchBookTypeTopic
+  service.SearchBooksResult:
+    properties:
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/service.SearchBookType'
+      url:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -431,6 +450,9 @@ paths:
       - application/json
       operationId: FilterBooks
       parameters:
+      - in: query
+        name: author
+        type: string
       - in: query
         name: page
         type: integer
@@ -743,6 +765,41 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Reject new book
+      tags:
+      - books
+  /books/search/:
+    get:
+      operationId: SearchBooks
+      parameters:
+      - description: Search query
+        in: query
+        name: search
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/service.SearchBooksResult'
+              type: array
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Error'
+      summary: Search books
       tags:
       - books
   /change-requests/:

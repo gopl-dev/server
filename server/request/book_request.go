@@ -75,6 +75,8 @@ type UpdateBook struct {
 // FilterBooks defines filtering options specific to books.
 type FilterBooks struct {
 	FilterEntities
+
+	Author string `json:"author" url:"author,omitempty"`
 }
 
 // RejectBook represents a request payload for rejecting a book.

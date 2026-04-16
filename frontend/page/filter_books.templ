@@ -15,10 +15,17 @@ templ FilterBooksPage() {
             topics: [],
             loadedOnce: false,
 
+            search: '',
+            searchResults: [],
+            searchLoading: false,
+            searchOpen: false,
+            searchDebounce: null,
+
             filters: {
                 page: 1,
                 per_page: 10,
                 topic_ids: [],
+                author: "",
             },
 
             coverURL(fileID) {
@@ -41,6 +48,9 @@ templ FilterBooksPage() {
 
                 const topicIDs = url.searchParams.getAll('topics')
                 this.filters.topic_ids = topicIDs ?? []
+
+                const author = url.searchParams.get('author')
+                this.filters.author = author ?? ""
             },
 
             writeToURL() {
@@ -63,6 +73,41 @@ templ FilterBooksPage() {
             onPopState() {
                 this.readFromURL()
                 this.load({ syncURL: false, scrollTop: true })
+            },
+
+            // ---------- search ----------
+
+            async onSearchInput() {
+                clearTimeout(this.searchDebounce)
+                if (this.search.length < 3) {
+                    this.searchResults = []
+                    this.searchOpen = false
+                    return
+                }
+                this.searchDebounce = setTimeout(async () => {
+                    this.searchLoading = true
+                    try {
+                        const { resp, data } = await HTTP.requestJSON(
+                            '/api/books/search/?search=' + encodeURIComponent(this.search)
+                        )
+                        if (resp.status === 200) {
+                            this.searchResults = data ?? []
+                            this.searchOpen = this.searchResults.length > 0
+                        }
+                    } catch (e) {
+                        console.error(e)
+                    } finally {
+                        this.searchLoading = false
+                    }
+                }, 300)
+            },
+
+            onSearchSelect(result) {
+                window.location.href = result.url
+            },
+
+            closeSearch() {
+                this.searchOpen = false
             },
 
             // ---------- pagination ui ----------
@@ -107,6 +152,7 @@ templ FilterBooksPage() {
                 const qs = new URLSearchParams({
                     page: String(this.filters.page),
                     per_page: String(this.filters.per_page),
+                    author: this.filters.author,
                 })
 
                 for (const id of (this.filters.topic_ids ?? [])) {
@@ -185,12 +231,55 @@ templ FilterBooksPage() {
 </script>
 
 <div x-data="booksPage()">
-    <div class="flex items-center justify-between pb-4">
-        <h1 class="text-3xl">Books</h1>
-        <a class="btn btn-info ml-2" href="/add-book/">Add book</a>
+    <div class="flex items-center justify-between pb-4 gap-4">
+        <h1 class="text-3xl shrink-0">Books</h1>
+
+        <div class="flex items-center gap-2 flex-1">
+            <div class="relative flex-1" x-on:click.outside="closeSearch()">
+                <input
+                        type="text"
+                        class="input input-bordered w-full"
+                        placeholder="Search by book title, author or topic"
+                        x-model="search"
+                        x-on:input="onSearchInput()"
+                        x-on:focus="searchOpen = searchResults.length > 0"
+                />
+
+                <template x-if="searchLoading">
+                    <div class="absolute right-3 top-3">
+                        <span class="loading loading-spinner loading-sm"></span>
+                    </div>
+                </template>
+
+                <template x-if="searchOpen">
+                    <ul class="absolute z-50 mt-1 w-full bg-base-100 border border-base-300 rounded-box shadow-lg max-h-80 overflow-y-auto">
+                        <template x-for="(r, i) in searchResults" :key="i">
+                            <li
+                                    class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-base-200"
+                                    x-on:click="onSearchSelect(r)"
+                            >
+                                <div class="shrink-0">
+                                    <template x-if="r.type === 'book'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-text"><path d="M12 7v14"/><path d="M16 12h2"/><path d="M16 8h2"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/><path d="M6 12h2"/><path d="M6 8h2"/></svg>
+                                    </template>
+                                    <template x-if="r.type === 'topic'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hash"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
+                                    </template>
+                                    <template x-if="r.type === 'author'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    </template>
+                                </div>
+                                <span x-text="r.name"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+            </div>
+
+            <a class="btn btn-info ml-2 shrink-0" href="/add-book/">Add book</a>
+        </div>
     </div>
 
-    <!-- topics -->
     <div class="flex flex-wrap gap-2 mb-2">
         <template x-for="t in topics" :key="t.id">
             <label
@@ -214,7 +303,6 @@ templ FilterBooksPage() {
         </template>
     </div>
 
-    <!-- Top pagination -->
     <div class="flex items-center justify-between mb-4">
         <div class="text-sm text-gray-500">
             <span x-text="'Total: ' + total"></span>
@@ -239,7 +327,7 @@ templ FilterBooksPage() {
             <template x-for="p in pageButtons" :key="p">
                 <button
                         class="btn btn-sm"
-                        :class="p === page ? 'btn-active' : ''"
+                        :class="p === filters.page ? 'btn-active' : ''"
                         :disabled="loading"
                         @click="gotoPage(p)"
                         x-text="p"
@@ -263,7 +351,7 @@ templ FilterBooksPage() {
     </div>
 
     <template x-if="loading">
-        <div>Loading…</div>
+        <div>Loading...</div>
     </template>
 
     <template x-if="error">
@@ -295,7 +383,6 @@ templ FilterBooksPage() {
                         <span x-text="b.release_date" class="italic font-normal text-gray-400"></span>
                     </h2>
 
-
                     <a
                             class="btn btn-ghost btn-sm btn-square"
                             title="Edit"
@@ -306,47 +393,50 @@ templ FilterBooksPage() {
                 </div>
 
                 <span>
-						by&nbsp;
-                <template x-for="(a, i) in b.authors" :key="a.name">
-                    <span>
-                        <template x-if="a.link">
-                            <a
-                                    :href="a.link"
-                                    class="link"
-                                    x-text="a.name"
-                            ></a>
-                        </template>
+                    by&nbsp;
+                    <template x-for="(a, i) in b.authors" :key="a.name">
+                        <span>
+                            <template x-if="a.link">
+                                <a
+                                        :href="a.link"
+                                        class="link"
+                                        x-text="a.name"
+                                ></a>
+                            </template>
 
-                        <template x-if="!a.link">
-                            <span x-text="a.name"></span>
-                        </template>
+                            <template x-if="!a.link">
+                                <span x-text="a.name"></span>
+                            </template>
 
-                        <template x-if="b.authors.length > 1 && i < b.authors.length - 2">
-                            <span>, </span>
-                        </template>
+                            <template x-if="b.authors.length > 1 && i < b.authors.length - 2">
+                                <span>, </span>
+                            </template>
 
-                        <template x-if="b.authors.length > 1 && i === b.authors.length - 2">
-                            <span>&nbsp;and&nbsp;</span>
-                        </template>
-                    </span>
-                </template>
-					</span>
+                            <template x-if="b.authors.length > 1 && i === b.authors.length - 2">
+                                <span>&nbsp;and&nbsp;</span>
+                            </template>
+                        </span>
+                    </template>
+                </span>
 
                 <div x-html="b.summary"></div>
                 <div class="flex flex-wrap gap-2 mb-3">
                     <template x-for="t in (b.topics ?? [])" :key="t.public_id">
-    <a :href="'/books/?topics=' + t.public_id"
-            class="badge"
-            :class="isTopicSelected(t) ? 'badge-outline badge-info' : 'badge-soft'"
-            x-text="t.name"
-    ></a>
+                        <a
+                                :href="'/books/?topics=' + t.public_id"
+                                class="badge"
+                                :class="isTopicSelected(t) ? 'badge-outline badge-info' : 'badge-soft'"
+                                x-text="t.name"
+                        ></a>
                     </template>
                 </div>
 
-                <p><a
-                        class="hover:underline link-info"
-                        :href="'/books/' + b.public_id + '/'"
-                >More...</a></p>
+                <p>
+                    <a
+                            class="hover:underline link-info"
+                            :href="'/books/' + b.public_id + '/'"
+                    >More...</a>
+                </p>
             </div>
         </div>
     </template>
@@ -355,7 +445,6 @@ templ FilterBooksPage() {
         <div>No books found</div>
     </template>
 
-    <!-- Bottom pagination -->
     <div class="flex items-center justify-between mt-4">
         <div class="text-sm text-gray-500">
             <span x-text="'Total: ' + total"></span>
@@ -380,7 +469,7 @@ templ FilterBooksPage() {
             <template x-for="p in pageButtons" :key="p">
                 <button
                         class="btn btn-sm"
-                        :class="p === page ? 'btn-active' : ''"
+                        :class="p === filters.page ? 'btn-active' : ''"
                         :disabled="loading"
                         @click="gotoPage(p)"
                         x-text="p"

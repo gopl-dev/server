@@ -128,6 +128,11 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		)`
 	}
 
+	var whereAuthor string
+	if f.Author != "" {
+		whereAuthor = `EXISTS (SELECT 1 FROM jsonb_to_recordset(b.authors) AS a(name text) WHERE a.name = ?)`
+	}
+
 	count, err = r.filter("entities e", "e").
 		columns(`
 		  e.id AS id,
@@ -152,6 +157,8 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		join("LEFT JOIN users u ON e.owner_id = u.id").
 		where("e.type", ds.EntityTypeBook).
 		whereRaw(whereTopics, f.Topics).
+		whereRaw(whereAuthor, f.Author).
+		filterString("e.title", f.Title).
 		paginate(f.Page, f.PerPage).
 		createdAt(f.CreatedAt).
 		deletedAt(f.DeletedAt).
@@ -163,6 +170,11 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 		).
 		withCount(f.WithCount).
 		scan(ctx, &books)
+
+	if err != nil {
+		err = fmt.Errorf("filter books: %w", err)
+		return
+	}
 
 	// topics
 	if len(books) > 0 {
@@ -195,4 +207,31 @@ func (r *Repo) FilterBooks(ctx context.Context, f ds.BooksFilter) (books []ds.Bo
 	}
 
 	return
+}
+
+// SearchBookAuthors searches book authors by name.
+func (r *Repo) SearchBookAuthors(ctx context.Context, query string) ([]ds.BookAuthor, error) {
+	_, span := r.tracer.Start(ctx, "SearchBookAuthors")
+	defer span.End()
+
+	sql := `
+		SELECT DISTINCT a.name
+		FROM entities e
+		JOIN books b ON b.id = e.id
+		JOIN LATERAL jsonb_to_recordset(b.authors) AS a(name text) ON true
+		WHERE e.type = 'book'
+		  AND e.status = 'approved'
+		  AND e.visibility = 'public'
+		  AND e.deleted_at IS NULL
+		  AND a.name ILIKE $1
+		LIMIT 25
+	`
+
+	var rows []ds.BookAuthor
+	err := pgxscan.Select(ctx, r.db, &rows, sql, "%"+query+"%")
+	if err != nil {
+		return nil, fmt.Errorf("search book authors: %w", err)
+	}
+
+	return rows, nil
 }
