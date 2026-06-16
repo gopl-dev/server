@@ -58,10 +58,10 @@ jobs:
 
           server:
             host: ""
-            port: 443
+            port: 8080
             api_base_path: api
             addr: "https://gopl.dev/"
-            autocert_hosts: "gopl.dev, www.gopl.dev"
+            autocert_hosts: ""
 
           email:
             driver: smtp
