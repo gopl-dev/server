@@ -57,7 +57,7 @@ jobs:
             log_queries: false
 
           server:
-            host: ""
+            host: "localhost"
             port: 8080
             api_base_path: api
             addr: "https://gopl.dev/"
@@ -130,4 +130,4 @@ jobs:
             chmod +x /opt/gopl/server
             chmod +x /opt/gopl/cli
             sudo systemctl restart gopl
-            sudo setcap 'cap_net_bind_service=+ep' /opt/gopl/server
+
