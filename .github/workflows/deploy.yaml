@@ -57,7 +57,7 @@ jobs:
             log_queries: false
 
           server:
-            host: "localhost"
+            host: "127.0.0.1"
             port: 8080
             api_base_path: api
             addr: "https://gopl.dev/"
